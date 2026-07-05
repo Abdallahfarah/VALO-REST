@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #F97316;
+  --color-navy: #0B1630;
+  --color-navy-light: #1A2A52;
+  --color-surface: #FFFFFF;
+  --color-background-app: #F8FAFC;
+  --color-border-soft: #E5E7EB;
+}
+
+:root {
+  --background: #F8FAFC;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --primary: #F97316;
+  --primary-foreground: #ffffff;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
