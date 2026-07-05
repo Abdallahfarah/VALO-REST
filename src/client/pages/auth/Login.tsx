@@ -16,6 +16,8 @@ import { GoogleComingSoonModal } from '../../components/GoogleComingSoonModal';
 
 import { cn } from '../../lib/utils';
 
+import valoLogo from '../../../../Docs/valo-logo.jpg';
+
 const ROLE_ROUTES: Record<string, string> = {
   ADMIN: '/admin',
   SUPER_ADMIN: '/platform/overview',
@@ -106,22 +108,15 @@ export const Login = () => {
          {/* Background Image Overlay */}
          <div className="absolute inset-0 opacity-20">
             <img 
-              src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=2000" 
-              alt="Restaurant Interior"
-              className="w-full h-full object-cover"
+               src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=2000" 
+               alt="Restaurant Interior"
+               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1630] via-transparent to-transparent" />
          </div>
 
          <div className="relative z-10">
-            <div className="flex items-center gap-3">
-               <div className="w-12 h-12 bg-[#F97316] rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
-                  <span className="text-white font-black text-2xl">VX</span>
-               </div>
-               <span className="text-2xl font-black tracking-tight">VALO-<span className="text-[#F97316]">REST</span></span>
-            </div>
-
-            <div className="mt-24 space-y-12">
+            <div className="space-y-12">
                <h1 className="text-5xl font-black leading-tight max-w-sm">
                   Smart Restaurant Management Platform
                </h1>
@@ -177,9 +172,20 @@ export const Login = () => {
          </div>
 
          <div className="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full">
-            <div className="mb-12">
-               <h2 className="text-4xl font-black text-[#0B1630] mb-2">Welcome Back</h2>
-               <p className="text-[#94A3B8] font-medium">Sign in to your workspace</p>
+            <div className="mb-8 flex flex-col items-center justify-center">
+               {/* Logo above Welcome Back */}
+               <div className="inline-flex items-center justify-center bg-[#F8FAFC]/80 backdrop-blur-md border border-[#E2E8F0] rounded-[22px] px-8 py-5 shadow-sm mb-8 select-none">
+                  <img 
+                     src={valoLogo} 
+                     alt="VALO-REST Logo" 
+                     className="h-12 w-auto object-contain"
+                     onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                     }}
+                  />
+               </div>
+               <h2 className="text-4xl font-black text-[#0B1630] mb-2 text-center w-full">Welcome Back</h2>
+               <p className="text-[#94A3B8] font-medium text-center w-full">Sign in to your workspace</p>
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit} autoComplete="on">
