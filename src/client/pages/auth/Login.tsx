@@ -3,6 +3,7 @@ import {
   Mail, 
   Lock, 
   Eye, 
+  EyeOff,
   Globe, 
   Building2, 
   Zap, 
@@ -38,6 +39,7 @@ export const Login = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const { role: currentRole } = useAuth();
 
@@ -217,14 +219,18 @@ export const Login = () => {
                      <input 
                        className="w-full h-14 pl-12 pr-12 rounded-2xl border border-slate-100 bg-slate-50/30 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8] transition-all" 
                        placeholder="Enter your password" 
-                       type="password"
+                       type={showPassword ? "text" : "password"}
                        value={password}
                        onChange={(e) => setPassword(e.target.value)}
                        autoComplete="current-password"
                        required
                      />
-                     <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0B1630]">
-                        <Eye size={18} />
+                     <button 
+                        type="button" 
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0B1630] cursor-pointer"
+                     >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                      </button>
                   </div>
                </div>
