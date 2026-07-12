@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import { AuthService } from '../services/AuthService';
@@ -25,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
   
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const setImpersonatedTenantId = (id: string | null) => {
     if (id) {
@@ -119,7 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setDbRole(null);
 
     // 6. Redirect user to /login and refresh authentication state
-    window.location.href = '/login';
+    navigate('/login');
   };
 
   const role = impersonatedTenantId ? 'ADMIN' : (dbRole || user?.user_metadata?.role || null);

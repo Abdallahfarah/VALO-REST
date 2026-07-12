@@ -151,10 +151,10 @@ export const App = () => {
     <ErrorBoundary>
       <style>{globalStyles}</style>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TenantProvider>
-            <ImpersonationBanner />
-            <BrowserRouter>
+        <BrowserRouter>
+          <AuthProvider>
+            <TenantProvider>
+              <ImpersonationBanner />
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   {/* Public Routes */}
@@ -243,10 +243,10 @@ export const App = () => {
                   <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
               </Suspense>
-            </BrowserRouter>
-            <ToastContainer />
-          </TenantProvider>
-        </AuthProvider>
+              <ToastContainer />
+            </TenantProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>
   );
