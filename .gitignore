@@ -3,3 +3,6 @@ node_modules
 .env
 dist
 *.timestamp-*.mjs
+scratch/
+Docs/Valo-LogoTab.png
+Docs/valo-logo-tab.png
