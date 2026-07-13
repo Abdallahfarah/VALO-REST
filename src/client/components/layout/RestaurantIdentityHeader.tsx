@@ -25,7 +25,7 @@ export const RestaurantIdentityHeader = () => {
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#F97316] flex items-center justify-center text-xl shrink-0 font-bold border border-orange-100/50">
           {tenant.logo ? (
-            <img src={tenant.logo} alt={tenant.name} className="w-full h-full object-cover rounded-xl" />
+            <img src={tenant.logo} alt={tenant.name} className="w-full h-full object-cover rounded-xl" loading="lazy" decoding="async" width={40} height={40} />
           ) : (
             '🍽️'
           )}

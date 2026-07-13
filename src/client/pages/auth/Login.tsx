@@ -126,7 +126,7 @@ export const Login = () => {
                <h2 className="text-5xl font-black leading-tight max-w-sm">
                   Smart Restaurant Management Platform
                </h2>
-               <p className="text-[#94A3B8] text-lg leading-relaxed max-w-md">
+               <p className="text-[#CBD5E1] text-lg leading-relaxed max-w-md">
                   All-in-one solution to manage your restaurant operations, staff, orders, and customers from anywhere.
                </p>
 
@@ -137,7 +137,7 @@ export const Login = () => {
                      </div>
                      <div>
                         <h3 className="font-bold text-lg">Multi-Tenant SaaS</h3>
-                        <p className="text-[#94A3B8] text-sm mt-1">Manage multiple restaurants with complete isolation.</p>
+                        <p className="text-[#CBD5E1] text-sm mt-1">Manage multiple restaurants with complete isolation.</p>
                      </div>
                   </div>
                   <div className="flex items-center gap-6 group">
@@ -146,7 +146,7 @@ export const Login = () => {
                      </div>
                      <div>
                         <h3 className="font-bold text-lg">Lightning Fast POS</h3>
-                        <p className="text-[#94A3B8] text-sm mt-1">Streamlined operations for maximum efficiency.</p>
+                        <p className="text-[#CBD5E1] text-sm mt-1">Streamlined operations for maximum efficiency.</p>
                      </div>
                   </div>
                   <div className="flex items-center gap-6 group">
@@ -155,7 +155,7 @@ export const Login = () => {
                      </div>
                      <div>
                         <h3 className="font-bold text-lg">Secure & Reliable</h3>
-                        <p className="text-[#94A3B8] text-sm mt-1">Enterprise-grade security and 99.9% uptime.</p>
+                        <p className="text-[#CBD5E1] text-sm mt-1">Enterprise-grade security and 99.9% uptime.</p>
                      </div>
                   </div>
                </div>

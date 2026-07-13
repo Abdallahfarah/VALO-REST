@@ -211,6 +211,8 @@ export const Restaurants = () => {
                               className="w-full h-full object-cover rounded-lg" 
                               loading="lazy"
                               decoding="async"
+                              width={40}
+                              height={40}
                             />
                           ) : (
                             <Store size={18} />
@@ -487,7 +489,7 @@ const DetailsPanel = ({ tenant }: { tenant: any }) => {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-          {tenant.logo ? <img src={tenant.logo} alt="Logo" className="w-full h-full object-cover rounded-xl" /> : <Store size={32} />}
+          {tenant.logo ? <img src={tenant.logo} alt="Logo" className="w-full h-full object-cover rounded-xl" loading="lazy" decoding="async" width={64} height={64} /> : <Store size={32} />}
         </div>
         <div>
           <h4 className="text-lg font-bold text-[#0B1630]">{tenant.name}</h4>

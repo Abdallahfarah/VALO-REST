@@ -125,9 +125,10 @@ export const Register = () => {
               src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=75&w=1200&fm=webp" 
               alt="Restaurant Interior"
               className="w-full h-full object-cover"
-              loading="eager"
-              fetchPriority="high"
+              loading="lazy"
               decoding="async"
+              width={1200}
+              height={800}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1630] via-transparent to-transparent" />
          </div>
@@ -141,10 +142,10 @@ export const Register = () => {
             </div>
 
             <div className="mt-24 space-y-12">
-               <h1 className="text-5xl font-black leading-tight max-w-sm">
+               <h2 className="text-5xl font-black leading-tight max-w-sm">
                   Smart Restaurant Management Platform
-               </h1>
-               <p className="text-[#94A3B8] text-lg leading-relaxed max-w-md">
+               </h2>
+               <p className="text-[#CBD5E1] text-lg leading-relaxed max-w-md">
                   All-in-one solution to manage your restaurant operations, staff, orders, and customers from anywhere.
                </p>
 
@@ -155,7 +156,7 @@ export const Register = () => {
                      </div>
                      <div>
                         <h3 className="font-bold text-lg">Multi-Tenant SaaS</h3>
-                        <p className="text-[#94A3B8] text-sm mt-1">Manage multiple restaurants with complete isolation.</p>
+                        <p className="text-[#CBD5E1] text-sm mt-1">Manage multiple restaurants with complete isolation.</p>
                      </div>
                   </div>
                   <div className="flex items-center gap-6 group">
@@ -164,7 +165,7 @@ export const Register = () => {
                      </div>
                      <div>
                         <h3 className="font-bold text-lg">Lightning Fast POS</h3>
-                        <p className="text-[#94A3B8] text-sm mt-1">Streamlined operations for maximum efficiency.</p>
+                        <p className="text-[#CBD5E1] text-sm mt-1">Streamlined operations for maximum efficiency.</p>
                      </div>
                   </div>
                   <div className="flex items-center gap-6 group">
@@ -173,7 +174,7 @@ export const Register = () => {
                      </div>
                      <div>
                         <h3 className="font-bold text-lg">Secure & Reliable</h3>
-                        <p className="text-[#94A3B8] text-sm mt-1">Enterprise-grade security and 99.9% uptime.</p>
+                        <p className="text-[#CBD5E1] text-sm mt-1">Enterprise-grade security and 99.9% uptime.</p>
                      </div>
                   </div>
                </div>
@@ -200,8 +201,8 @@ export const Register = () => {
                <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center mb-6 text-[#F97316]">
                   <UserPlus size={28} />
                </div>
-               <h2 className="text-4xl font-black text-[#0B1630] mb-2">Create Account</h2>
-               <p className="text-[#94A3B8] font-medium">Get started with your restaurant</p>
+               <h1 className="text-4xl font-black text-[#0B1630] mb-2">Create Account</h1>
+               <p className="text-[#64748B] font-medium">Get started with your restaurant</p>
             </div>
 
             <form className="space-y-5" onSubmit={handleSubmit} autoComplete="off">
@@ -342,12 +343,12 @@ export const Register = () => {
                   disabled={isLoading}
                   className="w-full bg-white h-14 rounded-2xl border border-slate-100 flex items-center justify-center gap-3 text-sm font-bold text-[#0B1630] hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
                >
-                  <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />
+                  <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" loading="lazy" decoding="async" width={20} height={20} />
                   Continue with Google
                </button>
             </form>
 
-            <p className="text-center mt-10 text-sm font-medium text-[#94A3B8]">
+            <p className="text-center mt-10 text-sm font-medium text-[#64748B]">
                Already have an account? <Link to="/login" className="text-[#F97316] font-black hover:underline">Sign In</Link>
             </p>
          </div>

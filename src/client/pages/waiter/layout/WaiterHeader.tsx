@@ -36,7 +36,7 @@ export const WaiterHeader = ({ onToggleSidebar }: WaiterHeaderProps) => {
             <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Waiter</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden border border-slate-200">
-            <img src="https://ui-avatars.com/api/?name=Alex+Turner&background=0B1630&color=fff" alt="Alex Turner" />
+            <img src="https://ui-avatars.com/api/?name=Alex+Turner&background=0B1630&color=fff" alt="Alex Turner" loading="lazy" decoding="async" width={40} height={40} />
           </div>
           <ChevronDown size={14} className="text-[#94A3B8]" />
         </div>

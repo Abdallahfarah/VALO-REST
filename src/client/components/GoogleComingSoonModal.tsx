@@ -308,7 +308,7 @@ export const GoogleComingSoonModal: React.FC<GoogleComingSoonModalProps> = ({ is
               </div>
               <div className="flex items-center gap-3 text-xs text-slate-300 font-semibold">
                 <div className="w-5 h-5 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
-                  <img src="https://www.google.com/favicon.ico" className="w-3.5 h-3.5" alt="Google" />
+                  <img src="https://www.google.com/favicon.ico" className="w-3.5 h-3.5" alt="Google" loading="lazy" decoding="async" width={14} height={14} />
                 </div>
                 <span>Google Workspace support</span>
               </div>
@@ -331,7 +331,7 @@ export const GoogleComingSoonModal: React.FC<GoogleComingSoonModalProps> = ({ is
           <div className="mt-8 flex flex-col items-center justify-center relative z-10">
             <div className="w-24 h-24 rounded-full bg-[#0d162d] border border-slate-800 flex items-center justify-center relative">
               <div className="absolute inset-0 rounded-full border border-orange-500/30 pulse-glow-ring pointer-events-none" />
-              <img src="https://www.google.com/favicon.ico" className="w-10 h-10" alt="Google" />
+              <img src="https://www.google.com/favicon.ico" className="w-10 h-10" alt="Google" loading="lazy" decoding="async" width={40} height={40} />
             </div>
             <span className="mt-2 text-[9px] font-black uppercase tracking-widest text-[#F97316]">
               Coming Soon

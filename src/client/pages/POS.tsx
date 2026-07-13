@@ -150,6 +150,8 @@ export const POS = () => {
                     className="w-full h-full object-cover rounded-t-2xl" 
                     loading="lazy"
                     decoding="async"
+                    width={300}
+                    height={128}
                   />
                 ) : (
                   <span className="text-slate-500 text-xs">No Image</span>
