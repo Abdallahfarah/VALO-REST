@@ -51,8 +51,10 @@ export const CashierMessages = () => {
   // Mark active conversation as read when selected or when new messages arrive
   useEffect(() => {
     if (activeConversation && user?.id) {
-      localStorage.setItem(`last_read_${activeConversation}_${user.id}`, new Date().toISOString());
-      queryClient.invalidateQueries({ queryKey: ['conversations', tenant?.id] });
+      MessagingService.markMessagesAsRead(activeConversation, user.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['conversations', tenant?.id] });
+        queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
+      });
     }
   }, [activeConversation, messages, user?.id, tenant?.id, queryClient]);
 
@@ -65,10 +67,12 @@ export const CashierMessages = () => {
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${activeConversation}` },
         () => {
           if (activeConversation && user?.id) {
-            localStorage.setItem(`last_read_${activeConversation}_${user.id}`, new Date().toISOString());
+            MessagingService.markMessagesAsRead(activeConversation, user.id).then(() => {
+              queryClient.invalidateQueries({ queryKey: ['conversations', tenant?.id] });
+              queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
+            });
           }
           queryClient.invalidateQueries({ queryKey: ['messages', activeConversation] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', tenant?.id] });
         }
       )
       .subscribe();
