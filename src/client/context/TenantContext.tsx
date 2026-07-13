@@ -208,7 +208,7 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
   const currencyCode = tenant?.currencyCode || 'ETB';
   const currencySymbol = tenant?.currencySymbol || 'ETB';
   const currencyName = tenant?.currencyName || 'Ethiopian Birr';
-  const isTenantLoading = loading || (user && loadedUserId !== user.id);
+  const isTenantLoading = loading || !!(user && loadedUserId !== user.id);
 
   return (
     <TenantContext.Provider value={{ tenant, loading: isTenantLoading, error, setTenant, currencyCode, currencySymbol, currencyName }}>

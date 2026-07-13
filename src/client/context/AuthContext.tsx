@@ -173,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const role = impersonatedTenantId ? 'ADMIN' : (dbRole || user?.user_metadata?.role || null);
-  const isAuthLoading = loading || (session && loadedUserId !== session.user.id);
+  const isAuthLoading = loading || !!(session && loadedUserId !== session.user.id);
 
   const value = {
     user,
