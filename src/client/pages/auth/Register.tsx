@@ -122,9 +122,12 @@ export const Register = () => {
          {/* Background Image Overlay */}
          <div className="absolute inset-0 opacity-20">
             <img 
-              src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=2000" 
+              src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=75&w=1200&fm=webp" 
               alt="Restaurant Interior"
               className="w-full h-full object-cover"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1630] via-transparent to-transparent" />
          </div>

@@ -144,7 +144,13 @@ export const POS = () => {
             <Card key={item.id} className="border border-[#E5E7EB] shadow-none hover:shadow-md transition-shadow bg-white cursor-pointer" onClick={() => addToCart(item)}>
               <div className="h-32 bg-slate-800 rounded-t-2xl flex items-center justify-center">
                 {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover rounded-t-2xl" />
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover rounded-t-2xl" 
+                    loading="lazy"
+                    decoding="async"
+                  />
                 ) : (
                   <span className="text-slate-500 text-xs">No Image</span>
                 )}

@@ -205,7 +205,13 @@ export const Restaurants = () => {
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
                           {r.logo ? (
-                            <img src={r.logo} alt="Logo" className="w-full h-full object-cover rounded-lg" />
+                            <img 
+                              src={r.logo} 
+                              alt="Logo" 
+                              className="w-full h-full object-cover rounded-lg" 
+                              loading="lazy"
+                              decoding="async"
+                            />
                           ) : (
                             <Store size={18} />
                           )}
