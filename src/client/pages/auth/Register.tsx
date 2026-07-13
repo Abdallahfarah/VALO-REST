@@ -126,7 +126,7 @@ export const Register = () => {
               alt="Restaurant Interior"
               className="w-full h-full object-cover"
               loading="eager"
-              fetchpriority="high"
+              fetchPriority="high"
               decoding="async"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1630] via-transparent to-transparent" />

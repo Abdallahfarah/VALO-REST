@@ -114,7 +114,7 @@ export const Login = () => {
                alt="Restaurant Interior"
                className="w-full h-full object-cover"
                loading="eager"
-               fetchpriority="high"
+               fetchPriority="high"
                decoding="async"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1630] via-transparent to-transparent" />
@@ -185,7 +185,7 @@ export const Login = () => {
                      alt="VALO-REST Logo" 
                      className="h-12 w-auto object-contain"
                      loading="eager"
-                     fetchpriority="high"
+                     fetchPriority="high"
                      decoding="async"
                      onError={(e) => {
                         e.currentTarget.style.display = 'none';
