@@ -24,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [dbRole, setDbRole] = useState<string | null>(null);
   const [userTenantId, setUserTenantId] = useState<string | null>(null);
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
   const [impersonatedTenantId, setImpersonatedTenantIdState] = useState<string | null>(
     sessionStorage.getItem('valo_impersonated_tenant_id')
   );
@@ -51,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
           setDbRole(null);
           setUserTenantId(null);
+          setLoadedUserId(null);
           setLoading(false);
         }
         return;
@@ -70,12 +72,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (error) throw error;
 
-        if (mounted && profile) {
-          setDbRole(profile.role);
-          setUserTenantId(profile.tenant_id);
+        if (mounted) {
+          if (profile) {
+            setDbRole(profile.role);
+            setUserTenantId(profile.tenant_id);
+          }
+          setLoadedUserId(activeSession.user.id);
         }
       } catch (err) {
         console.error('Error fetching profile during startup:', err);
+        if (mounted) {
+          setLoadedUserId(activeSession.user.id);
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -102,6 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setDbRole(null);
         setUserTenantId(null);
+        setLoadedUserId(null);
         setLoading(false);
         return;
       }
@@ -158,17 +167,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setImpersonatedTenantIdState(null);
     setDbRole(null);
     setUserTenantId(null);
+    setLoadedUserId(null);
 
     navigate('/login');
   };
 
   const role = impersonatedTenantId ? 'ADMIN' : (dbRole || user?.user_metadata?.role || null);
+  const isAuthLoading = loading || (session && loadedUserId !== session.user.id);
 
   const value = {
     user,
     session,
     role,
-    loading,
+    loading: isAuthLoading,
     signOut,
     impersonatedTenantId,
     setImpersonatedTenantId,

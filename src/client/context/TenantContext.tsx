@@ -46,6 +46,7 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
   const { user, impersonatedTenantId, userTenantId, loading: authLoading } = useAuth();
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
       if (!user) {
         if (mounted) {
           setTenant(null);
+          setLoadedUserId(null);
           setLoading(false);
         }
         return;
@@ -74,6 +76,7 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
         if (!tenantId) {
           if (mounted) {
             setTenant(null);
+            setLoadedUserId(user.id);
             setLoading(false);
           }
           return;
@@ -138,12 +141,14 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
             currencySymbol,
             currencyName,
           });
+          setLoadedUserId(user.id);
         }
       } catch (err: any) {
         console.error('Failed to load workspace:', err);
         if (mounted) {
           setError(err.message || 'Failed to authenticate restaurant workspace.');
           setTenant(null);
+          setLoadedUserId(user.id);
           toast.error('Workspace Load Failed', err.message || 'Database connection error.');
         }
       } finally {
@@ -203,9 +208,10 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
   const currencyCode = tenant?.currencyCode || 'ETB';
   const currencySymbol = tenant?.currencySymbol || 'ETB';
   const currencyName = tenant?.currencyName || 'Ethiopian Birr';
+  const isTenantLoading = loading || (user && loadedUserId !== user.id);
 
   return (
-    <TenantContext.Provider value={{ tenant, loading, error, setTenant, currencyCode, currencySymbol, currencyName }}>
+    <TenantContext.Provider value={{ tenant, loading: isTenantLoading, error, setTenant, currencyCode, currencySymbol, currencyName }}>
       {children}
     </TenantContext.Provider>
   );
