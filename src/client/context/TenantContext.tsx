@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '../../lib/supabase';
+import { toast } from '../lib/toast-store';
 
 const CURRENCY_NAMES: Record<string, string> = {
   USD: 'US Dollar',
@@ -45,64 +46,74 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user, impersonatedTenantId } = useAuth();
+  const { user, impersonatedTenantId, userTenantId, loading: authLoading } = useAuth();
 
   useEffect(() => {
+    if (authLoading) return;
+
+    let mounted = true;
+
     const loadOrOnboardTenant = async () => {
       if (!user) {
-        setTenant(null);
-        setLoading(false);
+        if (mounted) {
+          setTenant(null);
+          setLoading(false);
+        }
         return;
       }
 
       try {
-        setLoading(true);
-        setError(null);
-
-        let tenantId = impersonatedTenantId;
-
-        if (!tenantId) {
-          // 1. Fetch user profile from public.users
-          const { data: profile, error: profileErr } = await supabase
-            .from('users')
-            .select('tenant_id, role')
-            .eq('id', user.id)
-            .single();
-
-          if (profileErr) {
-            if (profileErr.code === 'PGRST116') {
-              throw new Error('User profile not found. Please register or contact support.');
-            }
-            throw new Error('Failed to load user profile: ' + profileErr.message);
-          }
-
-          tenantId = profile?.tenant_id;
+        if (mounted) {
+          setLoading(true);
+          setError(null);
         }
 
-        // 2. If tenant_id is missing, set tenant to null and complete loading (allows onboarding)
+        const tenantId = impersonatedTenantId || userTenantId;
+
+        // If tenant_id is missing, user needs onboarding
         if (!tenantId) {
-          setTenant(null);
-          setLoading(false);
+          if (mounted) {
+            setTenant(null);
+            setLoading(false);
+          }
           return;
         }
 
-        // 3. Load the tenant data
-        const { data: tenantData, error: tenantErr } = await supabase
+        // Setup query promises with timeout to prevent infinite loading screens
+        const tenantPromise = supabase
           .from('tenants')
           .select('*')
           .eq('id', tenantId)
           .single();
 
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Workspace loading timed out. Please try again.')), 8000)
+        );
+
+        const { data: tenantData, error: tenantErr } = await Promise.race([
+          tenantPromise,
+          timeoutPromise
+        ]);
+
         if (tenantErr) {
           throw new Error('Failed to retrieve restaurant workspace data: ' + tenantErr.message);
         }
 
-        // 4. Load the subscription data
-        const { data: subData } = await supabase
+        if (!tenantData) {
+          throw new Error('Restaurant workspace not found.');
+        }
+
+        // Fetch subscription data with a timeout fallback
+        const subscriptionPromise = supabase
           .from('subscriptions')
           .select('*, plans(*)')
           .eq('tenant_id', tenantId)
           .maybeSingle();
+
+        const { data: subData } = await Promise.race([
+          subscriptionPromise,
+          timeoutPromise
+        ]);
 
         const activePlan = (subData?.plans?.name || 'PRO') as 'BASIC' | 'PRO' | 'ENTERPRISE';
         const subStatus = subData?.status || 'ACTIVE';
@@ -111,26 +122,34 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
         const currencySymbol = tenantData.currency_symbol || currencyCode;
         const currencyName = CURRENCY_NAMES[currencyCode] || currencyCode;
 
-        setTenant({
-          id: tenantData.id,
-          name: tenantData.name,
-          slug: tenantData.slug,
-          logo: tenantData.logo || undefined,
-          phone: tenantData.phone || undefined,
-          email: tenantData.email || undefined,
-          address: tenantData.address || undefined,
-          plan: activePlan,
-          subscriptionStatus: subStatus,
-          currency: currencyCode, // Backwards compatibility
-          currencyCode,
-          currencySymbol,
-          currencyName,
-        });
+        if (mounted) {
+          setTenant({
+            id: tenantData.id,
+            name: tenantData.name,
+            slug: tenantData.slug,
+            logo: tenantData.logo || undefined,
+            phone: tenantData.phone || undefined,
+            email: tenantData.email || undefined,
+            address: tenantData.address || undefined,
+            plan: activePlan,
+            subscriptionStatus: subStatus,
+            currency: currencyCode,
+            currencyCode,
+            currencySymbol,
+            currencyName,
+          });
+        }
       } catch (err: any) {
-        setError(err.message || 'Failed to authenticate restaurant workspace.');
-        setTenant(null);
+        console.error('Failed to load workspace:', err);
+        if (mounted) {
+          setError(err.message || 'Failed to authenticate restaurant workspace.');
+          setTenant(null);
+          toast.error('Workspace Load Failed', err.message || 'Database connection error.');
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -138,59 +157,48 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Realtime tenant synchronization channel
     let tenantChannel: any = null;
-    if (user) {
-      const getActiveTenantId = async () => {
-        let tenantId = impersonatedTenantId;
-        if (!tenantId) {
-          const { data: profile } = await supabase
-            .from('users')
-            .select('tenant_id')
-            .eq('id', user.id)
-            .maybeSingle();
-          tenantId = profile?.tenant_id;
-        }
-        if (tenantId) {
-          tenantChannel = supabase
-            .channel('tenant-realtime-sync')
-            .on(
-              'postgres_changes',
-              { event: 'UPDATE', schema: 'public', table: 'tenants', filter: `id=eq.${tenantId}` },
-              (payload: any) => {
-                if (payload.new) {
-                  setTenant(prev => {
-                    if (!prev) return null;
-                    const code = payload.new.currency_code || 'ETB';
-                    const symbol = payload.new.currency_symbol || code;
-                    const name = CURRENCY_NAMES[code] || code;
-                    return {
-                      ...prev,
-                      name: payload.new.name,
-                      slug: payload.new.slug,
-                      logo: payload.new.logo || undefined,
-                      phone: payload.new.phone || undefined,
-                      email: payload.new.email || undefined,
-                      address: payload.new.address || undefined,
-                      currency: code,
-                      currencyCode: code,
-                      currencySymbol: symbol,
-                      currencyName: name,
-                    };
-                  });
-                }
-              }
-            )
-            .subscribe();
-        }
-      };
-      getActiveTenantId();
+    const tenantId = impersonatedTenantId || userTenantId;
+
+    if (tenantId) {
+      tenantChannel = supabase
+        .channel('tenant-realtime-sync')
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'tenants', filter: `id=eq.${tenantId}` },
+          (payload: any) => {
+            if (payload.new && mounted) {
+              const code = payload.new.currency_code || 'ETB';
+              const symbol = payload.new.currency_symbol || code;
+              const name = CURRENCY_NAMES[code] || code;
+              setTenant(prev => {
+                if (!prev) return null;
+                return {
+                  ...prev,
+                  name: payload.new.name,
+                  slug: payload.new.slug,
+                  logo: payload.new.logo || undefined,
+                  phone: payload.new.phone || undefined,
+                  email: payload.new.email || undefined,
+                  address: payload.new.address || undefined,
+                  currency: code,
+                  currencyCode: code,
+                  currencySymbol: symbol,
+                  currencyName: name,
+                };
+              });
+            }
+          }
+        )
+        .subscribe();
     }
 
     return () => {
+      mounted = false;
       if (tenantChannel) {
         supabase.removeChannel(tenantChannel);
       }
     };
-  }, [user, impersonatedTenantId]);
+  }, [user, impersonatedTenantId, userTenantId, authLoading]);
 
   const currencyCode = tenant?.currencyCode || 'ETB';
   const currencySymbol = tenant?.currencySymbol || 'ETB';

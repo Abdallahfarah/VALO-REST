@@ -97,13 +97,17 @@ const ROLE_HOME: Record<string, string> = {
 
 export const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
   const { user, role, loading: authLoading } = useAuth();
-  const { tenant, loading: tenantLoading } = useTenant();
+  const { tenant, loading: tenantLoading, error: tenantError } = useTenant();
   const location = useLocation();
 
   if (authLoading) return <PageLoader label="Authenticating..." />;
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (tenantError) {
+    return <Navigate to="/login" replace />;
   }
 
   // Skip tenant loading check for Platform Owner (SUPER_ADMIN)
@@ -134,9 +138,10 @@ export const ProtectedRoute = ({ children, allowedRoles }: { children: React.Rea
 
 const RoleRedirect = () => {
   const { user, role, loading: authLoading } = useAuth();
-  const { tenant, loading: tenantLoading } = useTenant();
+  const { tenant, loading: tenantLoading, error: tenantError } = useTenant();
   if (authLoading) return <PageLoader label="Authenticating..." />;
   if (!user) return <Navigate to="/login" replace />;
+  if (tenantError) return <Navigate to="/login" replace />;
   if (role !== 'SUPER_ADMIN' && tenantLoading) {
     return <PageLoader label="Loading Workspace..." />;
   }
