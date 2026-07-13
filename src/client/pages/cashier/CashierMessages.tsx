@@ -48,13 +48,13 @@ export const CashierMessages = () => {
     refetchInterval: 5000,
   });
 
+  // Mark active conversation as read when selected or when new messages arrive
   useEffect(() => {
     if (activeConversation && user?.id) {
-      MessagingService.markMessagesAsRead(activeConversation, user.id).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      });
+      localStorage.setItem(`last_read_${activeConversation}_${user.id}`, new Date().toISOString());
+      queryClient.invalidateQueries({ queryKey: ['conversations', tenant?.id] });
     }
-  }, [activeConversation, messages, user?.id, queryClient]);
+  }, [activeConversation, messages, user?.id, tenant?.id, queryClient]);
 
   useEffect(() => {
     if (!activeConversation) return;
@@ -64,14 +64,17 @@ export const CashierMessages = () => {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${activeConversation}` },
         () => {
+          if (activeConversation && user?.id) {
+            localStorage.setItem(`last_read_${activeConversation}_${user.id}`, new Date().toISOString());
+          }
           queryClient.invalidateQueries({ queryKey: ['messages', activeConversation] });
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          queryClient.invalidateQueries({ queryKey: ['conversations', tenant?.id] });
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [activeConversation, tenant?.id, queryClient]);
+  }, [activeConversation, tenant?.id, user?.id, queryClient]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -139,6 +142,11 @@ export const CashierMessages = () => {
                      </div>
                      <p className="text-[11px] text-[#94A3B8] truncate leading-tight">{conv.lastMessage || 'No messages yet'}</p>
                   </div>
+                  {conv.unreadCount > 0 && (
+                     <div className="w-5 h-5 rounded-full bg-[#F97316] text-white text-[10px] font-black flex items-center justify-center mt-1 shrink-0">
+                        {conv.unreadCount}
+                     </div>
+                  )}
                </div>
              ))
            ) : (

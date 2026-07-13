@@ -11,8 +11,9 @@ import { NavLink } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTenant } from '../../../context/TenantContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MessagingService } from '../../../services/ApiService';
+import { supabase } from '../../../../lib/supabase';
 
 interface NavItem {
   name: string;
@@ -26,28 +27,6 @@ interface NavSection {
   items: NavItem[];
 }
 
-const navSections: NavSection[] = [
-  {
-    title: 'OPERATIONAL',
-    items: [
-      { name: 'Payments', path: '/cashier', icon: CreditCard },
-      { name: 'Receipts', path: '/cashier/receipts', icon: Receipt },
-    ],
-  },
-  {
-    title: 'COMMUNICATION',
-    items: [
-      { name: 'Messages', path: '/cashier/messages', icon: MessageSquare, badge: 3 },
-    ],
-  },
-  {
-    title: 'INTELLIGENCE',
-    items: [
-      { name: 'VALO AI Assistant', path: '/cashier/ai', icon: Sparkles },
-    ],
-  }
-];
-
 export interface CashierSidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
@@ -56,6 +35,7 @@ export interface CashierSidebarProps {
 export const CashierSidebar = ({ isOpen, onClose }: CashierSidebarProps) => {
   const { signOut, user } = useAuth();
   const { tenant } = useTenant();
+  const queryClient = useQueryClient();
 
   const { data: conversations = [] } = useQuery({
     queryKey: ['conversations', tenant?.id, user?.id],
@@ -64,6 +44,47 @@ export const CashierSidebar = ({ isOpen, onClose }: CashierSidebarProps) => {
   });
 
   const totalUnreadMessages = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
+
+  useEffect(() => {
+    if (!tenant?.id) return;
+
+    const mChannel = supabase
+      .channel('messages-realtime-cashier-sidebar')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenant.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['conversations', tenant.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(mChannel);
+    };
+  }, [tenant?.id, queryClient]);
+
+  const navSections = [
+    {
+      title: 'OPERATIONAL',
+      items: [
+        { name: 'Payments', path: '/cashier', icon: CreditCard },
+        { name: 'Receipts', path: '/cashier/receipts', icon: Receipt },
+      ],
+    },
+    {
+      title: 'COMMUNICATION',
+      items: [
+        { name: 'Messages', path: '/cashier/messages', icon: MessageSquare, badge: totalUnreadMessages || undefined },
+      ],
+    },
+    {
+      title: 'INTELLIGENCE',
+      items: [
+        { name: 'VALO AI Assistant', path: '/cashier/ai', icon: Sparkles },
+      ],
+    }
+  ];
   return (
     <>
       {/* Mobile Sidebar Backdrop overlay */}
@@ -125,23 +146,14 @@ export const CashierSidebar = ({ isOpen, onClose }: CashierSidebarProps) => {
                         />
                         <span className="font-bold tracking-wide">{item.name}</span>
                       </div>
-                      {item.name === 'Messages' ? (
-                        totalUnreadMessages > 0 ? (
-                          <span className={cn(
-                            "text-[10px] font-black px-2 py-0.5 rounded-full",
-                            isActive ? "bg-white text-[#F97316]" : "bg-[#4F46E5] text-white"
-                          )}>
-                            {totalUnreadMessages}
-                          </span>
-                        ) : null
-                      ) : item.badge ? (
+                      {item.badge && (
                         <span className={cn(
                           "text-[10px] font-black px-2 py-0.5 rounded-full",
                           isActive ? "bg-white text-[#F97316]" : "bg-[#4F46E5] text-white"
                         )}>
                           {item.badge}
                         </span>
-                      ) : null}
+                      )}
                       {item.name === 'VALO AI Assistant' && (
                         <span className={cn(
                           "text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase",
