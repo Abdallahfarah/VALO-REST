@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { 
   CreditCard, 
   Receipt, 
@@ -64,7 +65,7 @@ export const CashierSidebar = ({ isOpen, onClose }: CashierSidebarProps) => {
     };
   }, [tenant?.id, queryClient]);
 
-  const navSections = [
+  const navSections: NavSection[] = [
     {
       title: 'OPERATIONAL',
       items: [
