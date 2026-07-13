@@ -66,7 +66,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           <span className="text-white font-extrabold text-lg leading-none tracking-tight">VX</span>
         </div>
         <div className="flex flex-col min-w-0">
-          <span className="text-white font-black text-base leading-tight truncate">{tenant?.name || 'VALO HQ'}</span>
+          <span className="text-white font-black text-base leading-tight truncate">{tenant?.name || 'RESTAURANT'}</span>
           <span className="text-[#F97316] text-[9px] font-black tracking-widest mt-1 uppercase">RETAIL NODE</span>
         </div>
       </div>

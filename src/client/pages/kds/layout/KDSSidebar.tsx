@@ -9,6 +9,7 @@ import { cn } from '../../../lib/utils';
 import { NavLink } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
+import { useTenant } from '../../../context/TenantContext';
 
 interface NavItem {
   name: string;
@@ -50,6 +51,7 @@ export interface KDSSidebarProps {
 
 export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
   const { signOut } = useAuth();
+  const { tenant } = useTenant();
   return (
     <>
       {/* Mobile Sidebar Backdrop overlay */}
@@ -71,7 +73,7 @@ export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
               <span className="text-white font-bold text-lg leading-none">VX</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-white font-bold text-lg leading-none drop-shadow-sm">VALO HQ</span>
+              <span className="text-white font-bold text-lg leading-none drop-shadow-sm truncate max-w-[150px]">{tenant?.name || 'RESTAURANT'}</span>
               <span className="text-[#F97316] text-[10px] font-bold tracking-wider mt-1 uppercase">KITCHEN DISPLAY</span>
             </div>
           </div>
