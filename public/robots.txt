@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /$
+Allow: /login
+Allow: /register
+Disallow: /admin/
+Disallow: /platform/
+Disallow: /waiter/
+Disallow: /kds/
+Disallow: /cashier/
+Disallow: /onboarding/
+
+Sitemap: https://rest.valootech.com/sitemap.xml

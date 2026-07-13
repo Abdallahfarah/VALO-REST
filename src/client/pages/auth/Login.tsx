@@ -17,7 +17,7 @@ import { GoogleComingSoonModal } from '../../components/GoogleComingSoonModal';
 
 import { cn } from '../../lib/utils';
 
-import valoLogo from '../../../../Docs/valo-logo.jpg';
+import valoLogo from '../../../../Docs/valo-logo.webp';
 
 const ROLE_ROUTES: Record<string, string> = {
   ADMIN: '/admin',
@@ -113,18 +113,19 @@ export const Login = () => {
                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=75&w=1200&fm=webp" 
                alt="Restaurant Interior"
                className="w-full h-full object-cover"
-               loading="eager"
-               fetchPriority="high"
+               loading="lazy"
                decoding="async"
+               width={1200}
+               height={800}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1630] via-transparent to-transparent" />
          </div>
 
          <div className="relative z-10">
             <div className="space-y-12">
-               <h1 className="text-5xl font-black leading-tight max-w-sm">
+               <h2 className="text-5xl font-black leading-tight max-w-sm">
                   Smart Restaurant Management Platform
-               </h1>
+               </h2>
                <p className="text-[#94A3B8] text-lg leading-relaxed max-w-md">
                   All-in-one solution to manage your restaurant operations, staff, orders, and customers from anywhere.
                </p>
@@ -187,13 +188,15 @@ export const Login = () => {
                      loading="eager"
                      fetchPriority="high"
                      decoding="async"
+                     width={59}
+                     height={48}
                      onError={(e) => {
                         e.currentTarget.style.display = 'none';
                      }}
                   />
                </div>
-               <h2 className="text-4xl font-black text-[#0B1630] mb-2 text-center w-full">Welcome Back</h2>
-               <p className="text-[#94A3B8] font-medium text-center w-full">Sign in to your workspace</p>
+               <h1 className="text-4xl font-black text-[#0B1630] mb-2 text-center w-full">Welcome Back</h1>
+               <p className="text-[#64748B] font-medium text-center w-full">Sign in to your workspace</p>
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit} autoComplete="on">
@@ -235,6 +238,8 @@ export const Login = () => {
                         type="button" 
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0B1630] cursor-pointer"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        title={showPassword ? "Hide password" : "Show password"}
                      >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                      </button>
@@ -271,7 +276,7 @@ export const Login = () => {
 
                <div className="relative py-8 flex flex-col items-center">
                   <div className="absolute top-1/2 w-full h-[1px] bg-slate-100" />
-                  <span className="relative z-10 bg-white px-4 text-[10px] font-black text-[#94A3B8] uppercase tracking-widest">or</span>
+                  <span className="relative z-10 bg-white px-4 text-[10px] font-black text-[#64748B] uppercase tracking-widest">or</span>
                </div>
 
                <button 
@@ -285,7 +290,7 @@ export const Login = () => {
                </button>
             </form>
 
-            <p className="text-center mt-12 text-sm font-medium text-[#94A3B8]">
+            <p className="text-center mt-12 text-sm font-medium text-[#64748B]">
                Don't have an account? <Link to="/register" className="text-[#F97316] font-black hover:underline">Create Account</Link>
             </p>
          </div>

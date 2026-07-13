@@ -21,6 +21,23 @@ import { NexusLayout } from './pages/superadmin/layout/NexusLayout';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 
+// Operational & transactional pages (eager to reduce chunk fragmentation & satisfy strict page constraints)
+import { Tables } from './pages/Tables';
+import { Orders } from './pages/Orders';
+import { POS } from './pages/POS';
+import { KitchenQueue } from './pages/KitchenQueue';
+import { WaiterTables } from './pages/waiter/Tables';
+import { WaiterPOS } from './pages/waiter/POS';
+import { MyOrders } from './pages/waiter/MyOrders';
+import { Messages } from './pages/waiter/Messages';
+import { Notifications } from './pages/waiter/Notifications';
+import { OrdersMonitor } from './pages/kds/OrdersMonitor';
+import { KDSMessages } from './pages/kds/KDSMessages';
+import { Payments } from './pages/cashier/Payments';
+import { Receipts } from './pages/cashier/Receipts';
+import { CashierMessages } from './pages/cashier/CashierMessages';
+import { Restaurants } from './pages/superadmin/Restaurants';
+
 // ─── Lazy-loaded page chunks ───
 
 // Admin pages
@@ -29,32 +46,15 @@ const Menu = React.lazy(() => import('./pages/Menu').then(m => ({ default: m.Men
 const Staff = React.lazy(() => import('./pages/Staff').then(m => ({ default: m.Staff })));
 const Reports = React.lazy(() => import('./pages/Reports').then(m => ({ default: m.Reports })));
 const Settings = React.lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
-const Tables = React.lazy(() => import('./pages/Tables').then(m => ({ default: m.Tables })));
-const Orders = React.lazy(() => import('./pages/Orders').then(m => ({ default: m.Orders })));
-const POS = React.lazy(() => import('./pages/POS').then(m => ({ default: m.POS })));
-const KitchenQueue = React.lazy(() => import('./pages/KitchenQueue').then(m => ({ default: m.KitchenQueue })));
 
 // Waiter pages
-const WaiterTables = React.lazy(() => import('./pages/waiter/Tables').then(m => ({ default: m.WaiterTables })));
-const WaiterPOS = React.lazy(() => import('./pages/waiter/POS').then(m => ({ default: m.WaiterPOS })));
-const MyOrders = React.lazy(() => import('./pages/waiter/MyOrders').then(m => ({ default: m.MyOrders })));
-const Messages = React.lazy(() => import('./pages/waiter/Messages').then(m => ({ default: m.Messages })));
-const Notifications = React.lazy(() => import('./pages/waiter/Notifications').then(m => ({ default: m.Notifications })));
 const WaiterDashboard = React.lazy(() => import('./pages/waiter/Dashboard').then(m => ({ default: m.WaiterDashboard })));
 
 // KDS pages
-const OrdersMonitor = React.lazy(() => import('./pages/kds/OrdersMonitor').then(m => ({ default: m.OrdersMonitor })));
 const KDSReports = React.lazy(() => import('./pages/kds/KDSReports').then(m => ({ default: m.KDSReports })));
-const KDSMessages = React.lazy(() => import('./pages/kds/KDSMessages').then(m => ({ default: m.KDSMessages })));
-
-// Cashier pages
-const Payments = React.lazy(() => import('./pages/cashier/Payments').then(m => ({ default: m.Payments })));
-const Receipts = React.lazy(() => import('./pages/cashier/Receipts').then(m => ({ default: m.Receipts })));
-const CashierMessages = React.lazy(() => import('./pages/cashier/CashierMessages').then(m => ({ default: m.CashierMessages })));
 
 // SuperAdmin pages
 const Overview = React.lazy(() => import('./pages/superadmin/Overview').then(m => ({ default: m.Overview })));
-const Restaurants = React.lazy(() => import('./pages/superadmin/Restaurants').then(m => ({ default: m.Restaurants })));
 const Subscriptions = React.lazy(() => import('./pages/superadmin/Subscriptions').then(m => ({ default: m.Subscriptions })));
 const UserProvisioning = React.lazy(() => import('./pages/superadmin/UserProvisioning').then(m => ({ default: m.UserProvisioning })));
 const PlatformRevenue = React.lazy(() => import('./pages/superadmin/PlatformRevenue').then(m => ({ default: m.PlatformRevenue })));
