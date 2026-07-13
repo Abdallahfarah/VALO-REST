@@ -24,6 +24,7 @@ import { SubscriptionService } from '../services/SubscriptionService';
 import { UpgradeDialog } from '../components/UpgradeDialog';
 import { toast } from '../lib/toast-store';
 import { supabase } from '../../lib/supabase';
+import { useSessionStore } from '../lib/session-store';
 
 // ─── Memoized StaffRow Component ───
 interface StaffRowProps {
@@ -357,7 +358,14 @@ export const Staff = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isAddingStaff, setIsAddingStaff] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+
+  const tenantId = tenant?.id || '';
+  const tenantState = useSessionStore((state) => state.getTenantState(tenantId));
+  const updateTenantState = useSessionStore((state) => state.updateTenantState);
+
+  const searchQuery = tenantState.staffSearchQuery;
+  const setSearchQuery = (val: string) => updateTenantState(tenantId, { staffSearchQuery: val });
+
   const [newStaffForm, setNewStaffForm] = useState({
     fullName: '',
     email: '',

@@ -66,7 +66,9 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
 
       try {
         if (mounted) {
-          setLoading(true);
+          if (!tenant) {
+            setLoading(true);
+          }
           setError(null);
         }
 

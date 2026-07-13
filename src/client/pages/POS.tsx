@@ -9,15 +9,32 @@ import { useAuth } from '../context/AuthContext';
 import { useCurrency } from '../services/CurrencyService';
 import { toast } from '../lib/toast-store';
 
+import { useSessionStore } from '../lib/session-store';
+
 export const POS = () => {
   const { tenant } = useTenant();
   const { user } = useAuth();
   const { format } = useCurrency();
   const queryClient = useQueryClient();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedTable, setSelectedTable] = useState('');
-  const [cart, setCart] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+
+  const tenantId = tenant?.id || '';
+  const tenantState = useSessionStore((state) => state.getTenantState(tenantId));
+  const updateTenantState = useSessionStore((state) => state.updateTenantState);
+
+  const selectedCategory = tenantState.posSelectedCategory;
+  const setSelectedCategory = (val: string | null) => updateTenantState(tenantId, { posSelectedCategory: val });
+
+  const selectedTable = tenantState.posSelectedTable;
+  const setSelectedTable = (val: string) => updateTenantState(tenantId, { posSelectedTable: val });
+
+  const cart = tenantState.posCart;
+  const setCart = (val: any[] | ((prev: any[]) => any[])) => {
+    const nextCart = typeof val === 'function' ? val(cart) : val;
+    updateTenantState(tenantId, { posCart: nextCart });
+  };
+
+  const searchQuery = tenantState.posSearchQuery;
+  const setSearchQuery = (val: string) => updateTenantState(tenantId, { posSearchQuery: val });
 
   // ─── Data Fetching ───
   const { data: categories = [] } = useQuery({

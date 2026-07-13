@@ -19,15 +19,30 @@ import { toast } from '../../lib/toast-store';
 import { useCurrency } from '../../services/CurrencyService';
 import { useParams } from 'react-router-dom';
 
+import { useSessionStore } from '../../lib/session-store';
+
 export const WaiterPOS = () => {
   const { tenant } = useTenant();
   const { user } = useAuth();
   const { format } = useCurrency();
   const queryClient = useQueryClient();
   const { tableId } = useParams<{ tableId: string }>();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedTable, setSelectedTable] = useState<string>('');
-  const [cart, setCart] = useState<any[]>([]);
+
+  const tenantId = tenant?.id || '';
+  const tenantState = useSessionStore((state) => state.getTenantState(tenantId));
+  const updateTenantState = useSessionStore((state) => state.updateTenantState);
+
+  const selectedCategory = tenantState.waiterSelectedCategory;
+  const setSelectedCategory = (val: string | null) => updateTenantState(tenantId, { waiterSelectedCategory: val });
+
+  const selectedTable = tenantState.waiterSelectedTable;
+  const setSelectedTable = (val: string) => updateTenantState(tenantId, { waiterSelectedTable: val });
+
+  const cart = tenantState.waiterCart;
+  const setCart = (val: any[] | ((prev: any[]) => any[])) => {
+    const nextCart = typeof val === 'function' ? val(cart) : val;
+    updateTenantState(tenantId, { waiterCart: nextCart });
+  };
 
   useEffect(() => {
     if (tableId) {

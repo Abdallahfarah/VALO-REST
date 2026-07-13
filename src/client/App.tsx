@@ -1,9 +1,10 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TenantProvider, useTenant } from './context/TenantContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { useSessionStore } from './lib/session-store';
 import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { ToastContainer } from './components/ui/toast';
 import { PageLoader } from './components/ui/LoadingSpinner';
@@ -67,7 +68,7 @@ const queryClient = new QueryClient({
     queries: {
       retry: 2,
       staleTime: 30_000,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
     },
     mutations: {
       onError: (error: any) => {
@@ -151,6 +152,53 @@ const RoleRedirect = () => {
   return <Navigate to={ROLE_HOME[role ?? ''] || '/admin'} replace />;
 };
 
+const ScrollPersistenceManager = () => {
+  const location = useLocation();
+  const setScrollPosition = useSessionStore((state) => state.setScrollPosition);
+  const scrollPositions = useSessionStore((state) => state.scrollPositions);
+
+  useEffect(() => {
+    // Restore scroll position
+    const saved = scrollPositions[location.pathname] || 0;
+    const mainElement = document.querySelector('main');
+    if (mainElement) {
+      mainElement.scrollTop = saved;
+    }
+
+    const handleScroll = () => {
+      const el = document.querySelector('main');
+      if (el) {
+        setScrollPosition(location.pathname, el.scrollTop);
+      }
+    };
+
+    // Attach scroll listener
+    const el = document.querySelector('main');
+    if (el) {
+      el.addEventListener('scroll', handleScroll, { passive: true });
+    }
+
+    // Set up a MutationObserver to handle dynamically loading content scroll restoration
+    const observer = new MutationObserver(() => {
+      const elCurrent = document.querySelector('main');
+      if (elCurrent && elCurrent.scrollTop === 0 && saved > 0) {
+        elCurrent.scrollTop = saved;
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      if (el) {
+        el.removeEventListener('scroll', handleScroll);
+      }
+      observer.disconnect();
+    };
+  }, [location.pathname, scrollPositions, setScrollPosition]);
+
+  return null;
+};
+
 export const App = () => {
   return (
     <ErrorBoundary>
@@ -159,6 +207,7 @@ export const App = () => {
         <BrowserRouter>
           <AuthProvider>
             <TenantProvider>
+              <ScrollPersistenceManager />
               <ImpersonationBanner />
               <Suspense fallback={<PageLoader />}>
                 <Routes>
