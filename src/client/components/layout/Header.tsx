@@ -73,7 +73,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenant.id}` },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['conversations', tenant.id] });
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
         }
       )
       .subscribe();

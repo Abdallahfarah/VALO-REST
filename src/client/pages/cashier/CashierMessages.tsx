@@ -49,6 +49,14 @@ export const CashierMessages = () => {
   });
 
   useEffect(() => {
+    if (activeConversation && user?.id) {
+      MessagingService.markMessagesAsRead(activeConversation, user.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      });
+    }
+  }, [activeConversation, messages, user?.id, queryClient]);
+
+  useEffect(() => {
     if (!activeConversation) return;
     const channel = supabase
       .channel('cashier-messages-realtime')
@@ -57,7 +65,7 @@ export const CashierMessages = () => {
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${activeConversation}` },
         () => {
           queryClient.invalidateQueries({ queryKey: ['messages', activeConversation] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', tenant?.id] });
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
         }
       )
       .subscribe();

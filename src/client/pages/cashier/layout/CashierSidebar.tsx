@@ -11,6 +11,8 @@ import { NavLink } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTenant } from '../../../context/TenantContext';
+import { useQuery } from '@tanstack/react-query';
+import { MessagingService } from '../../../services/ApiService';
 
 interface NavItem {
   name: string;
@@ -52,8 +54,16 @@ export interface CashierSidebarProps {
 }
 
 export const CashierSidebar = ({ isOpen, onClose }: CashierSidebarProps) => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { tenant } = useTenant();
+
+  const { data: conversations = [] } = useQuery({
+    queryKey: ['conversations', tenant?.id, user?.id],
+    queryFn: () => MessagingService.getConversations(tenant?.id || '', user?.id || ''),
+    enabled: !!tenant?.id && !!user?.id,
+  });
+
+  const totalUnreadMessages = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
   return (
     <>
       {/* Mobile Sidebar Backdrop overlay */}
@@ -115,14 +125,23 @@ export const CashierSidebar = ({ isOpen, onClose }: CashierSidebarProps) => {
                         />
                         <span className="font-bold tracking-wide">{item.name}</span>
                       </div>
-                      {item.badge && (
+                      {item.name === 'Messages' ? (
+                        totalUnreadMessages > 0 ? (
+                          <span className={cn(
+                            "text-[10px] font-black px-2 py-0.5 rounded-full",
+                            isActive ? "bg-white text-[#F97316]" : "bg-[#4F46E5] text-white"
+                          )}>
+                            {totalUnreadMessages}
+                          </span>
+                        ) : null
+                      ) : item.badge ? (
                         <span className={cn(
                           "text-[10px] font-black px-2 py-0.5 rounded-full",
                           isActive ? "bg-white text-[#F97316]" : "bg-[#4F46E5] text-white"
                         )}>
                           {item.badge}
                         </span>
-                      )}
+                      ) : null}
                       {item.name === 'VALO AI Assistant' && (
                         <span className={cn(
                           "text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase",

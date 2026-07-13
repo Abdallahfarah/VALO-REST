@@ -13,6 +13,8 @@ import { NavLink } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTenant } from '../../../context/TenantContext';
+import { useQuery } from '@tanstack/react-query';
+import { MessagingService } from '../../../services/ApiService';
 
 interface NavItem {
   name: string;
@@ -51,8 +53,16 @@ export interface WaiterSidebarProps {
 }
 
 export const WaiterSidebar = ({ isOpen, onClose }: WaiterSidebarProps) => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { tenant } = useTenant();
+
+  const { data: conversations = [] } = useQuery({
+    queryKey: ['conversations', tenant?.id, user?.id],
+    queryFn: () => MessagingService.getConversations(tenant?.id || '', user?.id || ''),
+    enabled: !!tenant?.id && !!user?.id,
+  });
+
+  const totalUnreadMessages = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
   return (
     <>
       {/* Mobile Sidebar Backdrop overlay */}
@@ -114,11 +124,17 @@ export const WaiterSidebar = ({ isOpen, onClose }: WaiterSidebarProps) => {
                         />
                         <span className="font-medium tracking-wide">{item.name}</span>
                       </div>
-                      {item.badge && (
+                      {item.name === 'Messages' ? (
+                        totalUnreadMessages > 0 ? (
+                          <span className="bg-[#4F46E5] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                            {totalUnreadMessages}
+                          </span>
+                        ) : null
+                      ) : item.badge ? (
                         <span className="bg-[#4F46E5] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                           {item.badge}
                         </span>
-                      )}
+                      ) : null}
                     </>
                   )}
                 </NavLink>

@@ -84,11 +84,14 @@ export const MessagingCenterDrawer: React.FC<MessagingCenterDrawerProps> = ({ te
         (payload: any) => {
           if (activeConversation && payload.new.conversation_id === activeConversation) {
             refetchMessages();
-            // Mark read timestamp
-            localStorage.setItem(`last_read_${activeConversation}_${userId}`, new Date().toISOString());
+            MessagingService.markMessagesAsRead(activeConversation, userId).then(() => {
+              refetchConversations();
+              queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            });
+          } else {
+            refetchConversations();
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
           }
-          refetchConversations();
-          queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
         }
       )
       .subscribe();
@@ -97,6 +100,15 @@ export const MessagingCenterDrawer: React.FC<MessagingCenterDrawerProps> = ({ te
       supabase.removeChannel(channel);
     };
   }, [userId, tenantId, activeConversation, refetchMessages, refetchConversations, queryClient]);
+
+  useEffect(() => {
+    if (activeConversation && userId) {
+      MessagingService.markMessagesAsRead(activeConversation, userId).then(() => {
+        refetchConversations();
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      });
+    }
+  }, [activeConversation, messages, userId, refetchConversations, queryClient]);
 
   // Presence channel for Typing Indicator
   useEffect(() => {
@@ -152,7 +164,7 @@ export const MessagingCenterDrawer: React.FC<MessagingCenterDrawerProps> = ({ te
       setMessageInput('');
       refetchMessages();
       refetchConversations();
-      queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     }
   });
 
@@ -185,10 +197,10 @@ export const MessagingCenterDrawer: React.FC<MessagingCenterDrawerProps> = ({ te
 
   const handleOpenConversation = (convId: string) => {
     setActiveConversation(convId);
-    // Mark as read
-    localStorage.setItem(`last_read_${convId}_${userId}`, new Date().toISOString());
-    refetchConversations();
-    queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
+    MessagingService.markMessagesAsRead(convId, userId).then(() => {
+      refetchConversations();
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    });
   };
 
   const filteredConversations = conversations.filter((c: any) =>

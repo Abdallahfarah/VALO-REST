@@ -949,14 +949,12 @@ export const MessagingService = {
         lastSenderName: lastMsg?.users
           ? `${lastMsg.users.first_name} ${lastMsg.users.last_name}`
           : 'System',
-        unreadCount: (() => {
-          if (!conv?.id || !userId) return 0;
-          const key = `last_read_${conv.id}_${userId}`;
-          const lastReadStr = localStorage.getItem(key);
-          if (!lastReadStr) return conv?.messages?.filter((m: any) => m.sender_id !== userId).length || 0;
-          const lastReadTime = new Date(lastReadStr).getTime();
-          return conv?.messages?.filter((m: any) => m.sender_id !== userId && new Date(m.created_at).getTime() > lastReadTime).length || 0;
-        })(),
+        unreadCount: (conv?.messages || []).filter((m: any) => {
+          if (m.sender_id === userId) return false;
+          const payload = m.payload || {};
+          const readBy = payload.read_by || [];
+          return !readBy.includes(userId);
+        }).length,
       };
     });
   },
@@ -997,16 +995,12 @@ export const MessagingService = {
         sender_id: senderId,
         content,
         tenant_id: resolvedTenantId,
+        payload: { read_by: [senderId] }
       })
       .select('*, users(id, first_name, last_name)')
       .single();
 
     if (error) throw error;
-
-    // Update sender's last read timestamp for this conversation
-    if (senderId) {
-      localStorage.setItem(`last_read_${conversationId}_${senderId}`, new Date().toISOString());
-    }
 
     return {
       id: data.id,
@@ -1016,6 +1010,46 @@ export const MessagingService = {
       content: data.content,
       createdAt: data.created_at,
     };
+  },
+
+  async markMessagesAsRead(conversationId: string, userId: string) {
+    if (!conversationId || !userId) return;
+
+    // Fetch all messages in the conversation sent by other users
+    const { data: messages, error } = await supabase
+      .from('messages')
+      .select('id, sender_id, payload')
+      .eq('conversation_id', conversationId)
+      .neq('sender_id', userId);
+
+    if (error || !messages) return;
+
+    // Filter messages that don't have this userId in their read_by list
+    const unread = messages.filter((m: any) => {
+      const payload = m.payload || {};
+      const readBy = payload.read_by || [];
+      return !readBy.includes(userId);
+    });
+
+    if (unread.length === 0) return;
+
+    // Update each message to include the userId in payload.read_by
+    await Promise.all(
+      unread.map(async (m: any) => {
+        const payload = m.payload || {};
+        const readBy = payload.read_by || [];
+        const newReadBy = [...new Set([...readBy, userId])];
+        await supabase
+          .from('messages')
+          .update({
+            payload: {
+              ...payload,
+              read_by: newReadBy
+            }
+          })
+          .eq('id', m.id);
+      })
+    );
   },
 
   async createConversation(tenantId: string, name: string, participantIds: string[]) {
