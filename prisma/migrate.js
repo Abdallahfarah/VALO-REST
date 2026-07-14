@@ -326,16 +326,23 @@ $$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 DROP POLICY IF EXISTS tenant_isolation_tenants ON tenants;
 DROP POLICY IF EXISTS tenant_isolation_users ON users;
 DROP POLICY IF EXISTS tenant_isolation_categories ON categories;
+DROP POLICY IF EXISTS tenant_public_select_categories ON categories;
 DROP POLICY IF EXISTS tenant_isolation_menu_items ON menu_items;
+DROP POLICY IF EXISTS tenant_public_select_menu_items ON menu_items;
 DROP POLICY IF EXISTS tenant_isolation_tables ON tables;
+DROP POLICY IF EXISTS tenant_public_select_tables ON tables;
 DROP POLICY IF EXISTS tenant_isolation_orders ON orders;
+DROP POLICY IF EXISTS tenant_public_insert_orders ON orders;
 DROP POLICY IF EXISTS tenant_isolation_order_items ON order_items;
+DROP POLICY IF EXISTS tenant_public_insert_order_items ON order_items;
 DROP POLICY IF EXISTS tenant_isolation_activity_logs ON activity_logs;
 DROP POLICY IF EXISTS tenant_isolation_plans ON plans;
 DROP POLICY IF EXISTS tenant_isolation_subscriptions ON subscriptions;
 DROP POLICY IF EXISTS tenant_isolation_restaurant_settings ON restaurant_settings;
+DROP POLICY IF EXISTS tenant_public_select_restaurant_settings ON restaurant_settings;
 DROP POLICY IF EXISTS tenant_isolation_receipts ON receipts;
 DROP POLICY IF EXISTS tenant_isolation_notifications ON notifications;
+DROP POLICY IF EXISTS tenant_public_insert_notifications ON notifications;
 DROP POLICY IF EXISTS tenant_isolation_conversations ON conversations;
 DROP POLICY IF EXISTS tenant_isolation_conversation_participants ON conversation_participants;
 DROP POLICY IF EXISTS tenant_isolation_messages ON messages;
@@ -352,25 +359,35 @@ CREATE POLICY tenant_isolation_users ON users
 
 -- 3. Categories Policies:
 CREATE POLICY tenant_isolation_categories ON categories
-    FOR ALL USING (tenant_id = current_user_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = current_user_tenant_id());
+CREATE POLICY tenant_public_select_categories ON categories
+    FOR SELECT TO anon USING (true);
 
 -- 4. Menu Items Policies:
 CREATE POLICY tenant_isolation_menu_items ON menu_items
-    FOR ALL USING (tenant_id = current_user_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = current_user_tenant_id());
+CREATE POLICY tenant_public_select_menu_items ON menu_items
+    FOR SELECT TO anon USING (true);
 
 -- 5. Tables Policies:
 CREATE POLICY tenant_isolation_tables ON tables
-    FOR ALL USING (tenant_id = current_user_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = current_user_tenant_id());
+CREATE POLICY tenant_public_select_tables ON tables
+    FOR SELECT TO anon USING (true);
 
 -- 6. Orders Policies:
 CREATE POLICY tenant_isolation_orders ON orders
-    FOR ALL USING (tenant_id = current_user_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = current_user_tenant_id());
+CREATE POLICY tenant_public_insert_orders ON orders
+    FOR INSERT TO anon WITH CHECK (true);
 
 -- 7. Order Items Policies:
 CREATE POLICY tenant_isolation_order_items ON order_items
-    FOR ALL USING (
+    FOR ALL TO authenticated USING (
         order_id IN (SELECT id FROM orders WHERE tenant_id = current_user_tenant_id())
     );
+CREATE POLICY tenant_public_insert_order_items ON order_items
+    FOR INSERT TO anon WITH CHECK (true);
 
 -- 8. Activity Logs Policies:
 CREATE POLICY tenant_isolation_activity_logs ON activity_logs
@@ -388,7 +405,9 @@ CREATE POLICY tenant_isolation_subscriptions ON subscriptions
 
 -- 11. Restaurant Settings Policies:
 CREATE POLICY tenant_isolation_restaurant_settings ON restaurant_settings
-    FOR ALL USING (tenant_id = current_user_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = current_user_tenant_id());
+CREATE POLICY tenant_public_select_restaurant_settings ON restaurant_settings
+    FOR SELECT TO anon USING (true);
 
 -- 12. Receipts Policies:
 CREATE POLICY tenant_isolation_receipts ON receipts
@@ -404,6 +423,8 @@ CREATE POLICY tenant_isolation_notifications ON notifications
             OR (user_id IS NULL AND role IS NULL)
         )
     );
+CREATE POLICY tenant_public_insert_notifications ON notifications
+    FOR INSERT TO anon WITH CHECK (true);
 
 -- 14. Conversations Policies:
 CREATE POLICY tenant_isolation_conversations ON conversations

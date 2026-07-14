@@ -7,7 +7,7 @@ import {
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
-import { NotificationService } from '../services/ApiService';
+import { NotificationService, MenuService } from '../services/ApiService';
 import { toast } from '../lib/toast-store';
 
 export const CustomerQRMenu = () => {
@@ -89,19 +89,11 @@ export const CustomerQRMenu = () => {
           if (tableData) setTable(tableData);
         }
 
-        // Query categories
-        const { data: catData } = await supabase
-          .from('categories')
-          .select('*')
-          .eq('tenant_id', tenantData.id)
-          .order('sort_order', { ascending: true });
+        // Query categories using the shared MenuService
+        const catData = await MenuService.getCategories(tenantData.id);
 
-        // Query menu items
-        const { data: prodData } = await supabase
-          .from('menu_items')
-          .select('*')
-          .eq('tenant_id', tenantData.id)
-          .eq('is_available', true);
+        // Query menu items using the shared MenuService
+        const prodData = await MenuService.getMenuItems(tenantData.id, undefined, true);
 
         if (catData) setCategories(catData);
         if (prodData) setProducts(prodData);
@@ -273,7 +265,7 @@ export const CustomerQRMenu = () => {
   };
 
   const filteredProducts = selectedCategory 
-    ? products.filter(p => p.category_id === selectedCategory)
+    ? products.filter(p => p.categoryId === selectedCategory)
     : products;
 
   if (orderPlaced) {
