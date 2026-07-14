@@ -222,7 +222,15 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
 export const useTenant = () => {
   const context = useContext(TenantContext);
   if (context === undefined) {
-    throw new Error('useTenant must be used within a TenantProvider');
+    return {
+      tenant: null,
+      loading: true,
+      error: null,
+      setTenant: () => {},
+      currencyCode: 'ETB',
+      currencySymbol: 'ETB',
+      currencyName: 'Ethiopian Birr'
+    };
   }
   return context;
 };

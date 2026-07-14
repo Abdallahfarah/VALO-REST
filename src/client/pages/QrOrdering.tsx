@@ -8,9 +8,10 @@ import { useTenant } from '../context/TenantContext';
 import { SettingService } from '../services/ApiService';
 import { supabase } from '../../lib/supabase';
 import { toast } from '../lib/toast-store';
+import { PageLoader } from '../components/ui/LoadingSpinner';
 
 export const QrOrdering = () => {
-  const { tenant } = useTenant();
+  const { tenant, loading } = useTenant();
   const [slug, setSlug] = useState(tenant?.slug || '');
   const [isCopied, setIsCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +27,17 @@ export const QrOrdering = () => {
   const [tables, setTables] = useState<any[]>([]);
 
   const qrMenuUrl = `${window.location.origin}/r/${slug}`;
+
+  // Synchronize slug when tenant is resolved
+  useEffect(() => {
+    if (tenant?.slug) {
+      setSlug(tenant.slug);
+    }
+  }, [tenant]);
+
+  if (loading || !tenant) {
+    return <PageLoader label="Loading QR Workspace..." />;
+  }
 
   // 1. Fetch tables and settings
   useEffect(() => {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   Bell, Receipt, ShoppingCart, ShoppingBag, Plus, Minus, X, Check,
-  ChevronDown, Info, Loader2, Sparkles, CreditCard, Landmark
+  ChevronRight, ArrowLeft, Info, Loader2, Sparkles, CreditCard, Landmark
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
@@ -25,6 +25,7 @@ export const CustomerQRMenu = () => {
   // Customization States
   const [qrEnabled, setQrEnabled] = useState(true);
   const [welcomeMessage, setWelcomeMessage] = useState('Welcome! Browse our menu and place your order.');
+  const [requireApproval, setRequireApproval] = useState(true);
   const [payAtCounter, setPayAtCounter] = useState(true);
   const [onlinePayment, setOnlinePayment] = useState(false);
 
@@ -40,23 +41,6 @@ export const CustomerQRMenu = () => {
   // Service States
   const [isCallingWaiter, setIsCallingWaiter] = useState(false);
   const [isRequestingBill, setIsRequestingBill] = useState(false);
-
-  // Scroll indicator state
-  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
-
-  useEffect(() => {
-    const handleInteraction = () => {
-      setShowScrollIndicator(false);
-    };
-    window.addEventListener('scroll', handleInteraction, { passive: true });
-    window.addEventListener('click', handleInteraction, { passive: true });
-    window.addEventListener('touchstart', handleInteraction, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleInteraction);
-      window.removeEventListener('click', handleInteraction);
-      window.removeEventListener('touchstart', handleInteraction);
-    };
-  }, []);
 
   // 1. Load data
   useEffect(() => {
@@ -88,6 +72,7 @@ export const CustomerQRMenu = () => {
             return;
           }
           setWelcomeMessage(qrConfig.welcome_message || 'Welcome! Browse our menu and place your order.');
+          setRequireApproval(qrConfig.require_approval !== false);
           setPayAtCounter(qrConfig.pay_at_counter !== false);
           setOnlinePayment(!!qrConfig.online_payment);
         }
@@ -580,13 +565,6 @@ export const CustomerQRMenu = () => {
             </div>
 
           </div>
-        </div>
-      )}
-
-      {showScrollIndicator && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-40 bg-white/95 backdrop-blur-sm border border-slate-100/80 px-4.5 py-2.5 rounded-full shadow-lg pointer-events-none transition-all duration-300">
-          <span className="text-[9px] font-black text-[#0B1630] uppercase tracking-widest whitespace-nowrap">Scroll to explore menu</span>
-          <ChevronDown size={14} className="text-[#F97316] animate-bounce" />
         </div>
       )}
     </div>
