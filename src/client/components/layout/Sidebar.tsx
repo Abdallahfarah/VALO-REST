@@ -8,7 +8,8 @@ import {
   UserCog,
   BarChart,
   Settings,
-  LogOut
+  LogOut,
+  QrCode
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { NavLink } from 'react-router-dom';
@@ -33,6 +34,7 @@ const navSections = [
       { name: 'Staff', path: '/admin/staff', icon: UserCog },
       { name: 'Reports', path: '/admin/reports', icon: BarChart },
       { name: 'Settings', path: '/admin/settings', icon: Settings },
+      { name: 'QR Ordering', path: '/admin/qr-ordering', icon: QrCode },
     ],
   }
 ];

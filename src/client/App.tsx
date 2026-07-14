@@ -38,6 +38,8 @@ import { Payments } from './pages/cashier/Payments';
 import { Receipts } from './pages/cashier/Receipts';
 import { CashierMessages } from './pages/cashier/CashierMessages';
 import { Restaurants } from './pages/superadmin/Restaurants';
+import { QrOrdering } from './pages/QrOrdering';
+import { CustomerQRMenu } from './pages/CustomerQRMenu';
 
 // ─── Lazy-loaded page chunks ───
 
@@ -214,6 +216,9 @@ export const App = () => {
                   {/* Public Routes */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  {/* Public Customer QR Routes */}
+                  <Route path="/r/:slug" element={<CustomerQRMenu />} />
+                  <Route path="/r/:slug/t/:tableNumber" element={<CustomerQRMenu />} />
                   <Route path="/onboarding" element={
                     <ProtectedRoute>
                       <Onboarding />
@@ -237,6 +242,7 @@ export const App = () => {
                     <Route path="staff" element={<Staff />} />
                     <Route path="reports" element={<Reports />} />
                     <Route path="settings" element={<Settings />} />
+                    <Route path="qr-ordering" element={<QrOrdering />} />
                   </Route>
 
                   {/* Waiter Application */}

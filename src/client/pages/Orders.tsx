@@ -51,7 +51,12 @@ const OrderRow = React.memo(({ order, isSelected, onSelect, getStatusStyle, getT
         <p className="text-xs font-bold text-[#0B1630]">Table {order.table?.number || 'N/A'}</p>
       </td>
       <td className="px-6 py-4">
-        <p className="text-xs font-bold text-[#0B1630]">{order.waiterName || 'Unassigned'}</p>
+        <div className="flex flex-col">
+          <p className="text-xs font-bold text-[#0B1630]">{order.waiterName || 'Unassigned'}</p>
+          {(!order.waiterId || order.waiterName === 'Self Service') && (
+            <span className="text-[9px] font-black text-orange-600 bg-orange-50 border border-orange-100/50 px-1 py-0.5 rounded uppercase tracking-wider w-fit mt-0.5">QR Menu</span>
+          )}
+        </div>
       </td>
       <td className="px-6 py-4">
         <span className="text-xs font-bold text-[#64748B]">{order.items?.length || 0} items</span>
@@ -342,10 +347,19 @@ export const Orders = () => {
                            <span className="text-[#94A3B8] font-medium">Table</span>
                            <span className="text-[#0B1630] font-bold">Table {selectedOrder.table?.number || 'N/A'}</span>
                         </div>
-                        <div className="flex justify-between items-center text-xs">
-                           <span className="text-[#94A3B8] font-medium">Waiter</span>
-                           <span className="text-[#0B1630] font-bold">{selectedOrder.waiterName || 'Unassigned'}</span>
-                        </div>
+                         <div className="flex justify-between items-center text-xs">
+                            <span className="text-[#94A3B8] font-medium">Customer</span>
+                            <span className="text-[#0B1630] font-bold">{selectedOrder.customerName || 'Guest'}</span>
+                         </div>
+                         <div className="flex justify-between items-center text-xs">
+                            <span className="text-[#94A3B8] font-medium">Waiter</span>
+                            <span className="text-[#0B1630] font-bold flex items-center gap-1.5">
+                               {selectedOrder.waiterName || 'Unassigned'}
+                               {(!selectedOrder.waiterId || selectedOrder.waiterName === 'Self Service') && (
+                                  <span className="text-[9px] font-black text-orange-600 bg-orange-50 border border-orange-100 px-1 py-0.5 rounded uppercase tracking-wider">QR</span>
+                                )}
+                            </span>
+                         </div>
                         <div className="flex justify-between items-center text-xs">
                            <span className="text-[#94A3B8] font-medium">Status</span>
                            <span className="text-[#0B1630] font-bold">{statusMap[selectedOrder.status]?.label || selectedOrder.status}</span>
