@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  QrCode, Copy, Check, Sliders, BarChart3, 
+  QrCode, Copy, Check, BarChart3, 
   ExternalLink, Printer, Settings, ShoppingBag, Eye 
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
