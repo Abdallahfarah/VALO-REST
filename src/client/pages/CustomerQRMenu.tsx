@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   Bell, Receipt, ShoppingCart, ShoppingBag, Plus, Minus, X, Check,
-  ChevronRight, ChevronDown, ArrowLeft, Info, Loader2, Sparkles, CreditCard, Landmark
+  ChevronDown, Info, Loader2, Sparkles, CreditCard, Landmark
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
@@ -25,7 +25,6 @@ export const CustomerQRMenu = () => {
   // Customization States
   const [qrEnabled, setQrEnabled] = useState(true);
   const [welcomeMessage, setWelcomeMessage] = useState('Welcome! Browse our menu and place your order.');
-  const [requireApproval, setRequireApproval] = useState(true);
   const [payAtCounter, setPayAtCounter] = useState(true);
   const [onlinePayment, setOnlinePayment] = useState(false);
 
@@ -89,7 +88,6 @@ export const CustomerQRMenu = () => {
             return;
           }
           setWelcomeMessage(qrConfig.welcome_message || 'Welcome! Browse our menu and place your order.');
-          setRequireApproval(qrConfig.require_approval !== false);
           setPayAtCounter(qrConfig.pay_at_counter !== false);
           setOnlinePayment(!!qrConfig.online_payment);
         }
