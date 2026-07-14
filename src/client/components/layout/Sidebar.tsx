@@ -25,6 +25,7 @@ const navSections = [
       { name: 'Kitchen Queue', path: '/admin/kitchen', icon: ChefHat },
       { name: 'Tables', path: '/admin/tables', icon: Armchair },
       { name: 'Orders', path: '/admin/orders', icon: Receipt },
+      { name: 'QR Ordering', path: '/admin/qr-ordering', icon: QrCode },
     ],
   },
   {
@@ -34,7 +35,6 @@ const navSections = [
       { name: 'Staff', path: '/admin/staff', icon: UserCog },
       { name: 'Reports', path: '/admin/reports', icon: BarChart },
       { name: 'Settings', path: '/admin/settings', icon: Settings },
-      { name: 'QR Ordering', path: '/admin/qr-ordering', icon: QrCode },
     ],
   }
 ];
