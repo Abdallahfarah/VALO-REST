@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   Bell, Receipt, ShoppingCart, ShoppingBag, Plus, Minus, X, Check,
-  Info, Loader2, Sparkles, CreditCard, Landmark, ChevronsDown
+  ChevronRight, ArrowLeft, ArrowRight, Info, Loader2, Sparkles, CreditCard, Landmark
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
@@ -25,6 +25,7 @@ export const CustomerQRMenu = () => {
   // Customization States
   const [qrEnabled, setQrEnabled] = useState(true);
   const [welcomeMessage, setWelcomeMessage] = useState('Welcome! Browse our menu and place your order.');
+  const [requireApproval, setRequireApproval] = useState(true);
   const [payAtCounter, setPayAtCounter] = useState(true);
   const [onlinePayment, setOnlinePayment] = useState(false);
 
@@ -40,6 +41,91 @@ export const CustomerQRMenu = () => {
   // Service States
   const [isCallingWaiter, setIsCallingWaiter] = useState(false);
   const [isRequestingBill, setIsRequestingBill] = useState(false);
+
+  // Premium Category Scroll Ref and States
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
+  const [showLeftFade, setShowLeftFade] = useState(false);
+  const [showRightFade, setShowRightFade] = useState(false);
+  const [showMobileHint, setShowMobileHint] = useState(false);
+
+  const checkScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    
+    const canScroll = el.scrollWidth > el.clientWidth;
+    if (!canScroll) {
+      setShowLeftArrow(false);
+      setShowRightArrow(false);
+      setShowLeftFade(false);
+      setShowRightFade(false);
+      return;
+    }
+
+    const isAtStart = el.scrollLeft <= 5;
+    const isAtEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 5;
+
+    setShowLeftArrow(!isAtStart);
+    setShowRightArrow(!isAtEnd);
+    setShowLeftFade(!isAtStart);
+    setShowRightFade(!isAtEnd);
+  };
+
+  const handleScroll = () => {
+    if (showMobileHint) {
+      setShowMobileHint(false);
+      sessionStorage.setItem('category_swipe_hint_shown', 'true');
+    }
+    checkScroll();
+  };
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const scrollAmount = 200;
+    el.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      scrollCategories('left');
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      scrollCategories('right');
+    }
+  };
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+
+    return () => {
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [categories, products]);
+
+  useEffect(() => {
+    const hintShown = sessionStorage.getItem('category_swipe_hint_shown');
+    if (!hintShown) {
+      const el = scrollRef.current;
+      if (el && el.scrollWidth > el.clientWidth) {
+        setShowMobileHint(true);
+        const timer = setTimeout(() => {
+          setShowMobileHint(false);
+          sessionStorage.setItem('category_swipe_hint_shown', 'true');
+        }, 3000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [categories]);
 
   // 1. Load data
   useEffect(() => {
@@ -71,6 +157,7 @@ export const CustomerQRMenu = () => {
             return;
           }
           setWelcomeMessage(qrConfig.welcome_message || 'Welcome! Browse our menu and place your order.');
+          setRequireApproval(qrConfig.require_approval !== false);
           setPayAtCounter(qrConfig.pay_at_counter !== false);
           setOnlinePayment(!!qrConfig.online_payment);
         }
@@ -104,45 +191,6 @@ export const CustomerQRMenu = () => {
 
     loadMenuData();
   }, [slug, tableNumber]);
-
-  // 2. Scroll Guidance Indicator detection
-  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
-
-  useEffect(() => {
-    if (loading || !tenant) return;
-
-    const checkScroll = () => {
-      const scrollY = window.scrollY || document.documentElement.scrollTop;
-      const scrollHeight = document.documentElement.scrollHeight;
-      const clientHeight = window.innerHeight || document.documentElement.clientHeight;
-
-      const isAtTop = scrollY < 5;
-      const hasMoreContent = scrollHeight > clientHeight + 30;
-
-      setShowScrollIndicator(isAtTop && hasMoreContent);
-    };
-
-    window.addEventListener('scroll', checkScroll, { passive: true });
-    window.addEventListener('resize', checkScroll, { passive: true });
-
-    const resizeObserver = new ResizeObserver(() => {
-      checkScroll();
-    });
-
-    const timer = setTimeout(checkScroll, 100);
-    const timer2 = setTimeout(checkScroll, 500);
-
-    resizeObserver.observe(document.body);
-    checkScroll();
-
-    return () => {
-      window.removeEventListener('scroll', checkScroll);
-      window.removeEventListener('resize', checkScroll);
-      resizeObserver.disconnect();
-      clearTimeout(timer);
-      clearTimeout(timer2);
-    };
-  }, [loading, tenant, categories, products, selectedCategory]);
 
   if (loading) {
     return (
@@ -408,33 +456,87 @@ export const CustomerQRMenu = () => {
           </div>
         </div>
 
-        {/* Categories Bar */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none select-none">
+        {/* Categories Bar Container with edge fades and navigation controls */}
+        <div 
+          className="relative w-full overflow-hidden select-none"
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+        >
+          {/* Left Gradient Edge Fade */}
+          <div className={cn(
+            "absolute left-0 top-0 bottom-2 w-10 bg-gradient-to-r from-slate-50/90 via-slate-50/40 to-transparent pointer-events-none transition-opacity duration-200 z-10 opacity-0",
+            showLeftFade && "opacity-100"
+          )} />
+
+          {/* Right Gradient Edge Fade */}
+          <div className={cn(
+            "absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-slate-50/90 via-slate-50/40 to-transparent pointer-events-none transition-opacity duration-200 z-10 opacity-0",
+            showRightFade && "opacity-100"
+          )} />
+
+          {/* Left Floating Circular Navigation Button */}
           <button
-            onClick={() => setSelectedCategory(null)}
+            onClick={() => scrollCategories('left')}
             className={cn(
-              "px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer border",
-              !selectedCategory 
-                ? "bg-[#F97316] text-white border-[#F97316] shadow-md shadow-orange-500/10" 
-                : "bg-white text-[#64748B] border-slate-100 hover:bg-slate-50"
+              "absolute left-1 top-[42%] -translate-y-1/2 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md shadow-sm border border-slate-100/50 items-center justify-center text-[#F97316] hover:bg-[#F97316] hover:text-white hover:scale-108 active:scale-95 transition-all duration-200 cursor-pointer z-20 hidden md:flex opacity-0 pointer-events-none",
+              showLeftArrow && "opacity-100 pointer-events-auto"
             )}
+            aria-label="Scroll left categories"
           >
-            All Items
+            <ArrowLeft size={16} />
           </button>
-          {categories.map((cat) => (
+
+          {/* Right Floating Circular Navigation Button */}
+          <button
+            onClick={() => scrollCategories('right')}
+            className={cn(
+              "absolute right-1 top-[42%] -translate-y-1/2 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md shadow-sm border border-slate-100/50 items-center justify-center text-[#F97316] hover:bg-[#F97316] hover:text-white hover:scale-108 active:scale-95 transition-all duration-200 cursor-pointer z-20 hidden md:flex opacity-0 pointer-events-none",
+              showRightArrow && "opacity-100 pointer-events-auto"
+            )}
+            aria-label="Scroll right categories"
+          >
+            <ArrowRight size={16} />
+          </button>
+
+          {/* Categories Horizontal Scroll List */}
+          <div 
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none scroll-smooth"
+          >
             <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
+              onClick={() => setSelectedCategory(null)}
               className={cn(
                 "px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer border",
-                selectedCategory === cat.id
+                !selectedCategory 
                   ? "bg-[#F97316] text-white border-[#F97316] shadow-md shadow-orange-500/10" 
                   : "bg-white text-[#64748B] border-slate-100 hover:bg-slate-50"
               )}
             >
-              {cat.name}
+              All Items
             </button>
-          ))}
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer border",
+                  selectedCategory === cat.id
+                    ? "bg-[#F97316] text-white border-[#F97316] shadow-md shadow-orange-500/10" 
+                    : "bg-white text-[#64748B] border-slate-100 hover:bg-slate-50"
+                )}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Swipe Hint (Mobile / Tablet only) */}
+          {showMobileHint && (
+            <div className="text-center text-[9px] font-black text-[#F97316]/80 animate-pulse mt-0.5 tracking-widest uppercase md:hidden pointer-events-none transition-opacity duration-300">
+              ← Swipe Categories →
+            </div>
+          )}
         </div>
 
         {/* Products Grid */}
@@ -604,16 +706,6 @@ export const CustomerQRMenu = () => {
           </div>
         </div>
       )}
-
-      {/* Smart Scroll Guidance UX Indicator */}
-      <div className={cn(
-        "fixed left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-40 bg-white/95 backdrop-blur-sm border border-orange-100 px-5 py-2.5 rounded-full shadow-[0_8px_30px_rgb(249,115,22,0.08)] pointer-events-none transition-all duration-500 ease-in-out transform",
-        showScrollIndicator ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95 pointer-events-none",
-        cart.length > 0 ? "bottom-24" : "bottom-8"
-      )}>
-        <span className="text-[10px] font-black text-[#0B1630] uppercase tracking-widest whitespace-nowrap">Scroll for more items</span>
-        <ChevronsDown size={14} className="text-[#F97316] animate-bounce mt-0.5" />
-      </div>
     </div>
   );
 };
