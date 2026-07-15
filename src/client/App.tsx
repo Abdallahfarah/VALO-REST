@@ -254,6 +254,7 @@ export const App = () => {
                     <Route index element={<WaiterDashboard />} />
                     <Route path="dashboard" element={<WaiterDashboard />} />
                     <Route path="tables" element={<WaiterTables />} />
+                    <Route path="pos" element={<WaiterPOS />} />
                     <Route path="pos/:tableId" element={<WaiterPOS />} />
                     <Route path="orders" element={<MyOrders />} />
                     <Route path="messages" element={<Messages />} />
