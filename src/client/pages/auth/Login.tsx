@@ -4,19 +4,16 @@ import {
   Lock, 
   Eye, 
   EyeOff,
-  Globe, 
-  Building2, 
   Zap, 
-  ShieldCheck, 
-  ChevronDown 
+  ChefHat, 
+  Smartphone,
+  ArrowRight
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../../services/AuthService';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleComingSoonModal } from '../../components/GoogleComingSoonModal';
-
 import { cn } from '../../lib/utils';
-
 import valoLogo from '../../../../Docs/valo-logo.webp';
 
 const ROLE_ROUTES: Record<string, string> = {
@@ -29,6 +26,54 @@ const ROLE_ROUTES: Record<string, string> = {
 
 const getRoleRoute = (role?: string | null) =>
   (role && ROLE_ROUTES[role]) || '/admin';
+
+const animationStyles = `
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-fade-down {
+  animation: fadeDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-fade-up {
+  animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-up {
+  animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-scale-in {
+  animation: scaleIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-float-1 {
+  animation: float 6s ease-in-out infinite;
+}
+.animate-float-2 {
+  animation: float 6s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+.animate-float-3 {
+  animation: float 6s ease-in-out infinite;
+  animation-delay: 3s;
+}
+`;
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -76,7 +121,6 @@ export const Login = () => {
     setIsLoading(true);
     setError(null);
 
-    // Save rememberMe selection in localStorage so the custom storage provider sees it
     localStorage.setItem('valo_remember_me', rememberMe ? 'true' : 'false');
 
     try {
@@ -90,7 +134,6 @@ export const Login = () => {
     }
   };
 
-  // @ts-ignore
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
@@ -104,11 +147,13 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Pane - Branding & Features */}
-      <div className="hidden lg:flex w-[40%] bg-[#0B1630] relative overflow-hidden flex-col p-16 text-white">
-         {/* Background Image Overlay */}
-         <div className="absolute inset-0 opacity-20">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#FFFFFF]">
+      <style>{animationStyles}</style>
+
+      {/* Left Pane - Branding & Horizontal/Vertical Feature Cards */}
+      <div className="hidden md:flex w-full md:w-[40%] bg-[#0F172A] relative overflow-hidden flex-col p-8 lg:p-16 text-white shrink-0 justify-between md:min-h-screen">
+         {/* Background Image Overlay with deep navy overlay */}
+         <div className="absolute inset-0 opacity-20 select-none pointer-events-none">
             <img 
                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=75&w=1200&fm=webp" 
                alt="Restaurant Interior"
@@ -118,99 +163,118 @@ export const Login = () => {
                width={1200}
                height={800}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B1630] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-[#0F172A]/70 mix-blend-multiply" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-transparent" />
          </div>
 
-         <div className="relative z-10">
-            <div className="space-y-12">
-               <h2 className="text-5xl font-black leading-tight max-w-sm">
-                  Smart Restaurant Management Platform
+         <div className="relative z-10 my-auto space-y-8 lg:space-y-12">
+            <div className="space-y-4 animate-fade-up">
+               <h2 className="text-3xl lg:text-5xl font-bold leading-tight tracking-tight">
+                  Smarter Restaurants<br />
+                  <span className="text-[#F97316]">Better Business</span>
                </h2>
-               <p className="text-[#CBD5E1] text-lg leading-relaxed max-w-md">
-                  All-in-one solution to manage your restaurant operations, staff, orders, and customers from anywhere.
+               <p className="text-[#64748B] text-sm lg:text-base leading-relaxed max-w-md font-medium">
+                  Manage POS, Kitchen, Staff, Inventory and QR Ordering from one intelligent platform.
                </p>
+            </div>
 
-               <div className="space-y-8 pt-8">
-                  <div className="flex items-center gap-6 group">
-                     <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
-                        <Building2 size={24} />
-                     </div>
-                     <div>
-                        <h3 className="font-bold text-lg">Multi-Tenant SaaS</h3>
-                        <p className="text-[#CBD5E1] text-sm mt-1">Manage multiple restaurants with complete isolation.</p>
-                     </div>
+            {/* Feature Cards: horizontal layout on tablet (md), vertical on desktop (lg) */}
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 lg:gap-6 pt-4">
+               {/* Card 1 */}
+               <div className="flex items-center gap-4 p-4 rounded-[20px] bg-[#1E293B]/40 border border-[#334155]/30 backdrop-blur-sm animate-float-1">
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0 text-[#F97316]">
+                     <Zap size={20} />
                   </div>
-                  <div className="flex items-center gap-6 group">
-                     <div className="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0 group-hover:bg-orange-500 group-hover:text-white transition-all duration-300">
-                        <Zap size={24} />
-                     </div>
-                     <div>
-                        <h3 className="font-bold text-lg">Lightning Fast POS</h3>
-                        <p className="text-[#CBD5E1] text-sm mt-1">Streamlined operations for maximum efficiency.</p>
-                     </div>
+                  <div>
+                     <h3 className="font-bold text-sm text-white">⚡ Lightning Fast POS</h3>
+                     <p className="text-[#64748B] text-[11px] mt-0.5 font-medium">Real-time orders and payments.</p>
                   </div>
-                  <div className="flex items-center gap-6 group">
-                     <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
-                        <ShieldCheck size={24} />
-                     </div>
-                     <div>
-                        <h3 className="font-bold text-lg">Secure & Reliable</h3>
-                        <p className="text-[#CBD5E1] text-sm mt-1">Enterprise-grade security and 99.9% uptime.</p>
-                     </div>
+               </div>
+
+               {/* Card 2 */}
+               <div className="flex items-center gap-4 p-4 rounded-[20px] bg-[#1E293B]/40 border border-[#334155]/30 backdrop-blur-sm animate-float-2">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-[#10B981]">
+                     <ChefHat size={20} />
+                  </div>
+                  <div>
+                     <h3 className="font-bold text-sm text-white">🍳 Kitchen Display</h3>
+                     <p className="text-[#64748B] text-[11px] mt-0.5 font-medium">Instant kitchen synchronization.</p>
+                  </div>
+               </div>
+
+               {/* Card 3 */}
+               <div className="flex items-center gap-4 p-4 rounded-[20px] bg-[#1E293B]/40 border border-[#334155]/30 backdrop-blur-sm animate-float-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 text-[#6366F1]">
+                     <Smartphone size={20} />
+                  </div>
+                  <div>
+                     <h3 className="font-bold text-sm text-white">📱 QR Ordering</h3>
+                     <p className="text-[#64748B] text-[11px] mt-0.5 font-medium">Customers scan and order instantly.</p>
                   </div>
                </div>
             </div>
          </div>
 
-         <div className="mt-auto relative z-10">
-            <p className="text-[#64748B] text-xs">© 2026 VALO-REST. All rights reserved.</p>
+         {/* Tiny Footer */}
+         <div className="hidden lg:block mt-auto relative z-10 pt-8">
+            <p className="text-[#64748B] text-[10px] font-bold tracking-wider uppercase">© 2026 VALO-REST. All rights reserved.</p>
          </div>
       </div>
 
-      {/* Right Pane - Form */}
-      <div className="flex-1 bg-white flex flex-col p-8 md:p-16 relative">
-         <div className="absolute top-8 right-8">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-100 text-sm font-bold text-[#0B1630] cursor-pointer hover:bg-slate-50 transition-all">
-               <Globe size={16} />
-               English
-               <ChevronDown size={14} className="text-[#94A3B8]" />
+      {/* Right Pane - White Rounded Card Form Container */}
+      <div className="flex-1 bg-slate-50 md:bg-[#FFFFFF] flex flex-col justify-center p-4 sm:p-8 md:p-12 lg:p-16 min-h-screen relative">
+         
+         {/* Mobile Hero Banner */}
+         <div className="relative w-full h-40 overflow-hidden rounded-[20px] mb-6 md:hidden shadow-sm">
+            <img 
+               src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=70&w=600" 
+               alt="Restaurant Interior Mobile"
+               className="w-full h-full object-cover"
+               loading="eager"
+            />
+            <div className="absolute inset-0 bg-[#0F172A]/70 mix-blend-multiply" />
+            <div className="absolute inset-0 p-5 flex flex-col justify-end text-white">
+               <h2 className="text-xl font-bold leading-tight">Smarter Restaurants</h2>
+               <span className="text-[#F97316] text-xs font-bold">Better Business</span>
             </div>
          </div>
 
-         <div className="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full">
-            <div className="mb-8 flex flex-col items-center justify-center">
-               {/* Logo above Welcome Back */}
-               <div className="inline-flex items-center justify-center bg-[#F8FAFC]/80 backdrop-blur-md border border-[#E2E8F0] rounded-[22px] px-8 py-5 shadow-sm mb-8 select-none">
-                  <img 
-                     src={valoLogo} 
-                     alt="VALO-REST Logo" 
-                     className="h-12 w-auto object-contain"
-                     loading="eager"
-                     fetchPriority="high"
-                     decoding="async"
-                     width={59}
-                     height={48}
-                     onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                     }}
-                  />
-               </div>
-               <h1 className="text-4xl font-black text-[#0B1630] mb-2 text-center w-full">Welcome Back</h1>
-               <p className="text-[#64748B] font-medium text-center w-full">Sign in to your workspace</p>
+         {/* Form Card */}
+         <div className="w-full max-w-lg bg-[#FFFFFF] rounded-[24px] border border-[#E5E7EB] p-6 sm:p-10 md:p-12 shadow-sm animate-scale-in flex flex-col mx-auto my-auto justify-center">
+            {/* Center Logo */}
+            <div className="mb-6 flex justify-center animate-fade-down">
+               <img 
+                  src={valoLogo} 
+                  alt="VALO-REST Logo" 
+                  className="h-10 w-auto object-contain"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  width={50}
+                  height={40}
+                  onError={(e) => {
+                     e.currentTarget.style.display = 'none';
+                  }}
+               />
             </div>
 
-            <form className="space-y-6" onSubmit={handleSubmit} autoComplete="on">
+            <div className="mb-8 flex flex-col items-center justify-center">
+               <h1 className="text-[32px] sm:text-[40px] md:text-[44px] font-bold text-[#0F172A] tracking-tight text-center leading-none">Welcome Back</h1>
+               <p className="text-[#64748B] font-medium text-xs sm:text-sm text-center mt-2">Sign in to continue to your workspace</p>
+            </div>
+
+            <form className="space-y-5 animate-slide-up" onSubmit={handleSubmit} autoComplete="on">
                {error && (
                  <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-bold">
-                   {error}
+                    {error}
                  </div>
                )}
-               <div className="space-y-2">
-                  <label className="text-xs font-black text-[#0B1630] uppercase tracking-widest">Email Address</label>
+               <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Email Address</label>
                   <div className="relative">
-                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94A3B8]" />
+                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
                      <input 
-                       className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-100 bg-slate-50/30 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8] transition-all" 
+                       className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#64748B] transition-all" 
                        placeholder="Enter your email" 
                        type="email"
                        value={email}
@@ -221,12 +285,12 @@ export const Login = () => {
                   </div>
                </div>
 
-               <div className="space-y-2">
-                  <label className="text-xs font-black text-[#0B1630] uppercase tracking-widest">Password</label>
+               <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Password</label>
                   <div className="relative">
-                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94A3B8]" />
+                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
                      <input 
-                       className="w-full h-14 pl-12 pr-12 rounded-2xl border border-slate-100 bg-slate-50/30 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8] transition-all" 
+                       className="w-full h-12 pl-11 pr-11 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#64748B] transition-all" 
                        placeholder="Enter your password" 
                        type={showPassword ? "text" : "password"}
                        value={password}
@@ -237,62 +301,62 @@ export const Login = () => {
                      <button 
                         type="button" 
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0B1630] cursor-pointer"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] cursor-pointer"
                         aria-label={showPassword ? "Hide password" : "Show password"}
                         title={showPassword ? "Hide password" : "Show password"}
                      >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                      </button>
                   </div>
                </div>
 
-                <div className="flex items-center justify-between">
-                   <button
-                      type="button"
-                      onClick={() => setRememberMe(!rememberMe)}
-                      className="flex items-center gap-2 cursor-pointer group select-none bg-transparent border-0 outline-none p-0"
-                   >
-                      <div className={cn(
-                        "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
-                        rememberMe ? "border-[#F97316] bg-[#F97316]/5" : "border-slate-200 group-hover:border-[#F97316]"
-                      )}>
-                         <div className={cn(
-                           "w-2.5 h-2.5 bg-[#F97316] rounded-sm transition-transform",
-                           rememberMe ? "scale-100" : "scale-0"
-                         )} />
-                      </div>
-                      <span className="text-xs font-bold text-[#64748B]">Remember me</span>
-                   </button>
-                   <a href="#" className="text-xs font-bold text-[#F97316] hover:underline">Forgot Password?</a>
-                </div>
+               <div className="flex items-center justify-between pt-1">
+                  <button
+                     type="button"
+                     onClick={() => setRememberMe(!rememberMe)}
+                     className="flex items-center gap-2 cursor-pointer group select-none bg-transparent border-0 outline-none p-0"
+                  >
+                     <div className={cn(
+                       "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                       rememberMe ? "border-[#F97316] bg-[#F97316]" : "border-slate-300 group-hover:border-[#F97316]"
+                     )}>
+                        <div className={cn(
+                          "w-1.5 h-1.5 bg-white rounded-sm transition-transform",
+                          rememberMe ? "scale-100" : "scale-0"
+                        )} />
+                     </div>
+                     <span className="text-[11px] font-bold text-[#64748B]">Remember me</span>
+                  </button>
+                  <a href="#" className="text-[11px] font-bold text-[#F97316] hover:underline">Forgot Password?</a>
+               </div>
 
                <button 
                  type="submit"
                  disabled={isLoading}
-                 className="w-full bg-[#F97316] text-white h-14 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-orange-500/20 hover:bg-[#ea580c] transition-all active:scale-[0.98] mt-4 disabled:opacity-50"
+                 className="w-full bg-[#F97316] text-white h-12 rounded-xl font-bold text-xs uppercase tracking-widest shadow-sm hover:bg-[#ea580c] transition-all active:scale-[0.98] mt-2 disabled:opacity-50"
                >
                   {isLoading ? 'Signing In...' : 'Sign In'}
                </button>
 
-               <div className="relative py-8 flex flex-col items-center">
+               <div className="relative py-4 flex flex-col items-center">
                   <div className="absolute top-1/2 w-full h-[1px] bg-slate-100" />
-                  <span className="relative z-10 bg-white px-4 text-[10px] font-black text-[#64748B] uppercase tracking-widest">or</span>
+                  <span className="relative z-10 bg-white px-3 text-[9px] font-black text-[#64748B] uppercase tracking-widest">or</span>
                </div>
 
                <button 
                  type="button" 
                  onClick={() => setIsGoogleModalOpen(true)} 
                  disabled={isLoading}
-                 className="w-full bg-white h-14 rounded-2xl border border-slate-100 flex items-center justify-center gap-3 text-sm font-bold text-[#0B1630] hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
+                 className="w-full bg-white h-12 rounded-xl border border-[#E5E7EB] flex items-center justify-center gap-2.5 text-xs font-bold text-[#0F172A] hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
                >
-                  <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />
+                  <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" />
                   Continue with Google
                </button>
             </form>
 
-            <p className="text-center mt-12 text-sm font-medium text-[#64748B]">
-               Don't have an account? <Link to="/register" className="text-[#F97316] font-black hover:underline">Create Account</Link>
-            </p>
+            <div className="text-center mt-8 text-xs font-medium text-[#64748B]">
+               Need a restaurant workspace? <Link to="/register" className="text-[#F97316] font-bold hover:underline ml-1">Create Restaurant →</Link>
+            </div>
          </div>
       </div>
       <GoogleComingSoonModal isOpen={isGoogleModalOpen} onClose={() => setIsGoogleModalOpen(false)} />
