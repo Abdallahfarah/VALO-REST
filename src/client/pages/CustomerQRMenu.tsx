@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   Bell, Receipt, ShoppingCart, ShoppingBag, Plus, Minus, X, Check,
-  ChevronRight, ArrowLeft, Info, Loader2, Sparkles, CreditCard, Landmark
+  ChevronRight, ArrowLeft, Info, Loader2, Sparkles, CreditCard, Landmark, ChevronsDown
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
@@ -106,6 +106,45 @@ export const CustomerQRMenu = () => {
 
     loadMenuData();
   }, [slug, tableNumber]);
+
+  // 2. Scroll Guidance Indicator detection
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+
+  useEffect(() => {
+    if (loading || !tenant) return;
+
+    const checkScroll = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = window.innerHeight || document.documentElement.clientHeight;
+
+      const isAtTop = scrollY < 5;
+      const hasMoreContent = scrollHeight > clientHeight + 30;
+
+      setShowScrollIndicator(isAtTop && hasMoreContent);
+    };
+
+    window.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll, { passive: true });
+
+    const resizeObserver = new ResizeObserver(() => {
+      checkScroll();
+    });
+
+    const timer = setTimeout(checkScroll, 100);
+    const timer2 = setTimeout(checkScroll, 500);
+
+    resizeObserver.observe(document.body);
+    checkScroll();
+
+    return () => {
+      window.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+      resizeObserver.disconnect();
+      clearTimeout(timer);
+      clearTimeout(timer2);
+    };
+  }, [loading, tenant, categories, products, selectedCategory]);
 
   if (loading) {
     return (
@@ -567,6 +606,16 @@ export const CustomerQRMenu = () => {
           </div>
         </div>
       )}
+
+      {/* Smart Scroll Guidance UX Indicator */}
+      <div className={cn(
+        "fixed left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-40 bg-white/95 backdrop-blur-sm border border-orange-100 px-5 py-2.5 rounded-full shadow-[0_8px_30px_rgb(249,115,22,0.08)] pointer-events-none transition-all duration-500 ease-in-out transform",
+        showScrollIndicator ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95 pointer-events-none",
+        cart.length > 0 ? "bottom-24" : "bottom-8"
+      )}>
+        <span className="text-[10px] font-black text-[#0B1630] uppercase tracking-widest whitespace-nowrap">Scroll for more items</span>
+        <ChevronsDown size={14} className="text-[#F97316] animate-bounce mt-0.5" />
+      </div>
     </div>
   );
 };
