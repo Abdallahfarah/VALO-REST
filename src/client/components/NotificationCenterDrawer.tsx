@@ -83,11 +83,13 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
       case 'SUCCESS': return <CheckCircle className="w-5 h-5 text-emerald-500" />;
       case 'WARNING': return <AlertTriangle className="w-5 h-5 text-amber-500" />;
       case 'ERROR': return <AlertCircle className="w-5 h-5 text-red-500" />;
-      case 'ORDER': return <ShoppingCart className="w-5 h-5 text-blue-500" />;
+      case 'ORDER': 
+      case 'ORDER_READY': return <ShoppingCart className="w-5 h-5 text-blue-500" />;
       case 'PAYMENT': return <CreditCard className="w-5 h-5 text-green-500" />;
       case 'STAFF': return <UserCheck className="w-5 h-5 text-indigo-500" />;
       case 'SUBSCRIPTION': return <DollarSign className="w-5 h-5 text-orange-500" />;
       case 'PLATFORM': return <Globe className="w-5 h-5 text-purple-500" />;
+      case 'TABLE_REQUEST': return <UserCheck className="w-5 h-5 text-indigo-500" />;
       default: return <Info className="w-5 h-5 text-slate-500" />;
     }
   };
@@ -124,7 +126,7 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
       readMutation.mutate(n.id);
     }
     // Deep linking / Navigation helper
-    if (n.type === 'ORDER') {
+    if (n.type === 'ORDER' || n.type === 'ORDER_READY') {
       window.location.href = '/admin/orders';
     } else if (n.type === 'PAYMENT') {
       window.location.href = '/admin/payments';

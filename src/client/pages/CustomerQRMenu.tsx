@@ -254,7 +254,7 @@ export const CustomerQRMenu = () => {
       const loc = tableNumber ? `Table ${tableNumber}` : 'QR Menu';
       await NotificationService.createNotification({
         tenantId: tenant.id,
-        type: 'CALL_WAITER',
+        role: 'WAITER',
         title: `Waiter Service Needed - ${loc}`,
         message: `Customer at ${loc} has clicked Call Waiter. Please attend promptly.`
       });
@@ -274,7 +274,7 @@ export const CustomerQRMenu = () => {
       const loc = tableNumber ? `Table ${tableNumber}` : 'QR Menu';
       await NotificationService.createNotification({
         tenantId: tenant.id,
-        type: 'REQUEST_BILL',
+        role: 'CASHIER',
         title: `Bill Requested - ${loc}`,
         message: `Customer at ${loc} requested their bill invoice.`
       });
@@ -330,7 +330,7 @@ export const CustomerQRMenu = () => {
       const tableLabel = tableNumber ? `Table ${tableNumber}` : 'QR Mobile';
       await NotificationService.createNotification({
         tenantId: tenant.id,
-        type: 'ORDER_PLACED',
+        role: null,
         title: `New QR Order - ${tableLabel}`,
         message: `Customer ${customerName.trim()} placed self-order of ${cart.length} items (Total: ${tenant.currency_symbol || 'ETB'} ${cartTotal.toFixed(2)}).`
       });

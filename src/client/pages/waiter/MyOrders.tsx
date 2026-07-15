@@ -14,7 +14,9 @@ import {
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../../../lib/supabase';
 import { OrderService } from '../../services/ApiService';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
@@ -23,14 +25,36 @@ export const MyOrders = () => {
   const { tenant } = useTenant();
   const { user } = useAuth();
 
+  const queryClient = useQueryClient();
+
   const { data: allOrders = [] } = useQuery({
     queryKey: ['orders', tenant?.id],
     queryFn: () => OrderService.getOrders(tenant?.id || ''),
     enabled: !!tenant?.id,
   });
 
-  // Filter orders assigned to this waiter
-  const waiterOrders = allOrders.filter((o: any) => o.waiterId === user?.id);
+  // Realtime subscription for orders
+  useEffect(() => {
+    if (!tenant?.id) return;
+
+    const channel = supabase
+      .channel('waiter-orders-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `tenant_id=eq.${tenant.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['orders', tenant.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tenant?.id, queryClient]);
+
+  // Filter orders assigned to this waiter OR newly placed QR orders
+  const waiterOrders = allOrders.filter((o: any) => o.waiterId === user?.id || (o.customerName && o.customerName.includes('(QR')));
 
   // Compute KPIs dynamically
   const activeOrdersCount = waiterOrders.filter((o: any) => o.status !== 'COMPLETED' && o.status !== 'CANCELED').length;

@@ -877,16 +877,30 @@ export const NotificationService = {
 
     const { data, error } = await query;
     if (error) throw error;
-    return (data || []).map((n: any) => ({
-      id: n.id,
-      tenantId: n.tenant_id,
-      userId: n.user_id,
-      type: n.type,
-      title: n.title,
-      message: n.message,
-      isRead: n.is_read,
-      createdAt: n.created_at,
-    }));
+    return (data || []).map((n: any) => {
+      // Derive the type from title/message since notifications table lacks a type column
+      let derivedType = 'SYSTEM';
+      const titleLower = n.title?.toLowerCase() || '';
+      const messageLower = n.message?.toLowerCase() || '';
+      if (titleLower.includes('order') || messageLower.includes('order')) {
+        derivedType = 'ORDER_READY';
+      } else if (titleLower.includes('waiter') || titleLower.includes('service') || messageLower.includes('waiter')) {
+        derivedType = 'TABLE_REQUEST';
+      } else if (titleLower.includes('bill') || titleLower.includes('invoice') || messageLower.includes('bill')) {
+        derivedType = 'SYSTEM';
+      }
+      return {
+        id: n.id,
+        tenantId: n.tenant_id,
+        userId: n.user_id,
+        role: n.role,
+        type: derivedType,
+        title: n.title,
+        message: n.message,
+        isRead: n.is_read,
+        createdAt: n.created_at,
+      };
+    });
   },
 
   async markAsRead(notificationId: string) {
@@ -914,7 +928,7 @@ export const NotificationService = {
       .insert({
         tenant_id: notification.tenantId,
         user_id: notification.userId || null,
-        type: notification.type || 'SYSTEM',
+        role: notification.role || null,
         title: notification.title,
         message: notification.message,
         is_read: false,
