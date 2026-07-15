@@ -6,8 +6,7 @@ import {
   EyeOff,
   Zap, 
   ChefHat, 
-  Smartphone,
-  ArrowRight
+  Smartphone
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../../services/AuthService';
@@ -127,18 +126,6 @@ export const Login = () => {
       const data = await AuthService.login({ email, password });
       const role = data.user?.user_metadata?.role;
       navigate(getRoleRoute(role));
-    } catch (err: any) {
-      setError(getErrorMessage(err));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await AuthService.loginWithGoogle();
     } catch (err: any) {
       setError(getErrorMessage(err));
     } finally {
