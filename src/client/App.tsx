@@ -41,63 +41,28 @@ import { Restaurants } from './pages/superadmin/Restaurants';
 import { QrOrdering } from './pages/QrOrdering';
 import { CustomerQRMenu } from './pages/CustomerQRMenu';
 
-// ─── Safe lazy loading wrapper with auto-retry and stale chunk recovery ───
-const safeLazy = <T extends React.ComponentType<any>>(
-  importFn: () => Promise<{ default: T }>
-) => {
-  return React.lazy(async () => {
-    let retries = 2;
-    while (retries > 0) {
-      try {
-        const module = await importFn();
-        return module;
-      } catch (error: any) {
-        retries -= 1;
-        console.warn(`Dynamic import failed. Retrying... (${retries} retries left)`, error);
-        if (retries === 0) {
-          const isChunkError = 
-            error?.message?.includes('Failed to fetch') ||
-            error?.message?.includes('dynamically imported module') ||
-            error?.message?.includes('loading chunk');
-          if (isChunkError) {
-            const hasReloaded = sessionStorage.getItem('valo_chunk_reload');
-            if (!hasReloaded) {
-              sessionStorage.setItem('valo_chunk_reload', 'true');
-              window.location.reload();
-              return new Promise<{ default: T }>(() => {}); // Keep pending to avoid rendering crashes
-            }
-          }
-          throw error;
-        }
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-    throw new Error('Failed to load lazy component');
-  });
-};
-
 // ─── Lazy-loaded page chunks ───
 
 // Admin pages
-const Dashboard = safeLazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
-const Menu = safeLazy(() => import('./pages/Menu').then(m => ({ default: m.Menu })));
-const Staff = safeLazy(() => import('./pages/Staff').then(m => ({ default: m.Staff })));
-const Reports = safeLazy(() => import('./pages/Reports').then(m => ({ default: m.Reports })));
-const Settings = safeLazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const Dashboard = React.lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const Menu = React.lazy(() => import('./pages/Menu').then(m => ({ default: m.Menu })));
+const Staff = React.lazy(() => import('./pages/Staff').then(m => ({ default: m.Staff })));
+const Reports = React.lazy(() => import('./pages/Reports').then(m => ({ default: m.Reports })));
+const Settings = React.lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 
 // Waiter pages
-const WaiterDashboard = safeLazy(() => import('./pages/waiter/Dashboard').then(m => ({ default: m.WaiterDashboard })));
+const WaiterDashboard = React.lazy(() => import('./pages/waiter/Dashboard').then(m => ({ default: m.WaiterDashboard })));
 
 // KDS pages
-const KDSReports = safeLazy(() => import('./pages/kds/KDSReports').then(m => ({ default: m.KDSReports })));
+const KDSReports = React.lazy(() => import('./pages/kds/KDSReports').then(m => ({ default: m.KDSReports })));
 
 // SuperAdmin pages
-const Overview = safeLazy(() => import('./pages/superadmin/Overview').then(m => ({ default: m.Overview })));
-const Subscriptions = safeLazy(() => import('./pages/superadmin/Subscriptions').then(m => ({ default: m.Subscriptions })));
-const UserProvisioning = safeLazy(() => import('./pages/superadmin/UserProvisioning').then(m => ({ default: m.UserProvisioning })));
-const PlatformRevenue = safeLazy(() => import('./pages/superadmin/PlatformRevenue').then(m => ({ default: m.PlatformRevenue })));
-const AuditLogs = safeLazy(() => import('./pages/superadmin/AuditLogs').then(m => ({ default: m.AuditLogs })));
-const SystemHealth = safeLazy(() => import('./pages/superadmin/SystemHealth').then(m => ({ default: m.SystemHealth })));
+const Overview = React.lazy(() => import('./pages/superadmin/Overview').then(m => ({ default: m.Overview })));
+const Subscriptions = React.lazy(() => import('./pages/superadmin/Subscriptions').then(m => ({ default: m.Subscriptions })));
+const UserProvisioning = React.lazy(() => import('./pages/superadmin/UserProvisioning').then(m => ({ default: m.UserProvisioning })));
+const PlatformRevenue = React.lazy(() => import('./pages/superadmin/PlatformRevenue').then(m => ({ default: m.PlatformRevenue })));
+const AuditLogs = React.lazy(() => import('./pages/superadmin/AuditLogs').then(m => ({ default: m.AuditLogs })));
+const SystemHealth = React.lazy(() => import('./pages/superadmin/SystemHealth').then(m => ({ default: m.SystemHealth })));
 
 // ─── QueryClient with production defaults ───
 const queryClient = new QueryClient({
@@ -237,10 +202,6 @@ const ScrollPersistenceManager = () => {
 };
 
 export const App = () => {
-  React.useEffect(() => {
-    sessionStorage.removeItem('valo_chunk_reload');
-  }, []);
-
   return (
     <ErrorBoundary>
       <style>{globalStyles}</style>

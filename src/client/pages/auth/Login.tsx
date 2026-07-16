@@ -8,7 +8,7 @@ import {
   ChefHat, 
   Smartphone
 } from 'lucide-react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../../services/AuthService';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleComingSoonModal } from '../../components/GoogleComingSoonModal';
@@ -86,19 +86,10 @@ export const Login = () => {
   const [showPassword, setShowPassword] = React.useState(false);
 
   const { role: currentRole } = useAuth();
-  const location = useLocation();
 
   React.useEffect(() => {
     if (user) navigate(getRoleRoute(currentRole));
   }, [user, currentRole, navigate]);
-
-  React.useEffect(() => {
-    if (location.state?.message) {
-      setError(location.state.message);
-      // Clear location state to avoid re-triggering on manual refreshes
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [location, navigate]);
 
   const getErrorMessage = (err: any): string => {
     if (!err) return 'An unexpected error occurred. Please try again.';

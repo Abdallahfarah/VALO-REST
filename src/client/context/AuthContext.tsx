@@ -4,14 +4,13 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import { AuthService } from '../services/AuthService';
 import { useQueryClient } from '@tanstack/react-query';
-import { PageLoader } from '../components/ui/LoadingSpinner';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: string | null;
   loading: boolean;
-  signOut: (message?: string) => Promise<void>;
+  signOut: () => Promise<void>;
   impersonatedTenantId: string | null;
   setImpersonatedTenantId: (id: string | null) => void;
   userTenantId: string | null;
@@ -127,46 +126,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loadSessionAndProfile(session);
     });
 
-    // 3. Register visibility, focus, and online listeners for tab wakeup/session recovery
-    const handleRecovery = async () => {
-      // Only recover session if there was an active user session previously
-      if (!user) return;
-
-      if (document.visibilityState === 'visible') {
-        try {
-          const { data: { session: activeSession }, error } = await supabase.auth.getSession();
-          if (error) throw error;
-
-          if (activeSession) {
-            await loadSessionAndProfile(activeSession);
-            if (activeSession.access_token) {
-              supabase.realtime.setAuth(activeSession.access_token);
-            }
-            queryClient.invalidateQueries();
-          } else {
-            signOut('Your session has expired. Please sign in again.');
-          }
-        } catch (err) {
-          console.error('Session recovery failed during tab wakeup:', err);
-          signOut('Failed to recover session. Please sign in again.');
-        }
-      }
-    };
-
-    window.addEventListener('visibilitychange', handleRecovery);
-    window.addEventListener('focus', handleRecovery);
-    window.addEventListener('online', handleRecovery);
-
     return () => {
       mounted = false;
       subscription.unsubscribe();
-      window.removeEventListener('visibilitychange', handleRecovery);
-      window.removeEventListener('focus', handleRecovery);
-      window.removeEventListener('online', handleRecovery);
     };
-  }, [user, dbRole, userTenantId, queryClient]);
+  }, [user?.id, dbRole, userTenantId]);
 
-  const signOut = async (message?: string) => {
+  const signOut = async () => {
     try {
       await supabase.removeAllChannels();
     } catch (e) {
@@ -203,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserTenantId(null);
     setLoadedUserId(null);
 
-    navigate('/login', { state: { message } });
+    navigate('/login');
   };
 
   const role = impersonatedTenantId ? 'ADMIN' : (dbRole || user?.user_metadata?.role || null);
@@ -220,11 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userTenantId
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {isAuthLoading ? <PageLoader label="Authenticating..." /> : children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

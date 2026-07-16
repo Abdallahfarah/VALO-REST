@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '../../lib/supabase';
 import { toast } from '../lib/toast-store';
-import { PageLoader } from '../components/ui/LoadingSpinner';
 
 const CURRENCY_NAMES: Record<string, string> = {
   USD: 'US Dollar',
@@ -215,7 +214,7 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <TenantContext.Provider value={{ tenant, loading: isTenantLoading, error, setTenant, currencyCode, currencySymbol, currencyName }}>
-      {isTenantLoading ? <PageLoader label="Loading Workspace..." /> : children}
+      {children}
     </TenantContext.Provider>
   );
 };
