@@ -4,53 +4,182 @@ import {
   Lock, 
   Building2, 
   Zap, 
-  ShieldCheck, 
+  ChefHat, 
+  Smartphone,
   ChevronDown,
   UserPlus,
   User,
   Globe,
-  CheckCircle2
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  Phone
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../../services/AuthService';
 import { GoogleComingSoonModal } from '../../components/GoogleComingSoonModal';
+import { cn } from '../../lib/utils';
+
+const ROLE_ROUTES: Record<string, string> = {
+  ADMIN: '/admin',
+  SUPER_ADMIN: '/platform/overview',
+  WAITER: '/waiter/tables',
+  KITCHEN_STAFF: '/kds',
+  CASHIER: '/cashier',
+};
+
+const getRoleRoute = (role?: string | null) =>
+  (role && ROLE_ROUTES[role]) || '/admin';
+
+const animationStyles = `
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(25px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-fade-down {
+  animation: fadeDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-fade-up {
+  animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-in {
+  animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-up {
+  animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-scale-in {
+  animation: scaleIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-float-1 {
+  animation: float 6s ease-in-out infinite;
+}
+.animate-float-2 {
+  animation: float 6s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+.animate-float-3 {
+  animation: float 6s ease-in-out infinite;
+  animation-delay: 3s;
+}
+`;
 
 export const Register = () => {
   const navigate = useNavigate();
+  const [step, setStep] = React.useState(1);
   const [formData, setFormData] = React.useState({
     restaurantName: '',
+    restaurantSlug: '',
+    restaurantType: 'bistro',
+    country: 'US',
+    currency: 'ETB',
     fullName: '',
     email: '',
+    phoneNumber: '',
     password: '',
     confirmPassword: '',
-    currency: 'ETB',
   });
+  const [agreeToTerms, setAgreeToTerms] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = React.useState(false);
 
+  React.useEffect(() => {
+    setFormData({
+      restaurantName: '',
+      restaurantSlug: '',
+      restaurantType: 'bistro',
+      country: 'US',
+      currency: 'ETB',
+      fullName: '',
+      email: '',
+      phoneNumber: '',
+      password: '',
+      confirmPassword: '',
+    });
+    setAgreeToTerms(false);
+    setError(null);
+    setStep(1);
+  }, []);
+
   const getErrorMessage = (err: any): string => {
     if (!err) return 'An unexpected error occurred. Please try again.';
-    console.error('Registration technical error details:', err);
+    console.error('Registration error details:', err);
 
     if (typeof err === 'string') return err;
     if (err.message) {
       if (err.message === '{}' || err.message === '{"message":"{}"}') {
-        return 'Registration server transaction failed. Please check your credentials or contact support.';
+        return 'Registration server transaction failed. Please check details or contact support.';
       }
       return err.message;
     }
     if (err.error_description) return err.error_description;
     if (err.description) return err.description;
-    if (err.error) {
-      if (typeof err.error === 'string') return err.error;
-      if (err.error.message) return err.error.message;
-    }
-    try {
-      const str = JSON.stringify(err);
-      if (str !== '{}') return str;
-    } catch (e) {}
     return 'An unexpected server error occurred. Please try again.';
+  };
+
+  const handleRestaurantNameChange = (val: string) => {
+    const slug = val
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+    setFormData(prev => ({ ...prev, restaurantName: val, restaurantSlug: slug }));
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const nextStep = () => {
+    setError(null);
+    if (step === 1) {
+      if (!formData.restaurantName.trim()) {
+        setError('Restaurant name is required');
+        return;
+      }
+      if (!formData.restaurantSlug.trim()) {
+        setError('Restaurant URL slug is required');
+        return;
+      }
+    } else if (step === 2) {
+      if (!formData.fullName.trim()) {
+        setError('Owner name is required');
+        return;
+      }
+      if (!formData.email.trim()) {
+        setError('Email address is required');
+        return;
+      }
+    }
+    setStep(prev => prev + 1);
+  };
+
+  const prevStep = () => {
+    setError(null);
+    setStep(prev => prev - 1);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,14 +199,25 @@ export const Register = () => {
       return;
     }
 
+    if (!agreeToTerms) {
+      setError('You must agree to the Terms of Service and Privacy Policy');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const data = await AuthService.register(formData);
+      const data = await AuthService.register({
+        email: formData.email,
+        password: formData.password,
+        restaurantName: formData.restaurantName,
+        fullName: formData.fullName,
+        currency: formData.currency,
+      });
+
       if (data.session) {
-        // Auto-confirmed — go straight to dashboard
         navigate('/admin');
       } else {
-        // Should not happen with our trigger, but handle gracefully
-        setError('Account created — please check your email to confirm before signing in.');
+        setError('Account created. Please check your email to confirm before logging in.');
       }
     } catch (err: any) {
       setError(getErrorMessage(err));
@@ -86,271 +226,415 @@ export const Register = () => {
     }
   };
 
-  // @ts-ignore
-  const handleGoogleRegister = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await AuthService.loginWithGoogle();
-    } catch (err: any) {
-      setError(getErrorMessage(err));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-
-  React.useEffect(() => {
-    setFormData({
-      restaurantName: '',
-      fullName: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      currency: 'ETB',
-    });
-    setError(null);
-  }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
   return (
-    <div className="min-h-screen flex">
-      {/* Left Pane - Branding & Features */}
-      <div className="hidden lg:flex w-[40%] bg-[#0B1630] relative overflow-hidden flex-col p-16 text-white">
-         {/* Background Image Overlay */}
-         <div className="absolute inset-0 opacity-20">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#FFFFFF]">
+      <style>{animationStyles}</style>
+
+      {/* Left Pane - Branding, Headlines & Premium Vertical Feature Cards */}
+      <div className="hidden md:flex w-full md:w-[40%] bg-[#0F172A] relative overflow-hidden flex-col p-8 lg:p-16 text-white shrink-0 justify-between md:min-h-screen">
+         {/* Background Image Overlay with deep navy overlay */}
+         <div className="absolute inset-0 opacity-20 select-none pointer-events-none">
             <img 
-              src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=75&w=1200&fm=webp" 
-              alt="Restaurant Interior"
-              className="w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-              width={1200}
-              height={800}
+               src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=75&w=1200&fm=webp" 
+               alt="Restaurant Interior"
+               className="w-full h-full object-cover"
+               loading="lazy"
+               decoding="async"
+               width={1200}
+               height={800}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B1630] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-[#0F172A]/70 mix-blend-multiply" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-transparent" />
          </div>
 
-         <div className="relative z-10">
-            <div className="flex items-center gap-3">
-               <div className="w-12 h-12 bg-[#F97316] rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
-                  <span className="text-white font-black text-2xl">VX</span>
-               </div>
-               <span className="text-2xl font-black tracking-tight">VALO-<span className="text-[#F97316]">REST</span></span>
-            </div>
-
-            <div className="mt-24 space-y-12">
-               <h2 className="text-5xl font-black leading-tight max-w-sm">
-                  Smart Restaurant Management Platform
+         <div className="relative z-10 my-auto space-y-8 lg:space-y-12">
+            <div className="space-y-4 animate-fade-up">
+               <h2 className="text-3xl lg:text-5xl font-bold leading-tight tracking-tight">
+                  Start Your<br />
+                  <span className="text-[#F97316]">Restaurant Journey</span>
                </h2>
-               <p className="text-[#CBD5E1] text-lg leading-relaxed max-w-md">
-                  All-in-one solution to manage your restaurant operations, staff, orders, and customers from anywhere.
+               <p className="text-[#64748B] text-sm lg:text-base leading-relaxed max-w-md font-medium">
+                  Create your workspace and manage POS, Kitchen, Staff, Inventory, Tables and QR Ordering from one intelligent operating system.
                </p>
+            </div>
 
-               <div className="space-y-8 pt-8">
-                  <div className="flex items-center gap-6 group">
-                     <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
-                        <Building2 size={24} />
-                     </div>
-                     <div>
-                        <h3 className="font-bold text-lg">Multi-Tenant SaaS</h3>
-                        <p className="text-[#CBD5E1] text-sm mt-1">Manage multiple restaurants with complete isolation.</p>
-                     </div>
+            {/* Feature Cards: horizontal layout on tablet (md), vertical on desktop (lg) */}
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 lg:gap-6 pt-4">
+               {/* Card 1 */}
+               <div className="flex items-center gap-4 p-4 rounded-[20px] bg-[#1E293B]/40 border border-[#334155]/30 backdrop-blur-sm animate-float-1 hover:border-[#334155]/60 hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0 text-[#F97316]">
+                     <Zap size={20} />
                   </div>
-                  <div className="flex items-center gap-6 group">
-                     <div className="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0 group-hover:bg-orange-500 group-hover:text-white transition-all duration-300">
-                        <Zap size={24} />
-                     </div>
-                     <div>
-                        <h3 className="font-bold text-lg">Lightning Fast POS</h3>
-                        <p className="text-[#CBD5E1] text-sm mt-1">Streamlined operations for maximum efficiency.</p>
-                     </div>
+                  <div>
+                     <h3 className="font-bold text-sm text-white">⚡ Lightning Fast POS</h3>
+                     <p className="text-[#64748B] text-[11px] mt-0.5 font-medium">Process orders in seconds with real-time synchronization.</p>
                   </div>
-                  <div className="flex items-center gap-6 group">
-                     <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
-                        <ShieldCheck size={24} />
-                     </div>
-                     <div>
-                        <h3 className="font-bold text-lg">Secure & Reliable</h3>
-                        <p className="text-[#CBD5E1] text-sm mt-1">Enterprise-grade security and 99.9% uptime.</p>
-                     </div>
+               </div>
+
+               {/* Card 2 */}
+               <div className="flex items-center gap-4 p-4 rounded-[20px] bg-[#1E293B]/40 border border-[#334155]/30 backdrop-blur-sm animate-float-2 hover:border-[#334155]/60 hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-[#10B981]">
+                     <ChefHat size={20} />
+                  </div>
+                  <div>
+                     <h3 className="font-bold text-sm text-white">🍳 Smart Kitchen Display</h3>
+                     <p className="text-[#64748B] text-[11px] mt-0.5 font-medium">Live order updates for every kitchen station.</p>
+                  </div>
+               </div>
+
+               {/* Card 3 */}
+               <div className="flex items-center gap-4 p-4 rounded-[20px] bg-[#1E293B]/40 border border-[#334155]/30 backdrop-blur-sm animate-float-3 hover:border-[#334155]/60 hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 text-[#6366F1]">
+                     <Smartphone size={20} />
+                  </div>
+                  <div>
+                     <h3 className="font-bold text-sm text-white">📱 QR Self Ordering</h3>
+                     <p className="text-[#64748B] text-[11px] mt-0.5 font-medium">Customers scan, order and pay directly from their table.</p>
                   </div>
                </div>
             </div>
          </div>
 
-         <div className="mt-auto relative z-10">
-            <p className="text-[#64748B] text-xs">© 2026 VALO-REST. All rights reserved.</p>
+         {/* Tiny Footer */}
+         <div className="hidden lg:block mt-auto relative z-10 pt-8">
+            <p className="text-[#64748B] text-[10px] font-bold tracking-wider uppercase">Powered by VALO-RES</p>
          </div>
       </div>
 
-      {/* Right Pane - Form */}
-      <div className="flex-1 bg-white flex flex-col p-8 md:p-12 relative overflow-y-auto">
-         <div className="absolute top-8 right-8 cursor-pointer">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-100 text-sm font-bold text-[#0B1630] hover:bg-slate-50 transition-all">
-               <Globe size={16} />
-               English
-               <ChevronDown size={14} className="text-[#94A3B8]" />
+      {/* Right Pane - White Rounded Card Form Container */}
+      <div className="flex-1 bg-slate-50 md:bg-[#FFFFFF] flex flex-col justify-center p-4 sm:p-8 md:p-12 lg:p-16 min-h-screen relative">
+         
+         {/* Mobile Hero Banner */}
+         <div className="relative w-full h-40 overflow-hidden rounded-[20px] mb-6 md:hidden shadow-sm">
+            <img 
+               src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=70&w=600" 
+               alt="Restaurant Interior Mobile"
+               className="w-full h-full object-cover"
+               loading="eager"
+            />
+            <div className="absolute inset-0 bg-[#0F172A]/70 mix-blend-multiply" />
+            <div className="absolute inset-0 p-5 flex flex-col justify-end text-white">
+               <h2 className="text-xl font-bold leading-tight">Start Your Restaurant</h2>
+               <span className="text-[#F97316] text-xs font-bold">Journey with VALO-REST</span>
             </div>
          </div>
 
-         <div className="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full py-12">
-            <div className="mb-10 text-center flex flex-col items-center">
-               <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center mb-6 text-[#F97316]">
-                  <UserPlus size={28} />
+         {/* Form Card */}
+         <div className="w-full max-w-lg bg-[#FFFFFF] rounded-[24px] border border-[#E5E7EB] p-6 sm:p-10 md:p-12 shadow-sm animate-scale-in flex flex-col mx-auto my-auto justify-center">
+            
+            {/* Center Registration Icon */}
+            <div className="mb-4 flex justify-center animate-fade-down">
+               <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center text-[#F97316]">
+                  <UserPlus size={22} />
                </div>
-               <h1 className="text-4xl font-black text-[#0B1630] mb-2">Create Account</h1>
-               <p className="text-[#64748B] font-medium">Get started with your restaurant</p>
             </div>
 
-            <form className="space-y-5" onSubmit={handleSubmit} autoComplete="off">
+            <div className="mb-6 flex flex-col items-center justify-center">
+               <h1 className="text-[32px] sm:text-[40px] font-bold text-[#0F172A] tracking-tight text-center leading-none">Create Your Restaurant</h1>
+               <p className="text-[#64748B] font-medium text-xs sm:text-sm text-center mt-2">Create your restaurant workspace in less than a minute.</p>
+            </div>
+
+            {/* Step Wizard Progress Indicator */}
+            <div className="grid grid-cols-3 gap-2 mb-8 animate-slide-in relative select-none">
+               {[
+                  { label: 'Restaurant', stepNum: 1 },
+                  { label: 'Owner', stepNum: 2 },
+                  { label: 'Security', stepNum: 3 }
+               ].map((item) => (
+                  <div 
+                     key={item.stepNum} 
+                     className="flex flex-col items-center relative cursor-pointer"
+                     onClick={() => {
+                        if (item.stepNum < step) setStep(item.stepNum);
+                     }}
+                  >
+                     <div className={cn(
+                        "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-300 border-2 z-10",
+                        step === item.stepNum ? "border-[#F97316] bg-white text-[#F97316]" : 
+                        step > item.stepNum ? "border-[#10B981] bg-[#10B981] text-white" : 
+                        "border-[#E5E7EB] bg-white text-[#64748B]"
+                     )}>
+                        {step > item.stepNum ? <Check size={12} strokeWidth={3} /> : item.stepNum}
+                     </div>
+                     <span className={cn(
+                        "text-[9px] font-bold uppercase tracking-wider mt-1.5 transition-colors duration-300",
+                        step === item.stepNum ? "text-[#F97316]" : "text-[#64748B]"
+                     )}>
+                        {item.label}
+                     </span>
+                  </div>
+               ))}
+               <div className="absolute top-[14px] left-12 right-12 h-[2px] bg-[#E5E7EB] -z-0" />
+            </div>
+
+            <form className="space-y-4 animate-slide-up" onSubmit={handleSubmit} autoComplete="off">
                {error && (
                  <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-bold">
-                   {error}
+                    {error}
                  </div>
                )}
-               <div className="space-y-2">
-                  <label className="text-[10px] font-black text-[#0B1630] uppercase tracking-widest">Restaurant Name</label>
-                  <div className="relative">
-                     <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94A3B8]" />
-                     <input 
-                       className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-100 bg-slate-50/30 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8] transition-all" 
-                       placeholder="Enter your restaurant name" 
-                       name="restaurantName"
-                       value={formData.restaurantName}
-                       onChange={handleChange}
-                       autoComplete="off"
-                       required
-                     />
-                  </div>
-               </div>
 
-               <div className="space-y-2">
-                  <label className="text-[10px] font-black text-[#0B1630] uppercase tracking-widest">Full Name</label>
-                  <div className="relative">
-                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94A3B8]" />
-                     <input 
-                       className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-100 bg-slate-50/30 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8] transition-all" 
-                       placeholder="Enter your full name" 
-                       name="fullName"
-                       value={formData.fullName}
-                       onChange={handleChange}
-                       autoComplete="off"
-                       required
-                     />
-                  </div>
-               </div>
+               {/* STEP 1: RESTAURANT INFO */}
+               {step === 1 && (
+                  <div className="space-y-4">
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Restaurant Name</label>
+                        <div className="relative">
+                           <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+                           <input 
+                             className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#64748B] transition-all" 
+                             placeholder="Enter restaurant name" 
+                             name="restaurantName"
+                             value={formData.restaurantName}
+                             onChange={(e) => handleRestaurantNameChange(e.target.value)}
+                             required
+                           />
+                        </div>
+                     </div>
 
-               <div className="space-y-2">
-                  <label className="text-[10px] font-black text-[#0B1630] uppercase tracking-widest">Email Address</label>
-                  <div className="relative">
-                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94A3B8]" />
-                     <input 
-                       className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-100 bg-slate-50/30 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8] transition-all" 
-                       placeholder="Enter your email" 
-                       type="email"
-                       name="email"
-                       value={formData.email}
-                       onChange={handleChange}
-                       autoComplete="off"
-                       required
-                     />
-                  </div>
-               </div>
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Restaurant URL Slug</label>
+                        <div className="relative">
+                           <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+                           <input 
+                             className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-slate-50/50 text-xs text-[#0F172A] font-bold transition-all focus:outline-none" 
+                             placeholder="auto-generated-slug" 
+                             name="restaurantSlug"
+                             value={formData.restaurantSlug}
+                             readOnly
+                           />
+                        </div>
+                     </div>
 
-               <div className="space-y-2">
-                  <label className="text-[10px] font-black text-[#0B1630] uppercase tracking-widest">Currency</label>
-                  <div className="relative">
-                     <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94A3B8]" />
-                     <select 
-                       className="w-full h-14 pl-12 pr-10 rounded-2xl border border-slate-100 bg-slate-50/30 text-sm focus:outline-none focus:border-[#F97316] font-bold text-[#0B1630] transition-all appearance-none cursor-pointer" 
-                       name="currency"
-                       value={formData.currency}
-                       onChange={handleChange}
-                       required
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                           <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Type</label>
+                           <div className="relative">
+                              <select 
+                                className="w-full h-12 pl-4 pr-10 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#F97316] transition-all appearance-none cursor-pointer" 
+                                name="restaurantType"
+                                value={formData.restaurantType}
+                                onChange={handleChange}
+                                required
+                              >
+                                 <option value="bistro">Bistro</option>
+                                 <option value="cafe">Cafe</option>
+                                 <option value="dining">Fine Dining</option>
+                                 <option value="fastfood">Fast Food</option>
+                                 <option value="truck">Food Truck</option>
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
+                           </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                           <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Country</label>
+                           <div className="relative">
+                              <select 
+                                className="w-full h-12 pl-4 pr-10 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#F97316] transition-all appearance-none cursor-pointer" 
+                                name="country"
+                                value={formData.country}
+                                onChange={handleChange}
+                                required
+                              >
+                                 <option value="ET">Ethiopia</option>
+                                 <option value="US">United States</option>
+                                 <option value="UK">United Kingdom</option>
+                                 <option value="CA">Canada</option>
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
+                           </div>
+                        </div>
+                     </div>
+
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Currency</label>
+                        <div className="relative">
+                           <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+                           <select 
+                             className="w-full h-12 pl-11 pr-10 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#F97316] transition-all appearance-none cursor-pointer" 
+                             name="currency"
+                             value={formData.currency}
+                             onChange={handleChange}
+                             required
+                           >
+                              <option value="ETB">🇪🇹 Ethiopian Birr (ETB)</option>
+                              <option value="USD">🇺🇸 US Dollar (USD)</option>
+                              <option value="EUR">🇪🇺 Euro (EUR)</option>
+                           </select>
+                           <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
+                        </div>
+                     </div>
+
+                     <button 
+                       type="button" 
+                       onClick={nextStep}
+                       className="w-full bg-[#F97316] text-white h-12 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#ea580c] transition-all flex items-center justify-center gap-2 mt-4"
                      >
-                        <option value="ETB">🇪🇹 Ethiopian Birr (ETB)</option>
-                        <option value="USD">🇺🇸 US Dollar (USD)</option>
-                     </select>
-                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                        Next: Owner Details <ArrowRight size={14} />
+                     </button>
                   </div>
-               </div>
+               )}
 
-               <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                     <label className="text-[10px] font-black text-[#0B1630] uppercase tracking-widest">Password</label>
-                     <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                        <input 
-                          className="w-full h-14 pl-10 pr-4 rounded-2xl border border-slate-100 bg-slate-50/30 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8] transition-all" 
-                          placeholder="Password" 
-                          type="password"
-                          name="password"
-                          value={formData.password}
-                          onChange={handleChange}
-                          autoComplete="new-password"
-                          required
-                        />
+               {/* STEP 2: OWNER INFO */}
+               {step === 2 && (
+                  <div className="space-y-4">
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Owner Full Name</label>
+                        <div className="relative">
+                           <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+                           <input 
+                             className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#64748B] transition-all" 
+                             placeholder="Enter owner's full name" 
+                             name="fullName"
+                             value={formData.fullName}
+                             onChange={handleChange}
+                             required
+                           />
+                        </div>
+                     </div>
+
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Email Address</label>
+                        <div className="relative">
+                           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+                           <input 
+                             className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#64748B] transition-all" 
+                             placeholder="Enter email address" 
+                             type="email"
+                             name="email"
+                             value={formData.email}
+                             onChange={handleChange}
+                             required
+                           />
+                        </div>
+                     </div>
+
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Phone Number</label>
+                        <div className="relative">
+                           <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+                           <input 
+                             className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#64748B] transition-all" 
+                             placeholder="Enter phone number" 
+                             type="tel"
+                             name="phoneNumber"
+                             value={formData.phoneNumber}
+                             onChange={handleChange}
+                           />
+                        </div>
+                     </div>
+
+                     <div className="flex gap-4 pt-2">
+                        <button 
+                          type="button" 
+                          onClick={prevStep}
+                          className="flex-1 bg-white border border-[#E5E7EB] text-[#0F172A] h-12 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                        >
+                           <ArrowLeft size={14} /> Back
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={nextStep}
+                          className="flex-1 bg-[#F97316] text-white h-12 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#ea580c] transition-all flex items-center justify-center gap-2"
+                        >
+                           Next <ArrowRight size={14} />
+                        </button>
                      </div>
                   </div>
-                  <div className="space-y-2">
-                     <label className="text-[10px] font-black text-[#0B1630] uppercase tracking-widest">Confirm Password</label>
-                     <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                        <input 
-                          className="w-full h-14 pl-10 pr-4 rounded-2xl border border-slate-100 bg-slate-50/30 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8] transition-all" 
-                          placeholder="Confirm" 
-                          type="password"
-                          name="confirmPassword"
-                          value={formData.confirmPassword}
-                          onChange={handleChange}
-                          autoComplete="new-password"
-                          required
-                        />
+               )}
+
+               {/* STEP 3: SECURITY INFO */}
+               {step === 3 && (
+                  <div className="space-y-4">
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Password</label>
+                        <div className="relative">
+                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+                           <input 
+                             className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#64748B] transition-all" 
+                             placeholder="Min. 8 characters" 
+                             type="password"
+                             name="password"
+                             value={formData.password}
+                             onChange={handleChange}
+                             required
+                           />
+                        </div>
+                     </div>
+
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Confirm Password</label>
+                        <div className="relative">
+                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+                           <input 
+                             className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#64748B] transition-all" 
+                             placeholder="Re-enter password" 
+                             type="password"
+                             name="confirmPassword"
+                             value={formData.confirmPassword}
+                             onChange={handleChange}
+                             required
+                           />
+                        </div>
+                     </div>
+
+                     <div className="flex items-start gap-3 py-2">
+                        <button
+                           type="button"
+                           onClick={() => setAgreeToTerms(!agreeToTerms)}
+                           className="mt-0.5 flex items-center justify-center shrink-0 w-4 h-4 rounded border transition-all cursor-pointer bg-transparent"
+                        >
+                           <div className={cn(
+                             "w-3 h-3 rounded-sm flex items-center justify-center transition-all",
+                             agreeToTerms ? "bg-[#F97316]" : "bg-transparent border-slate-300"
+                           )}>
+                              {agreeToTerms && <Check size={8} strokeWidth={4} className="text-white" />}
+                           </div>
+                        </button>
+                        <p className="text-[11px] font-bold text-[#64748B] leading-normal select-none">
+                           I agree to the <a href="#" className="text-[#F97316] hover:underline">Terms of Service</a> and <a href="#" className="text-[#F97316] hover:underline">Privacy Policy</a>
+                        </p>
+                     </div>
+
+                     <div className="flex gap-4">
+                        <button 
+                          type="button" 
+                          onClick={prevStep}
+                          className="flex-1 bg-white border border-[#E5E7EB] text-[#0F172A] h-12 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                        >
+                           <ArrowLeft size={14} /> Back
+                        </button>
+                        <button 
+                          type="submit"
+                          disabled={isLoading}
+                          className="flex-1 bg-[#F97316] text-white h-12 rounded-xl font-bold text-xs uppercase tracking-widest shadow-sm hover:bg-[#ea580c] transition-all active:scale-[0.98] disabled:opacity-50"
+                        >
+                           {isLoading ? 'Creating...' : 'Create Restaurant'}
+                        </button>
                      </div>
                   </div>
-               </div>
+               )}
 
-               <div className="flex items-start gap-3 py-2">
-                  <div className="mt-1">
-                     <div className="w-5 h-5 rounded-md border-2 border-orange-500 bg-orange-500 flex items-center justify-center">
-                        <CheckCircle2 size={12} className="text-white" />
-                     </div>
-                  </div>
-                  <p className="text-xs font-medium text-[#64748B] leading-relaxed">
-                     I agree to the <a href="#" className="text-[#F97316] font-bold hover:underline">Terms of Service</a> and <a href="#" className="text-[#F97316] font-bold hover:underline">Privacy Policy</a>
-                  </p>
-               </div>
-
-               <button 
-                 type="submit"
-                 disabled={isLoading}
-                 className="w-full bg-[#F97316] text-white h-14 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-orange-500/20 hover:bg-[#ea580c] transition-all active:scale-[0.98] mt-4 disabled:opacity-50"
-               >
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
-               </button>
-
-               <div className="relative py-6 flex flex-col items-center">
+               <div className="relative py-4 flex flex-col items-center">
                   <div className="absolute top-1/2 w-full h-[1px] bg-slate-100" />
-                  <span className="relative z-10 bg-white px-4 text-[10px] font-black text-[#94A3B8] uppercase tracking-widest">or</span>
+                  <span className="relative z-10 bg-white px-3 text-[9px] font-black text-[#64748B] uppercase tracking-widest">or</span>
                </div>
 
                <button 
-                  type="button" 
-                  onClick={() => setIsGoogleModalOpen(true)} 
-                  disabled={isLoading}
-                  className="w-full bg-white h-14 rounded-2xl border border-slate-100 flex items-center justify-center gap-3 text-sm font-bold text-[#0B1630] hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
+                 type="button" 
+                 onClick={() => setIsGoogleModalOpen(true)} 
+                 disabled={isLoading}
+                 className="w-full bg-white h-12 rounded-xl border border-[#E5E7EB] flex items-center justify-center gap-2.5 text-xs font-bold text-[#0F172A] hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
                >
-                  <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" loading="lazy" decoding="async" width={20} height={20} />
+                  <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" loading="lazy" decoding="async" width={16} height={16} />
                   Continue with Google
                </button>
             </form>
 
-            <p className="text-center mt-10 text-sm font-medium text-[#64748B]">
-               Already have an account? <Link to="/login" className="text-[#F97316] font-black hover:underline">Sign In</Link>
-            </p>
+            <div className="text-center mt-8 text-xs font-medium text-[#64748B]">
+               Already have an account? <Link to="/login" className="text-[#F97316] font-bold hover:underline ml-1">Sign In →</Link>
+            </div>
          </div>
       </div>
       <GoogleComingSoonModal isOpen={isGoogleModalOpen} onClose={() => setIsGoogleModalOpen(false)} />
