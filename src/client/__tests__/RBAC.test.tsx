@@ -87,7 +87,7 @@ describe('RBAC Routing Protection', () => {
     expect(screen.getByText(/Admin Content/i)).toBeInTheDocument();
   });
 
-  it('redirects unauthorized waiter user to waiter tables landing page', () => {
+  it('redirects unauthorized waiter user to waiter landing page', () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: 'w-1', email: 'waiter@test.com' } as any,
       session: {} as any,
@@ -109,7 +109,7 @@ describe('RBAC Routing Protection', () => {
               </ProtectedRoute>
             }
           />
-          <Route path="/waiter/tables" element={<div>Waiter Home</div>} />
+          <Route path="/waiter" element={<div>Waiter Home</div>} />
         </Routes>
       </MemoryRouter>
     );

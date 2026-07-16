@@ -18,7 +18,7 @@ import valoLogo from '../../../../Docs/valo-logo.webp';
 const ROLE_ROUTES: Record<string, string> = {
   ADMIN: '/admin',
   SUPER_ADMIN: '/platform/overview',
-  WAITER: '/waiter/tables',
+  WAITER: '/waiter',
   KITCHEN_STAFF: '/kds',
   CASHIER: '/cashier',
 };

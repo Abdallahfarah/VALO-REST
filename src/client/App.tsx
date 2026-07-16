@@ -93,7 +93,7 @@ const globalStyles = `
 const ROLE_HOME: Record<string, string> = {
   ADMIN: '/admin',
   SUPER_ADMIN: '/platform/overview',
-  WAITER: '/waiter/tables',
+  WAITER: '/waiter',
   KITCHEN_STAFF: '/kds',
   CASHIER: '/cashier',
 };
