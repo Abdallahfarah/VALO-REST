@@ -20,16 +20,7 @@ import { AuthService } from '../../services/AuthService';
 import { GoogleComingSoonModal } from '../../components/GoogleComingSoonModal';
 import { cn } from '../../lib/utils';
 
-const ROLE_ROUTES: Record<string, string> = {
-  ADMIN: '/admin',
-  SUPER_ADMIN: '/platform/overview',
-  WAITER: '/waiter/tables',
-  KITCHEN_STAFF: '/kds',
-  CASHIER: '/cashier',
-};
 
-const getRoleRoute = (role?: string | null) =>
-  (role && ROLE_ROUTES[role]) || '/admin';
 
 const animationStyles = `
 @keyframes fadeDown {
