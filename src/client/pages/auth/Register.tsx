@@ -91,6 +91,7 @@ export const Register = () => {
     password: '',
     confirmPassword: '',
     planName: 'PRO',
+    isTrial: false,
   });
   const [agreeToTerms, setAgreeToTerms] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -109,6 +110,7 @@ export const Register = () => {
       password: '',
       confirmPassword: '',
       planName: 'PRO',
+      isTrial: false,
     });
     setAgreeToTerms(false);
     setError(null);
@@ -224,37 +226,46 @@ export const Register = () => {
       });
 
       if (data.session) {
-        // Post-registration: update the subscription plan based on selection
+        // Post-registration: update the subscription plan based on selection & trial config
         try {
           const selectedPlan = formData.planName;
-          if (selectedPlan !== 'PRO') {
-            let tenantId: string | null = null;
-            for (let i = 0; i < 5; i++) {
-              const { data: userProfile } = await supabase
-                .from('users')
-                .select('tenant_id')
-                .eq('id', data.user.id)
-                .maybeSingle();
-              if (userProfile?.tenant_id) {
-                tenantId = userProfile.tenant_id;
-                break;
-              }
-              await new Promise(resolve => setTimeout(resolve, 500));
+          const isTrial = formData.isTrial;
+
+          let tenantId: string | null = null;
+          for (let i = 0; i < 5; i++) {
+            const { data: userProfile } = await supabase
+              .from('users')
+              .select('tenant_id')
+              .eq('id', data.user.id)
+              .maybeSingle();
+            if (userProfile?.tenant_id) {
+              tenantId = userProfile.tenant_id;
+              break;
             }
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
 
-            if (tenantId) {
-              const { data: planData } = await supabase
-                .from('plans')
-                .select('id')
-                .eq('name', selectedPlan)
-                .single();
+          if (tenantId) {
+            const { data: planData } = await supabase
+              .from('plans')
+              .select('id')
+              .eq('name', selectedPlan)
+              .single();
 
-              if (planData?.id) {
-                await supabase
-                  .from('subscriptions')
-                  .update({ plan_id: planData.id })
-                  .eq('tenant_id', tenantId);
-              }
+            if (planData?.id) {
+              const statusVal = isTrial ? 'TRIAL' : 'ACTIVE';
+              const currentPeriodEnd = isTrial 
+                ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+                : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+              await supabase
+                .from('subscriptions')
+                .update({ 
+                  plan_id: planData.id,
+                  status: statusVal,
+                  current_period_end: currentPeriodEnd
+                })
+                .eq('tenant_id', tenantId);
             }
           }
         } catch (err) {
@@ -490,6 +501,25 @@ export const Register = () => {
                               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
                            </div>
                         </div>
+                     </div>
+
+                     {/* 14-Day Trial Checkbox */}
+                     <div className="flex items-center gap-3 pt-2">
+                        <button
+                           type="button"
+                           onClick={() => setFormData(prev => ({ ...prev, isTrial: !prev.isTrial }))}
+                           className="flex items-center justify-center shrink-0 w-4 h-4 rounded border transition-all cursor-pointer bg-transparent"
+                        >
+                           <div className={cn(
+                             "w-3 h-3 rounded-sm flex items-center justify-center transition-all",
+                             formData.isTrial ? "bg-[#F97316]" : "bg-transparent border-slate-300"
+                           )}>
+                              {formData.isTrial && <Check size={8} strokeWidth={4} className="text-white" />}
+                           </div>
+                        </button>
+                        <span className="text-[11px] font-bold text-[#64748B] select-none">
+                           Start with 14-Day Trial
+                        </span>
                      </div>
 
                      <button 
