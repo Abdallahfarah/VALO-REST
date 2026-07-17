@@ -9,7 +9,6 @@ import {
   ChevronDown,
   UserPlus,
   User,
-  Globe,
   ArrowRight,
   ArrowLeft,
   Check,
@@ -264,17 +263,19 @@ export const Register = () => {
           const isTrial = formData.isTrial;
 
           let tenantId: string | null = null;
-          for (let i = 0; i < 5; i++) {
-            const { data: userProfile } = await supabase
-              .from('users')
-              .select('tenant_id')
-              .eq('id', data.user.id)
-              .maybeSingle();
-            if (userProfile?.tenant_id) {
-              tenantId = userProfile.tenant_id;
-              break;
+          if (data.user) {
+            for (let i = 0; i < 5; i++) {
+              const { data: userProfile } = await supabase
+                .from('users')
+                .select('tenant_id')
+                .eq('id', data.user.id)
+                .maybeSingle();
+              if (userProfile?.tenant_id) {
+                tenantId = userProfile.tenant_id;
+                break;
+              }
+              await new Promise(resolve => setTimeout(resolve, 500));
             }
-            await new Promise(resolve => setTimeout(resolve, 500));
           }
 
           if (tenantId) {
