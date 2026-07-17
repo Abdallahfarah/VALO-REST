@@ -16,14 +16,11 @@ import {
   Phone
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { AuthService } from '../../services/AuthService';
 import { GoogleComingSoonModal } from '../../components/GoogleComingSoonModal';
 import { cn } from '../../lib/utils';
 import { supabase } from '../../../lib/supabase';
-import { 
-  getPlanNameForRestaurantType, 
-  getDisplayPlanName 
-} from '../../services/SubscriptionMappingService';
 
 const animationStyles = `
 @keyframes fadeDown {
@@ -86,7 +83,6 @@ export const Register = () => {
   const [formData, setFormData] = React.useState({
     restaurantName: '',
     restaurantSlug: '',
-    restaurantType: 'casual',
     country: 'ET',
     currency: 'ETB',
     fullName: '',
@@ -94,6 +90,7 @@ export const Register = () => {
     phoneNumber: '',
     password: '',
     confirmPassword: '',
+    planName: 'PRO',
   });
   const [agreeToTerms, setAgreeToTerms] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -104,7 +101,6 @@ export const Register = () => {
     setFormData({
       restaurantName: '',
       restaurantSlug: '',
-      restaurantType: 'casual',
       country: 'ET',
       currency: 'ETB',
       fullName: '',
@@ -112,11 +108,25 @@ export const Register = () => {
       phoneNumber: '',
       password: '',
       confirmPassword: '',
+      planName: 'PRO',
     });
     setAgreeToTerms(false);
     setError(null);
     setStep(1);
   }, []);
+
+  // Fetch available subscription plans from database
+  const { data: dbPlans = [] } = useQuery({
+    queryKey: ['register-plans'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('id, name, price')
+        .order('price', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    }
+  });
 
   const getErrorMessage = (err: any): string => {
     if (!err) return 'An unexpected error occurred. Please try again.';
@@ -214,9 +224,9 @@ export const Register = () => {
       });
 
       if (data.session) {
-        // Post-registration: update the subscription plan based on restaurantType
+        // Post-registration: update the subscription plan based on selection
         try {
-          const selectedPlan = getPlanNameForRestaurantType(formData.restaurantType);
+          const selectedPlan = formData.planName;
           if (selectedPlan !== 'PRO') {
             let tenantId: string | null = null;
             for (let i = 0; i < 5; i++) {
@@ -262,7 +272,10 @@ export const Register = () => {
     }
   };
 
-  const activePlanName = getDisplayPlanName(getPlanNameForRestaurantType(formData.restaurantType));
+  const getPlanDisplayName = (name: string) => {
+    if (!name) return '';
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#FFFFFF]">
@@ -432,41 +445,6 @@ export const Register = () => {
 
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                           <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Type</label>
-                           <div className="relative">
-                              <select 
-                                className="w-full h-12 pl-4 pr-10 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#F97316] transition-all appearance-none cursor-pointer" 
-                                name="restaurantType"
-                                value={formData.restaurantType}
-                                onChange={handleChange}
-                                required
-                              >
-                                 <option value="fastfood">🍔 Fast Food</option>
-                                 <option value="casual">🍽 Casual Dining</option>
-                                 <option value="finedining">🥩 Fine Dining</option>
-                                 <option value="cafe">☕ Cafe</option>
-                                 <option value="bakery">🥐 Bakery</option>
-                                 <option value="pizzeria">🍕 Pizzeria</option>
-                                 <option value="bbq">🍗 BBQ & Grill</option>
-                                 <option value="sushi">🍣 Sushi</option>
-                                 <option value="asian">🍜 Asian Restaurant</option>
-                                 <option value="healthy">🥗 Healthy Food</option>
-                                 <option value="dessert">🍰 Dessert Shop</option>
-                                 <option value="juice">🍹 Juice Bar</option>
-                                 <option value="lounge">🍺 Bar & Lounge</option>
-                                 <option value="truck">🚚 Food Truck</option>
-                                 <option value="local">🍛 Local Restaurant</option>
-                                 <option value="seafood">🍤 Seafood</option>
-                                 <option value="middleeast">🥙 Middle Eastern</option>
-                                 <option value="steakhouse">🥩 Steakhouse</option>
-                                 <option value="buffet">🍲 Buffet</option>
-                                 <option value="other">Other</option>
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
-                           </div>
-                        </div>
-
-                        <div className="space-y-1.5">
                            <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Country</label>
                            <div className="relative">
                               <select 
@@ -484,15 +462,34 @@ export const Register = () => {
                               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
                            </div>
                         </div>
-                     </div>
 
-                     {/* Recommended Plan Informational Card */}
-                     <div className="p-4 rounded-xl border border-orange-500/10 bg-orange-50/50 space-y-1 text-left mt-2">
-                        <h4 className="text-[10px] font-bold text-[#F97316] uppercase tracking-wider">Recommended Plan</h4>
-                        <div className="text-xs font-bold text-[#0F172A]">{activePlanName}</div>
-                        <p className="text-[10px] text-[#64748B] font-medium leading-normal">
-                           Automatically selected based on your restaurant type. You can upgrade or downgrade later from Subscription Settings.
-                        </p>
+                        <div className="space-y-1.5">
+                           <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Subscription Plan</label>
+                           <div className="relative">
+                              <select 
+                                className="w-full h-12 pl-4 pr-10 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#F97316] transition-all appearance-none cursor-pointer" 
+                                name="planName"
+                                value={formData.planName}
+                                onChange={handleChange}
+                                required
+                              >
+                                 {dbPlans.length > 0 ? (
+                                    dbPlans.map((p: any) => (
+                                      <option key={p.id} value={p.name}>
+                                        {getPlanDisplayName(p.name)}
+                                      </option>
+                                    ))
+                                 ) : (
+                                    <>
+                                       <option value="BASIC">Basic</option>
+                                       <option value="PRO">Pro</option>
+                                       <option value="ENTERPRISE">Enterprise</option>
+                                    </>
+                                 )}
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
+                           </div>
+                        </div>
                      </div>
 
                      <button 
