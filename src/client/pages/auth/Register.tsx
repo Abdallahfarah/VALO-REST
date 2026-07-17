@@ -87,7 +87,7 @@ export const Register = () => {
     currency: 'ETB',
     fullName: '',
     email: '',
-    phoneNumber: '',
+    phoneNumber: '+251',
     password: '',
     confirmPassword: '',
     planName: 'PRO',
@@ -106,7 +106,7 @@ export const Register = () => {
       currency: 'ETB',
       fullName: '',
       email: '',
-      phoneNumber: '',
+      phoneNumber: '+251',
       password: '',
       confirmPassword: '',
       planName: 'PRO',
@@ -161,11 +161,34 @@ export const Register = () => {
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const countryVal = e.target.value;
-    let currencyVal = 'ETB';
-    if (countryVal === 'US') currencyVal = 'USD';
-    else if (countryVal === 'UK') currencyVal = 'GBP';
-    else if (countryVal === 'CA') currencyVal = 'CAD';
-    setFormData(prev => ({ ...prev, country: countryVal, currency: currencyVal }));
+    const oldPrefix = formData.country === 'ET' ? '+251' : '+252';
+    const newPrefix = countryVal === 'ET' ? '+251' : '+252';
+    const currencyVal = countryVal === 'ET' ? 'ETB' : 'USD';
+
+    let newPhone = newPrefix;
+    if (formData.phoneNumber.startsWith(oldPrefix)) {
+      const suffix = formData.phoneNumber.slice(oldPrefix.length);
+      newPhone = newPrefix + suffix;
+    }
+
+    setFormData(prev => ({ 
+      ...prev, 
+      country: countryVal, 
+      currency: currencyVal,
+      phoneNumber: newPhone
+    }));
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const prefix = formData.country === 'ET' ? '+251' : '+252';
+    const val = e.target.value;
+    
+    if (!val.startsWith(prefix)) {
+      setFormData(prev => ({ ...prev, phoneNumber: prefix }));
+    } else {
+      const suffix = val.slice(prefix.length).replace(/[^\d]/g, '');
+      setFormData(prev => ({ ...prev, phoneNumber: prefix + suffix }));
+    }
   };
 
   const nextStep = () => {
@@ -183,6 +206,15 @@ export const Register = () => {
       if (!formData.email.trim()) {
         setError('Email address is required');
         return;
+      }
+      
+      const prefix = formData.country === 'ET' ? '+251' : '+252';
+      if (formData.phoneNumber && formData.phoneNumber !== prefix) {
+        const suffix = formData.phoneNumber.slice(prefix.length);
+        if (suffix.length !== 9) {
+          setError(`Phone number must contain exactly 9 digits after the country code (${prefix} XXXXXXXXX)`);
+          return;
+        }
       }
     }
     setStep(prev => prev + 1);
@@ -266,6 +298,15 @@ export const Register = () => {
                   current_period_end: currentPeriodEnd
                 })
                 .eq('tenant_id', tenantId);
+            }
+
+            // Update phone number on the tenant table if entered
+            const prefix = formData.country === 'ET' ? '+251' : '+252';
+            if (formData.phoneNumber && formData.phoneNumber !== prefix) {
+              await supabase
+                .from('tenants')
+                .update({ phone: formData.phoneNumber })
+                .eq('id', tenantId);
             }
           }
         } catch (err) {
@@ -465,10 +506,8 @@ export const Register = () => {
                                 onChange={handleCountryChange}
                                 required
                               >
-                                 <option value="ET">Ethiopia</option>
-                                 <option value="US">United States</option>
-                                 <option value="UK">United Kingdom</option>
-                                 <option value="CA">Canada</option>
+                                 <option value="ET">🇪🇹 Ethiopia</option>
+                                 <option value="SO">🇸🇴 Somalia</option>
                               </select>
                               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
                            </div>
@@ -576,7 +615,7 @@ export const Register = () => {
                              type="tel"
                              name="phoneNumber"
                              value={formData.phoneNumber}
-                             onChange={handleChange}
+                             onChange={handlePhoneChange}
                            />
                         </div>
                      </div>
