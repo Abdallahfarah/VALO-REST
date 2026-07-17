@@ -76,6 +76,11 @@ const animationStyles = `
 }
 `;
 
+const getPhonePrefix = (country: string) => {
+  if (country === 'ET') return '+251';
+  return '+252';
+};
+
 export const Register = () => {
   const navigate = useNavigate();
   const [step, setStep] = React.useState(1);
@@ -160,8 +165,8 @@ export const Register = () => {
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const countryVal = e.target.value;
-    const oldPrefix = formData.country === 'ET' ? '+251' : '+252';
-    const newPrefix = countryVal === 'ET' ? '+251' : '+252';
+    const oldPrefix = getPhonePrefix(formData.country);
+    const newPrefix = getPhonePrefix(countryVal);
     const currencyVal = countryVal === 'ET' ? 'ETB' : 'USD';
 
     let newPhone = newPrefix;
@@ -179,7 +184,7 @@ export const Register = () => {
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const prefix = formData.country === 'ET' ? '+251' : '+252';
+    const prefix = getPhonePrefix(formData.country);
     const val = e.target.value;
     
     if (!val.startsWith(prefix)) {
@@ -207,7 +212,7 @@ export const Register = () => {
         return;
       }
       
-      const prefix = formData.country === 'ET' ? '+251' : '+252';
+      const prefix = getPhonePrefix(formData.country);
       if (formData.phoneNumber && formData.phoneNumber !== prefix) {
         const suffix = formData.phoneNumber.slice(prefix.length);
         if (suffix.length !== 9) {
@@ -302,7 +307,7 @@ export const Register = () => {
             }
 
             // Update phone number on the tenant table if entered
-            const prefix = formData.country === 'ET' ? '+251' : '+252';
+            const prefix = getPhonePrefix(formData.country);
             if (formData.phoneNumber && formData.phoneNumber !== prefix) {
               await supabase
                 .from('tenants')
@@ -507,8 +512,9 @@ export const Register = () => {
                                 onChange={handleCountryChange}
                                 required
                               >
-                                 <option value="ET">🇪🇹 Ethiopia</option>
-                                 <option value="SO">🇸🇴 Somalia</option>
+                                 <option value="ET">🇪🇹 Ethiopia (ET)</option>
+                                 <option value="SO">🇸🇴 Somalia (SO)</option>
+                                 <option value="SL">🏳️ Somaliland (SL)</option>
                               </select>
                               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
                            </div>
@@ -586,7 +592,7 @@ export const Register = () => {
                              value={formData.fullName}
                              onChange={handleChange}
                              required
-                           />
+                          />
                         </div>
                      </div>
 
