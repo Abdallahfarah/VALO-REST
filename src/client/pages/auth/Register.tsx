@@ -19,8 +19,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../../services/AuthService';
 import { GoogleComingSoonModal } from '../../components/GoogleComingSoonModal';
 import { cn } from '../../lib/utils';
-
-
+import { supabase } from '../../../lib/supabase';
+import { 
+  getPlanNameForRestaurantType, 
+  getDisplayPlanName 
+} from '../../services/SubscriptionMappingService';
 
 const animationStyles = `
 @keyframes fadeDown {
@@ -83,8 +86,8 @@ export const Register = () => {
   const [formData, setFormData] = React.useState({
     restaurantName: '',
     restaurantSlug: '',
-    restaurantType: 'bistro',
-    country: 'US',
+    restaurantType: 'casual',
+    country: 'ET',
     currency: 'ETB',
     fullName: '',
     email: '',
@@ -101,8 +104,8 @@ export const Register = () => {
     setFormData({
       restaurantName: '',
       restaurantSlug: '',
-      restaurantType: 'bistro',
-      country: 'US',
+      restaurantType: 'casual',
+      country: 'ET',
       currency: 'ETB',
       fullName: '',
       email: '',
@@ -144,15 +147,20 @@ export const Register = () => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const countryVal = e.target.value;
+    let currencyVal = 'ETB';
+    if (countryVal === 'US') currencyVal = 'USD';
+    else if (countryVal === 'UK') currencyVal = 'GBP';
+    else if (countryVal === 'CA') currencyVal = 'CAD';
+    setFormData(prev => ({ ...prev, country: countryVal, currency: currencyVal }));
+  };
+
   const nextStep = () => {
     setError(null);
     if (step === 1) {
       if (!formData.restaurantName.trim()) {
         setError('Restaurant name is required');
-        return;
-      }
-      if (!formData.restaurantSlug.trim()) {
-        setError('Restaurant URL slug is required');
         return;
       }
     } else if (step === 2) {
@@ -206,6 +214,43 @@ export const Register = () => {
       });
 
       if (data.session) {
+        // Post-registration: update the subscription plan based on restaurantType
+        try {
+          const selectedPlan = getPlanNameForRestaurantType(formData.restaurantType);
+          if (selectedPlan !== 'PRO') {
+            let tenantId: string | null = null;
+            for (let i = 0; i < 5; i++) {
+              const { data: userProfile } = await supabase
+                .from('users')
+                .select('tenant_id')
+                .eq('id', data.user.id)
+                .maybeSingle();
+              if (userProfile?.tenant_id) {
+                tenantId = userProfile.tenant_id;
+                break;
+              }
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            if (tenantId) {
+              const { data: planData } = await supabase
+                .from('plans')
+                .select('id')
+                .eq('name', selectedPlan)
+                .single();
+
+              if (planData?.id) {
+                await supabase
+                  .from('subscriptions')
+                  .update({ plan_id: planData.id })
+                  .eq('tenant_id', tenantId);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Failed to update subscription plan:', err);
+        }
+
         navigate('/admin');
       } else {
         setError('Account created. Please check your email to confirm before logging in.');
@@ -216,6 +261,8 @@ export const Register = () => {
       setIsLoading(false);
     }
   };
+
+  const activePlanName = getDisplayPlanName(getPlanNameForRestaurantType(formData.restaurantType));
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#FFFFFF]">
@@ -337,7 +384,7 @@ export const Register = () => {
                      className="flex flex-col items-center relative cursor-pointer"
                      onClick={() => {
                         if (item.stepNum < step) setStep(item.stepNum);
-                     }}
+                      }}
                   >
                      <div className={cn(
                         "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-300 border-2 z-10",
@@ -383,20 +430,6 @@ export const Register = () => {
                         </div>
                      </div>
 
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Restaurant URL Slug</label>
-                        <div className="relative">
-                           <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
-                           <input 
-                             className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-slate-50/50 text-xs text-[#0F172A] font-bold transition-all focus:outline-none" 
-                             placeholder="auto-generated-slug" 
-                             name="restaurantSlug"
-                             value={formData.restaurantSlug}
-                             readOnly
-                           />
-                        </div>
-                     </div>
-
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                            <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Type</label>
@@ -408,11 +441,26 @@ export const Register = () => {
                                 onChange={handleChange}
                                 required
                               >
-                                 <option value="bistro">Bistro</option>
-                                 <option value="cafe">Cafe</option>
-                                 <option value="dining">Fine Dining</option>
-                                 <option value="fastfood">Fast Food</option>
-                                 <option value="truck">Food Truck</option>
+                                 <option value="fastfood">🍔 Fast Food</option>
+                                 <option value="casual">🍽 Casual Dining</option>
+                                 <option value="finedining">🥩 Fine Dining</option>
+                                 <option value="cafe">☕ Cafe</option>
+                                 <option value="bakery">🥐 Bakery</option>
+                                 <option value="pizzeria">🍕 Pizzeria</option>
+                                 <option value="bbq">🍗 BBQ & Grill</option>
+                                 <option value="sushi">🍣 Sushi</option>
+                                 <option value="asian">🍜 Asian Restaurant</option>
+                                 <option value="healthy">🥗 Healthy Food</option>
+                                 <option value="dessert">🍰 Dessert Shop</option>
+                                 <option value="juice">🍹 Juice Bar</option>
+                                 <option value="lounge">🍺 Bar & Lounge</option>
+                                 <option value="truck">🚚 Food Truck</option>
+                                 <option value="local">🍛 Local Restaurant</option>
+                                 <option value="seafood">🍤 Seafood</option>
+                                 <option value="middleeast">🥙 Middle Eastern</option>
+                                 <option value="steakhouse">🥩 Steakhouse</option>
+                                 <option value="buffet">🍲 Buffet</option>
+                                 <option value="other">Other</option>
                               </select>
                               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
                            </div>
@@ -425,7 +473,7 @@ export const Register = () => {
                                 className="w-full h-12 pl-4 pr-10 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#F97316] transition-all appearance-none cursor-pointer" 
                                 name="country"
                                 value={formData.country}
-                                onChange={handleChange}
+                                onChange={handleCountryChange}
                                 required
                               >
                                  <option value="ET">Ethiopia</option>
@@ -438,23 +486,13 @@ export const Register = () => {
                         </div>
                      </div>
 
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Currency</label>
-                        <div className="relative">
-                           <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
-                           <select 
-                             className="w-full h-12 pl-11 pr-10 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#F97316] transition-all appearance-none cursor-pointer" 
-                             name="currency"
-                             value={formData.currency}
-                             onChange={handleChange}
-                             required
-                           >
-                              <option value="ETB">🇪🇹 Ethiopian Birr (ETB)</option>
-                              <option value="USD">🇺🇸 US Dollar (USD)</option>
-                              <option value="EUR">🇪🇺 Euro (EUR)</option>
-                           </select>
-                           <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
-                        </div>
+                     {/* Recommended Plan Informational Card */}
+                     <div className="p-4 rounded-xl border border-orange-500/10 bg-orange-50/50 space-y-1 text-left mt-2">
+                        <h4 className="text-[10px] font-bold text-[#F97316] uppercase tracking-wider">Recommended Plan</h4>
+                        <div className="text-xs font-bold text-[#0F172A]">{activePlanName}</div>
+                        <p className="text-[10px] text-[#64748B] font-medium leading-normal">
+                           Automatically selected based on your restaurant type. You can upgrade or downgrade later from Subscription Settings.
+                        </p>
                      </div>
 
                      <button 
@@ -507,7 +545,7 @@ export const Register = () => {
                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
                            <input 
                              className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#64748B] transition-all" 
-                             placeholder="Enter phone number" 
+                             placeholder="Enter phone number (optional)" 
                              type="tel"
                              name="phoneNumber"
                              value={formData.phoneNumber}
