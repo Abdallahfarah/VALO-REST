@@ -1,4 +1,5 @@
-import { Bell, ChevronDown, Menu } from 'lucide-react';
+import { Bell, Menu, ChevronDown } from 'lucide-react';
+import { UserProfileHeaderSection } from '../../../components/layout/UserProfileHeaderSection';
 
 export interface WaiterHeaderProps {
   onToggleSidebar?: () => void;
@@ -30,15 +31,8 @@ export const WaiterHeader = ({ onToggleSidebar }: WaiterHeaderProps) => {
           <span className="absolute -top-1 -right-1 bg-[#4F46E5] text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">3</span>
         </div>
         
-        <div className="flex items-center gap-3 pl-6 border-l border-slate-100">
-          <div className="flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0B1630]">Alex Turner</span>
-            <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Waiter</span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden border border-slate-200">
-            <img src="https://ui-avatars.com/api/?name=Alex+Turner&background=0B1630&color=fff" alt="Alex Turner" loading="lazy" decoding="async" width={40} height={40} />
-          </div>
-          <ChevronDown size={14} className="text-[#94A3B8]" />
+        <div className="pl-6 border-l border-slate-100">
+          <UserProfileHeaderSection />
         </div>
       </div>
     </header>

@@ -1,4 +1,5 @@
 import { Bell, ChevronDown, Menu } from 'lucide-react';
+import { UserProfileHeaderSection } from '../../../components/layout/UserProfileHeaderSection';
 
 export interface CashierHeaderProps {
   onToggleSidebar?: () => void;
@@ -30,15 +31,8 @@ export const CashierHeader = ({ onToggleSidebar }: CashierHeaderProps) => {
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">2</span>
         </div>
         
-        <div className="flex items-center gap-3 pl-6 border-l border-slate-100">
-          <div className="flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0B1630]">Cashier User</span>
-            <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Cashier</span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-[#0B1630] flex items-center justify-center text-white font-black text-lg">
-            K
-          </div>
-          <ChevronDown size={14} className="text-[#94A3B8]" />
+        <div className="pl-6 border-l border-slate-100">
+          <UserProfileHeaderSection />
         </div>
       </div>
     </header>

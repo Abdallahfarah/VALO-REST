@@ -7,6 +7,7 @@ import { supabase } from '../../../lib/supabase';
 import { MessagingService } from '../../services/ApiService';
 import { NotificationCenterDrawer } from '../NotificationCenterDrawer';
 import { MessagingCenterDrawer } from '../MessagingCenterDrawer';
+import { UserProfileHeaderSection } from './UserProfileHeaderSection';
 
 export interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -157,16 +158,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
         
         <div className="h-8 w-[1px] bg-[#E5E7EB] hidden sm:block" />
 
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#0B1630] text-white flex items-center justify-center font-bold text-sm shadow-sm">
-            {avatarChar}
-          </div>
-          <div className="hidden sm:flex flex-col text-left">
-            <span className="text-xs font-bold text-[#0B1630] truncate max-w-[120px]">{user?.email || fullName}</span>
-            <span className="text-[9px] font-bold text-[#94A3B8] tracking-widest uppercase mt-0.5">{role}</span>
-          </div>
-          <ChevronDown className="w-3.5 h-3.5 text-[#94A3B8] cursor-pointer hover:text-[#0B1630] transition-colors" />
-        </div>
+        <UserProfileHeaderSection />
       </div>
 
       {isNotificationsOpen && (
