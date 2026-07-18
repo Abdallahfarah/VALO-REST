@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { RestaurantIdentityHeader } from './RestaurantIdentityHeader';
 import { ValoSaaSBackground } from './ValoSaaSBackground';
 
 export const MainLayout = () => {

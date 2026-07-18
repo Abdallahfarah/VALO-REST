@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { KDSSidebar } from './KDSSidebar';
 import { KDSHeader } from './KDSHeader';
-import { RestaurantIdentityHeader } from '../../../components/layout/RestaurantIdentityHeader';
 import { ValoSaaSBackground } from '../../../components/layout/ValoSaaSBackground';
 
 export const KDSLayout = () => {

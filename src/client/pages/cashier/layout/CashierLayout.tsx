@@ -4,7 +4,6 @@ import { CashierSidebar } from './CashierSidebar';
 import { CashierHeader } from './CashierHeader';
 import { ValoAiPanel } from '../../../components/ValoAiPanel';
 import { Sparkles } from 'lucide-react';
-import { RestaurantIdentityHeader } from '../../../components/layout/RestaurantIdentityHeader';
 import { ValoSaaSBackground } from '../../../components/layout/ValoSaaSBackground';
 
 export const CashierLayout = () => {
