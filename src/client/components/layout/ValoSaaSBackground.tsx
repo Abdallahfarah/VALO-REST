@@ -1,126 +1,209 @@
 import { cn } from '../../lib/utils';
 
 interface ValoSaaSBackgroundProps {
+  type?: 'admin' | 'waiter' | 'cashier' | 'kds' | 'customer' | 'owner' | 'default';
   className?: string;
-  type?: string; // Kept for compatibility, but layout matches the reference composition globally
 }
 
-export const ValoSaaSBackground = ({ className }: ValoSaaSBackgroundProps) => {
-  return (
-    <div className={cn("absolute inset-0 overflow-hidden select-none pointer-events-none z-0 bg-[#FAFAFE]", className)}>
-      {/* 1. Soft mesh gradients (blurred large circles) - Opacity and blur optimized for responsive layouts */}
-      <div className="absolute top-[-15%] left-[-10%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] rounded-full bg-[#4F46E5]/[0.07] blur-[70px] md:blur-[110px] transition-all duration-500" />
-      <div className="absolute bottom-[-10%] left-[-5%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-[#F97316]/[0.05] blur-[70px] md:blur-[110px] transition-all duration-500" />
-      <div className="absolute bottom-[-15%] right-[-10%] w-[65vw] h-[65vw] max-w-[700px] max-h-[700px] rounded-full bg-[#F97316]/[0.07] blur-[80px] md:blur-[125px] transition-all duration-500" />
+export const ValoSaaSBackground = ({ type = 'default', className }: ValoSaaSBackgroundProps) => {
+  // Renders role-specific lightweight SVG outline illustrations
+  const renderIllustrations = () => {
+    switch (type) {
+      case 'admin':
+        return (
+          <>
+            {/* POS Terminal - Bottom Right */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[8%] right-[4%] w-40 h-40 md:w-72 md:h-72 text-[#64748B]/20 pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <rect x="15" y="15" width="70" height="70" rx="6" />
+              <rect x="23" y="23" width="54" height="34" rx="2" />
+              {/* Keyboard Grid */}
+              <line x1="28" y1="65" x2="38" y2="65" />
+              <line x1="45" y1="65" x2="55" y2="65" />
+              <line x1="62" y1="65" x2="72" y2="65" />
+              <line x1="28" y1="73" x2="38" y2="73" />
+              <line x1="45" y1="73" x2="55" y2="73" />
+              <line x1="62" y1="73" x2="72" y2="73" />
+              {/* Card slot reader */}
+              <path d="M 85 30 L 92 30 L 92 50 L 85 50" />
+            </svg>
 
-      {/* 2. Abstract flowing SVG wave lines (Top Section) - Clustered wavy lines */}
-      <svg viewBox="0 0 1440 220" fill="none" className="absolute top-0 left-0 w-full opacity-[0.04] text-[#4F46E5] pointer-events-none">
-        {/* Base ribbon path (always visible) */}
-        <path d="M 0 50 C 300 170, 650 30, 1000 110 C 1180 150, 1340 70, 1440 40" stroke="currentColor" strokeWidth="1" />
-        
-        {/* Layered ribbon lines (density reduced on mobile) */}
-        <path d="M 0 60 C 310 160, 660 40, 1010 100 C 1190 140, 1350 80, 1440 50" stroke="currentColor" strokeWidth="1" className="hidden sm:block" />
-        <path d="M 0 70 C 320 150, 670 50, 1020 90 C 1200 130, 1360 90, 1440 60" stroke="currentColor" strokeWidth="1" className="hidden md:block" />
-        <path d="M 0 80 C 330 140, 680 60, 1030 80 C 1210 120, 1370 100, 1440 70" stroke="currentColor" strokeWidth="1.5" className="hidden lg:block" />
-        <path d="M 0 90 C 340 130, 690 70, 1040 70 C 1220 110, 1380 110, 1440 80" stroke="currentColor" strokeWidth="1" className="hidden lg:block" />
+            {/* Restaurant Table - Top Left */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[12%] left-[4%] w-40 h-40 md:w-64 md:h-64 text-[#64748B]/20 pointer-events-none select-none hidden md:block transition-all duration-300">
+              <line x1="15" y1="45" x2="85" y2="45" />
+              <path d="M 30 45 L 35 78 M 70 45 L 65 78" />
+              {/* Left Chair */}
+              <path d="M 12 45 C 12 35, 20 35, 20 45" />
+              <line x1="16" y1="45" x2="16" y2="60" />
+              {/* Right Chair */}
+              <path d="M 88 45 C 88 35, 80 35, 80 45" />
+              <line x1="84" y1="45" x2="84" y2="60" />
+            </svg>
+          </>
+        );
+
+      case 'waiter':
+        return (
+          <>
+            {/* Serving Tray - Bottom Left */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[10%] left-[5%] w-40 h-40 md:w-64 md:h-64 text-[#64748B]/25 pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <line x1="10" y1="70" x2="90" y2="70" />
+              {/* Cloche dome */}
+              <path d="M 20 70 A 30 30 0 0 1 80 70" />
+              {/* Handle */}
+              <path d="M 46 38 A 4 4 0 1 1 54 38" />
+              <path d="M 15 70 L 10 75 L 90 75 L 85 70" />
+            </svg>
+
+            {/* Chef Hat - Top Right */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[10%] right-[6%] w-40 h-40 md:w-60 md:h-60 text-[#64748B]/20 pointer-events-none select-none hidden md:block transition-all duration-300">
+              {/* Base band */}
+              <rect x="30" y="62" width="40" height="12" rx="1" />
+              {/* Fluffy folds */}
+              <path d="M 30 62 C 15 50, 30 25, 45 32 C 48 18, 52 18, 55 32 C 70 25, 85 50, 70 62" />
+            </svg>
+          </>
+        );
+
+      case 'cashier':
+        return (
+          <>
+            {/* Payment Terminal - Bottom Right */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[8%] right-[5%] w-40 h-40 md:w-72 md:h-72 text-[#64748B]/20 pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <rect x="25" y="10" width="50" height="80" rx="8" />
+              <rect x="32" y="18" width="36" height="28" rx="2" />
+              {/* Keypad */}
+              <circle cx="39" cy="55" r="2.5" />
+              <circle cx="50" cy="55" r="2.5" />
+              <circle cx="61" cy="55" r="2.5" />
+              <circle cx="39" cy="65" r="2.5" />
+              <circle cx="50" cy="65" r="2.5" />
+              <circle cx="61" cy="65" r="2.5" />
+              <circle cx="39" cy="75" r="2.5" />
+              <circle cx="50" cy="75" r="2.5" />
+              <circle cx="61" cy="75" r="2.5" />
+              {/* Paper receipt coming out from top */}
+              <path d="M 38 10 L 38 5 L 42 7 L 46 5 L 50 7 L 54 5 L 58 7 L 62 5 L 62 10" />
+            </svg>
+
+            {/* Receipt - Top Left */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[12%] left-[4%] w-40 h-40 md:w-60 md:h-60 text-[#64748B]/20 pointer-events-none select-none hidden md:block transition-all duration-300">
+              <path d="M 25 15 L 75 15 L 75 82 L 70 78 L 65 82 L 60 78 L 55 82 L 50 78 L 45 82 L 40 78 L 35 82 L 30 78 L 25 82 Z" />
+              {/* Receipt detail lines */}
+              <line x1="35" y1="30" x2="65" y2="30" />
+              <line x1="35" y1="42" x2="55" y2="42" />
+              <line x1="35" y1="54" x2="65" y2="54" />
+              <line x1="35" y1="66" x2="48" y2="66" />
+            </svg>
+          </>
+        );
+
+      case 'kds':
+        return (
+          <>
+            {/* Kitchen Display - Bottom Right */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[8%] right-[5%] w-40 h-40 md:w-72 md:h-72 text-[#64748B]/20 pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <rect x="12" y="20" width="76" height="50" rx="4" />
+              <path d="M 45 70 L 40 85 L 60 85 L 55 70" />
+              {/* Grid content columns */}
+              <line x1="37" y1="20" x2="37" y2="70" />
+              <line x1="63" y1="20" x2="63" y2="70" />
+              {/* Tasks representation */}
+              <rect x="18" y="26" width="14" height="8" rx="1" />
+              <rect x="18" y="38" width="14" height="8" rx="1" />
+              <rect x="43" y="26" width="14" height="8" rx="1" />
+              <rect x="69" y="26" width="14" height="8" rx="1" />
+            </svg>
+
+            {/* Chef Hat - Top Left */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[12%] left-[4%] w-40 h-40 md:w-60 md:h-60 text-[#64748B]/20 pointer-events-none select-none hidden md:block transition-all duration-300">
+              <rect x="30" y="62" width="40" height="12" rx="1" />
+              <path d="M 30 62 C 15 50, 30 25, 45 32 C 48 18, 52 18, 55 32 C 70 25, 85 50, 70 62" />
+            </svg>
+          </>
+        );
+
+      case 'customer':
+        return (
+          <>
+            {/* QR Code - Bottom Right */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[6%] right-[4%] w-32 h-32 md:w-60 md:h-60 text-[#64748B]/20 pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <rect x="10" y="10" width="80" height="80" rx="6" />
+              {/* Markers */}
+              <rect x="20" y="20" width="20" height="20" rx="2" />
+              <rect x="24" y="24" width="12" height="12" rx="1" />
+              <rect x="60" y="20" width="20" height="20" rx="2" />
+              <rect x="64" y="24" width="12" height="12" rx="1" />
+              <rect x="20" y="60" width="20" height="20" rx="2" />
+              <rect x="24" y="64" width="12" height="12" rx="1" />
+              {/* Random blocks representation */}
+              <rect x="60" y="60" width="8" height="8" rx="1" />
+              <rect x="72" y="72" width="8" height="8" rx="1" />
+              <rect x="60" y="72" width="6" height="6" rx="1" />
+              <rect x="72" y="60" width="6" height="6" rx="1" />
+            </svg>
+
+            {/* Serving Tray - Top Left */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[10%] left-[5%] w-32 h-32 md:w-56 md:h-56 text-[#64748B]/20 pointer-events-none select-none hidden md:block transition-all duration-300">
+              <line x1="10" y1="70" x2="90" y2="70" />
+              <path d="M 20 70 A 30 30 0 0 1 80 70" />
+              <path d="M 46 38 A 4 4 0 1 1 54 38" />
+            </svg>
+          </>
+        );
+
+      case 'owner':
+        return (
+          <>
+            {/* Analytics Outline - Bottom Right */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[8%] right-[5%] w-40 h-40 md:w-72 md:h-72 text-[#64748B]/25 pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <path d="M 15 15 L 15 85 L 85 85" />
+              {/* Curved line representing graph */}
+              <path d="M 15 75 Q 30 45, 45 60 T 75 25" />
+              {/* Dots on graph points */}
+              <circle cx="15" cy="75" r="2" fill="currentColor" />
+              <circle cx="34" cy="53" r="2" fill="currentColor" />
+              <circle cx="45" cy="60" r="2" fill="currentColor" />
+              <circle cx="75" cy="25" r="2" fill="currentColor" />
+            </svg>
+
+            {/* Serving Tray - Top Left */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[12%] left-[4%] w-40 h-40 md:w-64 md:h-64 text-[#64748B]/20 pointer-events-none select-none hidden md:block transition-all duration-300">
+              <line x1="10" y1="70" x2="90" y2="70" />
+              <path d="M 20 70 A 30 30 0 0 1 80 70" />
+              <path d="M 46 38 A 4 4 0 1 1 54 38" />
+            </svg>
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className={cn("absolute inset-0 overflow-hidden select-none pointer-events-none z-0", className)}>
+      {/* 1. Soft mesh gradients (blurred large circles) */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/5 blur-[120px] transition-all duration-500" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-orange-500/4 blur-[120px] transition-all duration-500" />
+
+      {/* 2. Abstract flowing SVG wave lines (Top Section) */}
+      <svg viewBox="0 0 1440 200" fill="none" className="absolute top-0 left-0 w-full opacity-[0.03] text-[#64748B] pointer-events-none">
+        <path d="M 0 60 C 320 180, 720 20, 1080 120 C 1260 170, 1380 90, 1440 60 L 1440 0 L 0 0 Z" fill="currentColor" />
+        <path d="M 0 90 C 380 40, 680 180, 1020 90 C 1200 45, 1350 140, 1440 120" stroke="currentColor" strokeWidth="1.5" />
       </svg>
 
-      {/* 3. Dot grid pattern (Top Right) - Scaled down on mobile */}
-      <svg className="absolute top-0 right-0 w-[200px] h-[200px] md:w-[400px] md:h-[400px] opacity-[0.04] text-[#64748B] pointer-events-none" fill="currentColor">
+      {/* 3. Dot grid pattern (Top Right) */}
+      <svg className="absolute top-0 right-0 w-[400px] h-[400px] opacity-[0.03] text-[#64748B] pointer-events-none" fill="currentColor">
         <defs>
-          <pattern id="bg-dot-grid" width="22" height="22" patternUnits="userSpaceOnUse">
-            <circle cx="2.5" cy="2.5" r="1.5" />
+          <pattern id="bg-dot-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1.5" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#bg-dot-grid)" />
+        <rect width="100%" height="100%" fill="url(#bg-dot-pattern)" />
       </svg>
 
-      {/* 4. Large Outline Restaurant Illustrations (Hidden on Mobile/Tablet to avoid distraction) */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none select-none overflow-hidden">
-        
-        {/* Handheld POS Terminal - Mid-Left (rotated slightly counter-clockwise) */}
-        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute left-[3%] top-[25%] lg:top-[30%] w-36 h-36 lg:w-48 lg:h-48 text-[#64748B]/20 rotate-[-12deg] transition-all duration-300 hidden lg:block">
-          <rect x="22" y="12" width="56" height="76" rx="9" />
-          <rect x="29" y="19" width="42" height="24" rx="2.5" />
-          {/* Screen details */}
-          <line x1="35" y1="25" x2="65" y2="25" />
-          <line x1="35" y1="32" x2="52" y2="32" />
-          {/* Keypad */}
-          <rect x="29" y="50" width="10" height="7" rx="1" />
-          <rect x="45" y="50" width="10" height="7" rx="1" />
-          <rect x="61" y="50" width="10" height="7" rx="1" />
-          <rect x="29" y="62" width="10" height="7" rx="1" />
-          <rect x="45" y="62" width="10" height="7" rx="1" />
-          <rect x="61" y="62" width="10" height="7" rx="1" />
-          <rect x="29" y="74" width="10" height="7" rx="1" />
-          <rect x="45" y="74" width="10" height="7" rx="1" />
-          <rect x="61" y="74" width="10" height="7" rx="1" />
-        </svg>
-
-        {/* Restaurant Table & Chairs - Bottom-Left */}
-        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute left-[4%] bottom-[12%] lg:bottom-[15%] w-40 h-40 lg:w-56 lg:h-56 text-[#64748B]/20 transition-all duration-300 hidden lg:block">
-          <line x1="28" y1="62" x2="72" y2="62" />
-          <line x1="50" y1="62" x2="50" y2="80" />
-          <line x1="42" y1="80" x2="58" y2="80" />
-          {/* Left Chair */}
-          <path d="M 20 46 L 20 66 L 30 66" />
-          <line x1="22" y1="66" x2="19" y2="82" />
-          <line x1="28" y1="66" x2="31" y2="82" />
-          {/* Right Chair */}
-          <path d="M 80 46 L 80 66 L 70 66" />
-          <line x1="78" y1="66" x2="81" y2="82" />
-          <line x1="72" y1="66" x2="69" y2="82" />
-          {/* Plant on Table */}
-          <polygon points="46 62, 54 62, 52 54, 48 54" />
-          <path d="M 50 54 Q 45 46, 50 38 Q 55 46, 50 54" />
-          <path d="M 50 49 Q 41 44, 43 51" />
-          <path d="M 50 49 Q 59 44, 57 51" />
-        </svg>
-
-        {/* Serving Cloche - Top-Right */}
-        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute right-[18%] top-[8%] lg:top-[10%] w-36 h-36 lg:w-48 lg:h-48 text-[#64748B]/20 transition-all duration-300 hidden lg:block">
-          <path d="M 18 70 L 14 74 A 2 2 0 0 0 16 76 L 84 76 A 2 2 0 0 0 86 74 L 82 70 Z" />
-          <path d="M 23 70 A 27 27 0 0 1 77 70 Z" />
-          <path d="M 45 43 A 5 5 0 1 1 55 43" />
-        </svg>
-
-        {/* Chef Hat - Mid-Right (below Serving Cloche) */}
-        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute right-[3%] top-[25%] lg:top-[28%] w-36 h-36 lg:w-48 lg:h-48 text-[#64748B]/20 rotate-[8deg] transition-all duration-300 hidden lg:block">
-          <rect x="32" y="65" width="36" height="10" rx="1.5" />
-          <line x1="37" y1="70" x2="63" y2="70" />
-          <path d="M 32 65 C 20 52, 32 28, 45 35 C 48 20, 52 20, 55 35 C 68 28, 80 52, 68 65" />
-        </svg>
-
-        {/* QR Code Stand - Mid-Right (lower) */}
-        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute right-[4%] bottom-[25%] lg:bottom-[30%] w-36 h-36 lg:w-52 lg:h-52 text-[#64748B]/20 rotate-[10deg] transition-all duration-300 hidden lg:block">
-          <rect x="25" y="15" width="50" height="70" rx="6" />
-          <path d="M 30 85 L 70 85 L 65 92 L 35 92 Z" />
-          {/* QR Code structure */}
-          <rect x="34" y="24" width="32" height="32" rx="1" />
-          <rect x="38" y="28" width="8" height="8" />
-          <rect x="40" y="30" width="4" height="4" />
-          <rect x="54" y="28" width="8" height="8" />
-          <rect x="56" y="30" width="4" height="4" />
-          <rect x="38" y="44" width="8" height="8" />
-          <rect x="40" y="46" width="4" height="4" />
-          {/* Decorative bits */}
-          <rect x="54" y="44" width="4" height="4" />
-          <rect x="60" y="50" width="2" height="2" />
-        </svg>
-
-        {/* Receipt Scroll - Bottom-Right (near center) */}
-        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute right-[20%] bottom-[8%] lg:bottom-[10%] w-36 h-36 lg:w-48 lg:h-48 text-[#64748B]/20 transition-all duration-300 hidden lg:block">
-          <path d="M 30 20 C 30 12, 70 12, 70 20 C 70 28, 30 28, 30 36" />
-          <path d="M 30 36 C 30 45, 34 55, 30 65 C 28 75, 32 85, 30 95 L 35 91 L 40 95 L 45 91 L 50 95 L 55 91 L 60 95 L 65 91 L 70 95" />
-          <path d="M 70 20 C 70 28, 74 38, 70 48 C 68 58, 72 68, 70 78 L 70 95" />
-          {/* Detail lines inside receipt */}
-          <path d="M 38 42 Q 50 40, 62 42" />
-          <path d="M 38 54 Q 50 56, 58 54" />
-          <path d="M 38 66 Q 50 64, 62 66" />
-          <path d="M 38 78 Q 50 80, 54 78" />
-        </svg>
-
-      </div>
+      {/* 4. Large Outline Illustrations */}
+      {renderIllustrations()}
     </div>
   );
 };
