@@ -6,33 +6,48 @@ interface ValoSaaSBackgroundProps {
 }
 
 export const ValoSaaSBackground = ({ type = 'default', className }: ValoSaaSBackgroundProps) => {
-  // Renders role-specific lightweight SVG outline illustrations (2-4% opacity: text-[#64748B]/[0.03])
+  // Renders color-harmonized vector outlines matching the reference design layout
   const renderIllustrations = () => {
     switch (type) {
       case 'admin':
         return (
           <>
-            {/* POS Terminal - Bottom Right */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[8%] right-[4%] w-40 h-40 md:w-72 md:h-72 text-[#64748B]/[0.03] pointer-events-none select-none hidden sm:block transition-all duration-300">
-              <rect x="15" y="15" width="70" height="70" rx="6" />
-              <rect x="23" y="23" width="54" height="34" rx="2" />
-              <line x1="28" y1="65" x2="38" y2="65" />
-              <line x1="45" y1="65" x2="55" y2="65" />
-              <line x1="62" y1="65" x2="72" y2="65" />
-              <line x1="28" y1="73" x2="38" y2="73" />
-              <line x1="45" y1="73" x2="55" y2="73" />
-              <line x1="62" y1="73" x2="72" y2="73" />
-              <path d="M 85 30 L 92 30 L 92 50 L 85 50" />
+            {/* Serving Dome / Cloche - Top Left (Blue Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[12%] left-[4%] w-36 h-36 md:w-60 md:h-60 text-[#3B82F6]/[0.04] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <path d="M 10 75 L 90 75 A 2 2 0 0 0 92 73 L 8 73 A 2 2 0 0 0 10 75 Z" />
+              <path d="M 18 73 C 18 35, 82 35, 82 73 Z" />
+              <circle cx="50" cy="31" r="4" />
             </svg>
 
-            {/* Restaurant Table - Top Left */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[12%] left-[4%] w-40 h-40 md:w-64 md:h-64 text-[#64748B]/[0.03] pointer-events-none select-none hidden md:block transition-all duration-300">
-              <line x1="15" y1="45" x2="85" y2="45" />
-              <path d="M 30 45 L 35 78 M 70 45 L 65 78" />
-              <path d="M 12 45 C 12 35, 20 35, 20 45" />
-              <line x1="16" y1="45" x2="16" y2="60" />
-              <path d="M 88 45 C 88 35, 80 35, 80 45" />
-              <line x1="84" y1="45" x2="84" y2="60" />
+            {/* Chef Hat - Top Right (Indigo Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[10%] right-[6%] w-36 h-36 md:w-56 md:h-56 text-[#6366F1]/[0.035] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <rect x="32" y="62" width="36" height="10" rx="1" />
+              <path d="M 32 62 C 18 50, 30 25, 45 32 C 48 18, 52 18, 55 32 C 70 25, 82 50, 68 62" />
+            </svg>
+
+            {/* Restaurant Table - Bottom Left (Green Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[10%] left-[4%] w-36 h-36 md:w-64 md:h-64 text-[#10B981]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <line x1="20" y1="48" x2="80" y2="48" />
+              <line x1="50" y1="48" x2="50" y2="78" />
+              <line x1="38" y1="78" x2="62" y2="78" />
+              {/* Left Chair */}
+              <path d="M 12 42 L 22 42 L 24 78 M 12 42 L 12 25 L 22 25" />
+              {/* Right Chair */}
+              <path d="M 88 42 L 78 42 L 76 78 M 88 42 L 88 25 L 78 25" />
+            </svg>
+
+            {/* Layered Phones / QR Code - Bottom Right (Orange Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[8%] right-[4%] w-40 h-40 md:w-68 md:h-68 text-[#F97316]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <rect x="20" y="24" width="44" height="66" rx="6" />
+              <rect x="35" y="14" width="44" height="66" rx="6" />
+              <rect x="40" y="20" width="34" height="42" rx="1" />
+              {/* QR markers */}
+              <rect x="45" y="25" width="8" height="8" />
+              <rect x="47" y="27" width="4" height="4" fill="currentColor" />
+              <rect x="61" y="25" width="8" height="8" />
+              <rect x="63" y="27" width="4" height="4" fill="currentColor" />
+              <rect x="45" y="41" width="8" height="8" />
+              <rect x="47" y="43" width="4" height="4" fill="currentColor" />
             </svg>
           </>
         );
@@ -40,18 +55,38 @@ export const ValoSaaSBackground = ({ type = 'default', className }: ValoSaaSBack
       case 'waiter':
         return (
           <>
-            {/* Serving Tray - Bottom Left */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[10%] left-[5%] w-40 h-40 md:w-64 md:h-64 text-[#64748B]/[0.03] pointer-events-none select-none hidden sm:block transition-all duration-300">
-              <line x1="10" y1="70" x2="90" y2="70" />
-              <path d="M 20 70 A 30 30 0 0 1 80 70" />
-              <path d="M 46 38 A 4 4 0 1 1 54 38" />
-              <path d="M 15 70 L 10 75 L 90 75 L 85 70" />
+            {/* Serving Dome / Cloche - Top Left (Blue Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[12%] left-[4%] w-36 h-36 md:w-60 md:h-60 text-[#3B82F6]/[0.04] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <path d="M 10 75 L 90 75 A 2 2 0 0 0 92 73 L 8 73 A 2 2 0 0 0 10 75 Z" />
+              <path d="M 18 73 C 18 35, 82 35, 82 73 Z" />
+              <circle cx="50" cy="31" r="4" />
             </svg>
 
-            {/* Chef Hat - Top Right */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[10%] right-[6%] w-40 h-40 md:w-60 md:h-60 text-[#64748B]/[0.03] pointer-events-none select-none hidden md:block transition-all duration-300">
-              <rect x="30" y="62" width="40" height="12" rx="1" />
-              <path d="M 30 62 C 15 50, 30 25, 45 32 C 48 18, 52 18, 55 32 C 70 25, 85 50, 70 62" />
+            {/* Chef Hat - Top Right (Indigo Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[10%] right-[6%] w-36 h-36 md:w-56 md:h-56 text-[#6366F1]/[0.035] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <rect x="32" y="62" width="36" height="10" rx="1" />
+              <path d="M 32 62 C 18 50, 30 25, 45 32 C 48 18, 52 18, 55 32 C 70 25, 82 50, 68 62" />
+            </svg>
+
+            {/* Receipt - Bottom Left (Green/Slate Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[10%] left-[5%] w-36 h-36 md:w-60 md:h-60 text-[#10B981]/[0.035] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <path d="M 30 10 L 70 10 L 70 82 L 66 78 L 62 82 L 58 78 L 54 82 L 50 78 L 46 82 L 42 78 L 38 82 L 34 78 L 30 82 Z" />
+              <line x1="38" y1="25" x2="62" y2="25" />
+              <line x1="38" y1="35" x2="54" y2="35" />
+              <line x1="38" y1="45" x2="62" y2="45" />
+              <line x1="38" y1="55" x2="48" y2="55" />
+            </svg>
+
+            {/* POS Terminal - Bottom Right (Orange Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[8%] right-[4%] w-40 h-40 md:w-68 md:h-68 text-[#F97316]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <rect x="25" y="15" width="50" height="70" rx="8" />
+              <rect x="32" y="22" width="36" height="28" rx="2" />
+              <circle cx="39" cy="58" r="2" />
+              <circle cx="50" cy="58" r="2" />
+              <circle cx="61" cy="58" r="2" />
+              <circle cx="39" cy="66" r="2" />
+              <circle cx="50" cy="66" r="2" />
+              <circle cx="61" cy="66" r="2" />
             </svg>
           </>
         );
@@ -59,29 +94,43 @@ export const ValoSaaSBackground = ({ type = 'default', className }: ValoSaaSBack
       case 'cashier':
         return (
           <>
-            {/* Payment Terminal - Bottom Right */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[8%] right-[5%] w-40 h-40 md:w-72 md:h-72 text-[#64748B]/[0.03] pointer-events-none select-none hidden sm:block transition-all duration-300">
-              <rect x="25" y="10" width="50" height="80" rx="8" />
-              <rect x="32" y="18" width="36" height="28" rx="2" />
-              <circle cx="39" cy="55" r="2.5" />
-              <circle cx="50" cy="55" r="2.5" />
-              <circle cx="61" cy="55" r="2.5" />
-              <circle cx="39" cy="65" r="2.5" />
-              <circle cx="50" cy="65" r="2.5" />
-              <circle cx="61" cy="65" r="2.5" />
-              <circle cx="39" cy="75" r="2.5" />
-              <circle cx="50" cy="75" r="2.5" />
-              <circle cx="61" cy="75" r="2.5" />
-              <path d="M 38 10 L 38 5 L 42 7 L 46 5 L 50 7 L 54 5 L 58 7 L 62 5 L 62 10" />
+            {/* Receipt - Top Left (Blue Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[12%] left-[4%] w-36 h-36 md:w-56 md:h-56 text-[#3B82F6]/[0.04] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <path d="M 30 10 L 70 10 L 70 82 L 66 78 L 62 82 L 58 78 L 54 82 L 50 78 L 46 82 L 42 78 L 38 82 L 34 78 L 30 82 Z" />
+              <line x1="38" y1="25" x2="62" y2="25" />
+              <line x1="38" y1="35" x2="54" y2="35" />
+              <line x1="38" y1="45" x2="62" y2="45" />
             </svg>
 
-            {/* Receipt - Top Left */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[12%] left-[4%] w-40 h-40 md:w-60 md:h-60 text-[#64748B]/[0.03] pointer-events-none select-none hidden md:block transition-all duration-300">
-              <path d="M 25 15 L 75 15 L 75 82 L 70 78 L 65 82 L 60 78 L 55 82 L 50 78 L 45 82 L 40 78 L 35 82 L 30 78 L 25 82 Z" />
-              <line x1="35" y1="30" x2="65" y2="30" />
-              <line x1="35" y1="42" x2="55" y2="42" />
-              <line x1="35" y1="54" x2="65" y2="54" />
-              <line x1="35" y1="66" x2="48" y2="66" />
+            {/* Chef Hat - Top Right (Indigo Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[10%] right-[6%] w-36 h-36 md:w-56 md:h-56 text-[#6366F1]/[0.035] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <rect x="32" y="62" width="36" height="10" rx="1" />
+              <path d="M 32 62 C 18 50, 30 25, 45 32 C 48 18, 52 18, 55 32 C 70 25, 82 50, 68 62" />
+            </svg>
+
+            {/* Restaurant Table - Bottom Left (Green Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[10%] left-[4%] w-36 h-36 md:w-64 md:h-64 text-[#10B981]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <line x1="20" y1="48" x2="80" y2="48" />
+              <line x1="50" y1="48" x2="50" y2="78" />
+              <line x1="38" y1="78" x2="62" y2="78" />
+              <path d="M 12 42 L 22 42 L 24 78 M 12 42 L 12 25 L 22 25" />
+              <path d="M 88 42 L 78 42 L 76 78 M 88 42 L 88 25 L 78 25" />
+            </svg>
+
+            {/* Payment Terminal - Bottom Right (Orange Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[8%] right-[5%] w-40 h-40 md:w-68 md:h-68 text-[#F97316]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <rect x="25" y="10" width="50" height="80" rx="8" />
+              <rect x="32" y="18" width="36" height="28" rx="2" />
+              <circle cx="39" cy="55" r="2" />
+              <circle cx="50" cy="55" r="2" />
+              <circle cx="61" cy="55" r="2" />
+              <circle cx="39" cy="65" r="2" />
+              <circle cx="50" cy="65" r="2" />
+              <circle cx="61" cy="65" r="2" />
+              <circle cx="39" cy="75" r="2" />
+              <circle cx="50" cy="75" r="2" />
+              <circle cx="61" cy="75" r="2" />
+              <path d="M 38 10 L 38 5 L 42 7 L 46 5 L 50 7 L 54 5 L 58 7 L 62 5 L 62 10" />
             </svg>
           </>
         );
@@ -89,22 +138,32 @@ export const ValoSaaSBackground = ({ type = 'default', className }: ValoSaaSBack
       case 'kds':
         return (
           <>
-            {/* Kitchen Display - Bottom Right */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[8%] right-[5%] w-40 h-40 md:w-72 md:h-72 text-[#64748B]/[0.03] pointer-events-none select-none hidden sm:block transition-all duration-300">
-              <rect x="12" y="20" width="76" height="50" rx="4" />
-              <path d="M 45 70 L 40 85 L 60 85 L 55 70" />
-              <line x1="37" y1="20" x2="37" y2="70" />
-              <line x1="63" y1="20" x2="63" y2="70" />
-              <rect x="18" y="26" width="14" height="8" rx="1" />
-              <rect x="18" y="38" width="14" height="8" rx="1" />
-              <rect x="43" y="26" width="14" height="8" rx="1" />
-              <rect x="69" y="26" width="14" height="8" rx="1" />
+            {/* Chef Hat - Top Left (Blue Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[12%] left-[4%] w-36 h-36 md:w-56 md:h-56 text-[#3B82F6]/[0.04] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <rect x="32" y="62" width="36" height="10" rx="1" />
+              <path d="M 32 62 C 18 50, 30 25, 45 32 C 48 18, 52 18, 55 32 C 70 25, 82 50, 68 62" />
             </svg>
 
-            {/* Chef Hat - Top Left */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[12%] left-[4%] w-40 h-40 md:w-60 md:h-60 text-[#64748B]/[0.03] pointer-events-none select-none hidden md:block transition-all duration-300">
-              <rect x="30" y="62" width="40" height="12" rx="1" />
-              <path d="M 30 62 C 15 50, 30 25, 45 32 C 48 18, 52 18, 55 32 C 70 25, 85 50, 70 62" />
+            {/* Serving Dome / Cloche - Top Right (Indigo Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[10%] right-[6%] w-36 h-36 md:w-60 md:h-60 text-[#6366F1]/[0.035] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <path d="M 10 75 L 90 75 A 2 2 0 0 0 92 73 L 8 73 A 2 2 0 0 0 10 75 Z" />
+              <path d="M 18 73 C 18 35, 82 35, 82 73 Z" />
+              <circle cx="50" cy="31" r="4" />
+            </svg>
+
+            {/* Receipt - Bottom Left (Green Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[10%] left-[5%] w-36 h-36 md:w-60 md:h-60 text-[#10B981]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <path d="M 30 10 L 70 10 L 70 82 L 66 78 L 62 82 L 58 78 L 54 82 L 50 78 L 46 82 L 42 78 L 38 82 L 34 78 L 30 82 Z" />
+              <line x1="38" y1="25" x2="62" y2="25" />
+              <line x1="38" y1="35" x2="54" y2="35" />
+            </svg>
+
+            {/* Kitchen Display - Bottom Right (Orange Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[8%] right-[5%] w-40 h-40 md:w-72 md:h-72 text-[#F97316]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <rect x="15" y="20" width="70" height="48" rx="4" />
+              <path d="M 45 68 L 40 82 L 60 82 L 55 68" />
+              <line x1="38" y1="20" x2="38" y2="68" />
+              <line x1="62" y1="20" x2="62" y2="68" />
             </svg>
           </>
         );
@@ -112,26 +171,39 @@ export const ValoSaaSBackground = ({ type = 'default', className }: ValoSaaSBack
       case 'customer':
         return (
           <>
-            {/* QR Code - Bottom Right */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[6%] right-[4%] w-32 h-32 md:w-60 md:h-60 text-[#64748B]/[0.03] pointer-events-none select-none hidden sm:block transition-all duration-300">
-              <rect x="10" y="10" width="80" height="80" rx="6" />
-              <rect x="20" y="20" width="20" height="20" rx="2" />
-              <rect x="24" y="24" width="12" height="12" rx="1" />
-              <rect x="60" y="20" width="20" height="20" rx="2" />
-              <rect x="64" y="24" width="12" height="12" rx="1" />
-              <rect x="20" y="60" width="20" height="20" rx="2" />
-              <rect x="24" y="64" width="12" height="12" rx="1" />
-              <rect x="60" y="60" width="8" height="8" rx="1" />
-              <rect x="72" y="72" width="8" height="8" rx="1" />
-              <rect x="60" y="72" width="6" height="6" rx="1" />
-              <rect x="72" y="60" width="6" height="6" rx="1" />
+            {/* Serving Dome / Cloche - Top Left (Blue Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[12%] left-[4%] w-36 h-36 md:w-60 md:h-60 text-[#3B82F6]/[0.04] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <path d="M 10 75 L 90 75 A 2 2 0 0 0 92 73 L 8 73 A 2 2 0 0 0 10 75 Z" />
+              <path d="M 18 73 C 18 35, 82 35, 82 73 Z" />
+              <circle cx="50" cy="31" r="4" />
             </svg>
 
-            {/* Serving Tray - Top Left */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[10%] left-[5%] w-32 h-32 md:w-56 md:h-56 text-[#64748B]/[0.03] pointer-events-none select-none hidden md:block transition-all duration-300">
-              <line x1="10" y1="70" x2="90" y2="70" />
-              <path d="M 20 70 A 30 30 0 0 1 80 70" />
-              <path d="M 46 38 A 4 4 0 1 1 54 38" />
+            {/* Chef Hat - Top Right (Indigo Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[10%] right-[6%] w-36 h-36 md:w-56 md:h-56 text-[#6366F1]/[0.035] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <rect x="32" y="62" width="36" height="10" rx="1" />
+              <path d="M 32 62 C 18 50, 30 25, 45 32 C 48 18, 52 18, 55 32 C 70 25, 82 50, 68 62" />
+            </svg>
+
+            {/* Restaurant Table - Bottom Left (Green Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[10%] left-[4%] w-36 h-36 md:w-64 md:h-64 text-[#10B981]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <line x1="20" y1="48" x2="80" y2="48" />
+              <line x1="50" y1="48" x2="50" y2="78" />
+              <line x1="38" y1="78" x2="62" y2="78" />
+              <path d="M 12 42 L 22 42 L 24 78 M 12 42 L 12 25 L 22 25" />
+              <path d="M 88 42 L 78 42 L 76 78 M 88 42 L 88 25 L 78 25" />
+            </svg>
+
+            {/* Layered Phones / QR Code - Bottom Right (Orange Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[8%] right-[4%] w-40 h-40 md:w-68 md:h-68 text-[#F97316]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <rect x="20" y="24" width="44" height="66" rx="6" />
+              <rect x="35" y="14" width="44" height="66" rx="6" />
+              <rect x="40" y="20" width="34" height="42" rx="1" />
+              <rect x="45" y="25" width="8" height="8" />
+              <rect x="47" y="27" width="4" height="4" fill="currentColor" />
+              <rect x="61" y="25" width="8" height="8" />
+              <rect x="63" y="27" width="4" height="4" fill="currentColor" />
+              <rect x="45" y="41" width="8" height="8" />
+              <rect x="47" y="43" width="4" height="4" fill="currentColor" />
             </svg>
           </>
         );
@@ -139,21 +211,30 @@ export const ValoSaaSBackground = ({ type = 'default', className }: ValoSaaSBack
       case 'owner':
         return (
           <>
-            {/* Analytics Outline - Bottom Right */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[8%] right-[5%] w-40 h-40 md:w-72 md:h-72 text-[#64748B]/[0.03] pointer-events-none select-none hidden sm:block transition-all duration-300">
+            {/* Serving Dome / Cloche - Top Left (Blue Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[12%] left-[4%] w-36 h-36 md:w-60 md:h-60 text-[#3B82F6]/[0.04] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <path d="M 10 75 L 90 75 A 2 2 0 0 0 92 73 L 8 73 A 2 2 0 0 0 10 75 Z" />
+              <path d="M 18 73 C 18 35, 82 35, 82 73 Z" />
+              <circle cx="50" cy="31" r="4" />
+            </svg>
+
+            {/* Restaurant Table - Bottom Left (Green Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[10%] left-[4%] w-36 h-36 md:w-64 md:h-64 text-[#10B981]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <line x1="20" y1="48" x2="80" y2="48" />
+              <line x1="50" y1="48" x2="50" y2="78" />
+              <line x1="38" y1="78" x2="62" y2="78" />
+              <path d="M 12 42 L 22 42 L 24 78 M 12 42 L 12 25 L 22 25" />
+              <path d="M 88 42 L 78 42 L 76 78 M 88 42 L 88 25 L 78 25" />
+            </svg>
+
+            {/* Analytics Outline - Bottom Right (Orange Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[8%] right-[5%] w-40 h-40 md:w-72 md:h-72 text-[#F97316]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
               <path d="M 15 15 L 15 85 L 85 85" />
               <path d="M 15 75 Q 30 45, 45 60 T 75 25" />
               <circle cx="15" cy="75" r="2" fill="currentColor" />
               <circle cx="34" cy="53" r="2" fill="currentColor" />
               <circle cx="45" cy="60" r="2" fill="currentColor" />
               <circle cx="75" cy="25" r="2" fill="currentColor" />
-            </svg>
-
-            {/* Serving Tray - Top Left */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[12%] left-[4%] w-40 h-40 md:w-64 md:h-64 text-[#64748B]/[0.03] pointer-events-none select-none hidden md:block transition-all duration-300">
-              <line x1="10" y1="70" x2="90" y2="70" />
-              <path d="M 20 70 A 30 30 0 0 1 80 70" />
-              <path d="M 46 38 A 4 4 0 1 1 54 38" />
             </svg>
           </>
         );
@@ -162,23 +243,39 @@ export const ValoSaaSBackground = ({ type = 'default', className }: ValoSaaSBack
       default:
         return (
           <>
-            {/* Serving Tray - Top Left */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute top-[12%] left-[4%] w-40 h-40 md:w-60 md:h-60 text-[#64748B]/[0.03] pointer-events-none select-none hidden md:block transition-all duration-300">
-              <line x1="10" y1="70" x2="90" y2="70" />
-              <path d="M 20 70 A 30 30 0 0 1 80 70" />
-              <path d="M 46 38 A 4 4 0 1 1 54 38" />
+            {/* Serving Dome / Cloche - Top Left (Blue Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[12%] left-[4%] w-36 h-36 md:w-60 md:h-60 text-[#3B82F6]/[0.04] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <path d="M 10 75 L 90 75 A 2 2 0 0 0 92 73 L 8 73 A 2 2 0 0 0 10 75 Z" />
+              <path d="M 18 73 C 18 35, 82 35, 82 73 Z" />
+              <circle cx="50" cy="31" r="4" />
             </svg>
 
-            {/* POS Terminal - Bottom Right */}
-            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.75" className="absolute bottom-[8%] right-[4%] w-40 h-40 md:w-72 md:h-72 text-[#64748B]/[0.03] pointer-events-none select-none hidden sm:block transition-all duration-300">
-              <rect x="15" y="15" width="70" height="70" rx="6" />
-              <rect x="23" y="23" width="54" height="34" rx="2" />
-              <line x1="28" y1="65" x2="38" y2="65" />
-              <line x1="45" y1="65" x2="55" y2="65" />
-              <line x1="62" y1="65" x2="72" y2="65" />
-              <line x1="28" y1="73" x2="38" y2="73" />
-              <line x1="45" y1="73" x2="55" y2="73" />
-              <line x1="62" y1="73" x2="72" y2="73" />
+            {/* Chef Hat - Top Right (Indigo Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute top-[10%] right-[6%] w-36 h-36 md:w-56 md:h-56 text-[#6366F1]/[0.035] pointer-events-none select-none hidden md:block transition-all duration-300">
+              <rect x="32" y="62" width="36" height="10" rx="1" />
+              <path d="M 32 62 C 18 50, 30 25, 45 32 C 48 18, 52 18, 55 32 C 70 25, 82 50, 68 62" />
+            </svg>
+
+            {/* Restaurant Table - Bottom Left (Green Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[10%] left-[4%] w-36 h-36 md:w-64 md:h-64 text-[#10B981]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <line x1="20" y1="48" x2="80" y2="48" />
+              <line x1="50" y1="48" x2="50" y2="78" />
+              <line x1="38" y1="78" x2="62" y2="78" />
+              <path d="M 12 42 L 22 42 L 24 78 M 12 42 L 12 25 L 22 25" />
+              <path d="M 88 42 L 78 42 L 76 78 M 88 42 L 88 25 L 78 25" />
+            </svg>
+
+            {/* Layered Phones / QR Code - Bottom Right (Orange Accent) */}
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8" className="absolute bottom-[8%] right-[4%] w-40 h-40 md:w-68 md:h-68 text-[#F97316]/[0.04] pointer-events-none select-none hidden sm:block transition-all duration-300">
+              <rect x="20" y="24" width="44" height="66" rx="6" />
+              <rect x="35" y="14" width="44" height="66" rx="6" />
+              <rect x="40" y="20" width="34" height="42" rx="1" />
+              <rect x="45" y="25" width="8" height="8" />
+              <rect x="47" y="27" width="4" height="4" fill="currentColor" />
+              <rect x="61" y="25" width="8" height="8" />
+              <rect x="63" y="27" width="4" height="4" fill="currentColor" />
+              <rect x="45" y="41" width="8" height="8" />
+              <rect x="47" y="43" width="4" height="4" fill="currentColor" />
             </svg>
           </>
         );
@@ -191,17 +288,18 @@ export const ValoSaaSBackground = ({ type = 'default', className }: ValoSaaSBack
       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/[0.035] blur-[120px] transition-all duration-500" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-orange-500/[0.03] blur-[120px] transition-all duration-500" />
 
-      {/* 2. Abstract flowing SVG wave lines (Top Section: 3% opacity) */}
-      <svg viewBox="0 0 1440 200" fill="none" className="absolute top-0 left-0 w-full opacity-[0.03] text-[#64748B] pointer-events-none">
-        <path d="M 0 60 C 320 180, 720 20, 1080 120 C 1260 170, 1380 90, 1440 60 L 1440 0 L 0 0 Z" fill="currentColor" />
-        <path d="M 0 90 C 380 40, 680 180, 1020 90 C 1200 45, 1350 140, 1440 120" stroke="currentColor" strokeWidth="1.5" />
+      {/* 2. Abstract flowing SVG wave lines (Top Section: 3.5% opacity) */}
+      <svg viewBox="0 0 1440 300" fill="none" className="absolute top-0 left-0 w-full opacity-[0.035] text-[#6366F1] pointer-events-none">
+        <path d="M 0,100 C 300,260 600,40 1000,180 C 1200,240 1350,140 1440,100" stroke="currentColor" strokeWidth="1" />
+        <path d="M 0,140 C 400,60 800,240 1100,120 C 1250,60 1380,180 1440,150" stroke="currentColor" strokeWidth="0.8" />
+        <path d="M 0,80 C 250,120 500,200 900,100 C 1150,40 1300,120 1440,60" stroke="currentColor" strokeWidth="0.5" />
       </svg>
 
       {/* 3. Dot grid pattern (Top Right: 2.5% opacity) */}
-      <svg className="absolute top-0 right-0 w-[400px] h-[400px] opacity-[0.025] text-[#64748B] pointer-events-none" fill="currentColor">
+      <svg className="absolute top-[4%] right-[4%] w-[240px] h-[240px] opacity-[0.025] text-[#64748B] pointer-events-none" fill="currentColor">
         <defs>
-          <pattern id="bg-dot-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1.5" />
+          <pattern id="bg-dot-pattern" width="16" height="16" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1.2" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#bg-dot-pattern)" />
