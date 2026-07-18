@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Bell, MessageSquare, ChevronDown, Menu } from 'lucide-react';
+import { Search, Bell, MessageSquare, Menu } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { useTenant } from '../../context/TenantContext';
@@ -20,12 +20,6 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
-
-  const fullName = user?.user_metadata?.first_name 
-    ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`
-    : user?.email || 'User';
-
-  const avatarChar = fullName.trim().charAt(0).toUpperCase();
 
   // Queries for unread counts
   const { data: unreadNotifications = [] } = useQuery({
