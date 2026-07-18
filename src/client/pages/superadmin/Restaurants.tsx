@@ -972,11 +972,10 @@ const UpgradePanel = ({ tenant, onClose }: { tenant: any; onClose: () => void })
         <select 
           value={selectedPlan} 
           onChange={e => setSelectedPlan(e.target.value)}
-          className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#F97316]"
+          className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none text-slate-500 pointer-events-none"
+          disabled
         >
-          <option value="BASIC">BASIC ($29.00/mo)</option>
           <option value="PRO">PRO ($79.00/mo)</option>
-          <option value="ENTERPRISE">ENTERPRISE ($199.00/mo)</option>
         </select>
       </div>
 

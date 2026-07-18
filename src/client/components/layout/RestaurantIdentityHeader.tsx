@@ -11,13 +11,7 @@ export const RestaurantIdentityHeader = () => {
     return null;
   }
 
-  const planLabels: Record<string, string> = {
-    BASIC: 'Basic Plan',
-    PRO: 'Professional Plan',
-    ENTERPRISE: 'Enterprise Plan'
-  };
-
-  const planLabel = planLabels[tenant.plan] || `${tenant.plan} Plan`;
+  const planLabel = 'Professional Plan';
 
   return (
     <div className="bg-white border-b border-slate-200 px-4 py-3 sm:px-8 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm shrink-0">

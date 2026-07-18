@@ -42,45 +42,6 @@ export const ValoAiPanel: React.FC<ValoAiPanelProps> = ({ onClose }) => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // ─── Plan Protection Guard ───
-  if (tenant?.plan !== 'PRO' && tenant?.plan !== 'ENTERPRISE') {
-    return (
-      <div className="h-full flex flex-col justify-center items-center p-8 bg-slate-900 text-white relative">
-        <button 
-          onClick={onClose} 
-          className="absolute top-6 right-6 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-        >
-          <X size={20} />
-        </button>
-
-        <div className="max-w-xs text-center space-y-6">
-          <div className="w-16 h-16 rounded-3xl bg-[#F97316]/10 text-[#F97316] border border-[#F97316]/20 flex items-center justify-center mx-auto shadow-lg shadow-orange-500/10">
-            <Sparkles size={32} />
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="text-xl font-black uppercase tracking-wide">VALO AI Assistant</h3>
-            <p className="text-sm font-black text-orange-500 leading-tight">
-              VALO AI is available with the Enterprise Plan.
-            </p>
-            <p className="text-xs text-slate-400 font-medium leading-relaxed pt-2">
-              Unlock a context-aware smart assistant inside the POS cashier view. Split bills, calculate tax splits, audit daily sales figures, and answer operational questions instantly.
-            </p>
-          </div>
-
-          <div className="pt-6">
-            <button 
-              onClick={() => toast.info('Upgrade Subscription', 'Ask your platform administrator to upgrade your plan to Enterprise.')}
-              className="w-full bg-[#F97316] hover:bg-[#ea580c] text-white font-bold text-xs uppercase tracking-widest py-3 px-4 rounded-xl transition-all cursor-pointer shadow-lg shadow-orange-500/20 active:scale-[0.98]"
-            >
-              Request Upgrade
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // ─── Query handler ───
   const handleSend = async (text: string) => {
     if (!text.trim() || loading) return;
@@ -132,7 +93,7 @@ export const ValoAiPanel: React.FC<ValoAiPanelProps> = ({ onClose }) => {
           </div>
           <div>
             <h3 className="text-sm font-bold text-[#0B1630] uppercase tracking-wider leading-none">VALO AI</h3>
-            <span className="text-[9px] text-[#94A3B8] font-bold uppercase tracking-widest mt-1 block">Enterprise Copilot</span>
+            <span className="text-[9px] text-[#94A3B8] font-bold uppercase tracking-widest mt-1 block">AI Copilot</span>
           </div>
         </div>
         <button 

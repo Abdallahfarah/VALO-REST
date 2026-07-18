@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Store, Globe, Crown, ArrowRight, Loader2 } from 'lucide-react';
+import { Store, Globe, ArrowRight, Loader2 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../lib/toast-store';
@@ -7,7 +7,7 @@ import { toast } from '../../lib/toast-store';
 export const Onboarding = () => {
   const [restaurantName, setRestaurantName] = useState('');
   const [currency, setCurrency] = useState('ETB');
-  const [plan, setPlan] = useState('PRO');
+  const plan = 'PRO';
   const [loading, setLoading] = useState(false);
 
   const { signOut } = useAuth();
@@ -101,24 +101,6 @@ export const Onboarding = () => {
             </div>
           </div>
 
-          {/* Plan selection */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-[#0B1630] uppercase tracking-widest">Subscription Plan</label>
-            <div className="relative">
-              <Crown className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94A3B8]" />
-              <select
-                className="w-full h-14 pl-12 pr-10 rounded-2xl border border-slate-100 bg-slate-50/30 text-sm focus:outline-none focus:border-[#F97316] font-bold text-[#0B1630] transition-all appearance-none cursor-pointer"
-                value={plan}
-                onChange={(e) => setPlan(e.target.value)}
-                required
-                disabled={loading}
-              >
-                <option value="BASIC">Basic ($29.00 / mo)</option>
-                <option value="PRO">Pro ($79.00 / mo)</option>
-                <option value="ENTERPRISE">Enterprise ($199.00 / mo)</option>
-              </select>
-            </div>
-          </div>
 
           {/* Buttons */}
           <div className="pt-2 space-y-3">

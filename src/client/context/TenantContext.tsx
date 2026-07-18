@@ -22,7 +22,7 @@ interface Tenant {
   phone?: string;
   email?: string;
   address?: string;
-  plan: 'BASIC' | 'PRO' | 'ENTERPRISE';
+  plan: 'PRO';
   subscriptionStatus: string;
   currency: string;
   currencyCode: string;
@@ -120,7 +120,7 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
           timeoutPromise
         ]);
 
-        const activePlan = (subData?.plans?.name || 'PRO') as 'BASIC' | 'PRO' | 'ENTERPRISE';
+        const activePlan = (subData?.plans?.name || 'PRO') as 'PRO';
         const subStatus = subData?.status || 'ACTIVE';
 
         const currencyCode = tenantData.currency_code || 'ETB';

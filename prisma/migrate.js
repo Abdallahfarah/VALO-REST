@@ -139,9 +139,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id);
 -- Seed Initial SaaS Plans (if empty)
 INSERT INTO plans (name, price, features, max_users, max_tables)
 VALUES 
-  ('BASIC', 29.00, '["pos", "menu", "tables"]'::jsonb, 5, 10),
-  ('PRO', 79.00, '["pos", "menu", "tables", "kds", "cashier", "messaging", "reports", "custom_branding"]'::jsonb, -1, -1),
-  ('ENTERPRISE', 199.00, '["pos", "menu", "tables", "kds", "cashier", "messaging", "reports", "custom_branding"]'::jsonb, -1, -1)
+  ('PRO', 79.00, '["pos", "menu", "tables", "kds", "cashier", "messaging", "reports", "custom_branding"]'::jsonb, -1, -1)
 ON CONFLICT (name) DO UPDATE 
 SET price = EXCLUDED.price, features = EXCLUDED.features, max_users = EXCLUDED.max_users, max_tables = EXCLUDED.max_tables;
 
@@ -158,7 +156,7 @@ SELECT
   'ACTIVE',
   NOW() + INTERVAL '1 year'
 FROM plans
-WHERE name = 'ENTERPRISE'
+WHERE name = 'PRO'
 LIMIT 1
 ON CONFLICT DO NOTHING;
 

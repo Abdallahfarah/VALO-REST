@@ -20,9 +20,7 @@ export const CashierMessages = () => {
   const { tenant } = useTenant();
   const { user } = useAuth();
 
-  if (tenant?.plan === 'BASIC') {
-    return <UpgradePlaceholder feature="Internal Messaging" requiredPlan="Professional" />;
-  }
+
   const queryClient = useQueryClient();
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');

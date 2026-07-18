@@ -1,4 +1,4 @@
-export type PlanType = 'BASIC' | 'PRO' | 'ENTERPRISE';
+export type PlanType = 'PRO';
 
 export interface PlanLimit {
   maxStaff: number;
@@ -25,53 +25,7 @@ export interface PlanLimit {
 }
 
 export const PLAN_LIMITS: Record<PlanType, PlanLimit> = {
-  BASIC: {
-    maxStaff: 3,
-    maxBranches: 1,
-    allowedRoles: ['ADMIN', 'WAITER', 'KITCHEN_STAFF'],
-    features: {
-      pos: true,
-      kds: true,
-      menu: true,
-      tables: true,
-      orders: true,
-      basicReports: true,
-      cashier: false,
-      inventory: false,
-      messaging: false,
-      advancedReports: false,
-      branding: false,
-      receiptManagement: false,
-      multiBranch: false,
-      apiAccess: false,
-      whiteLabel: false,
-      customIntegrations: false,
-    }
-  },
   PRO: {
-    maxStaff: 99999,
-    maxBranches: 99999,
-    allowedRoles: ['ADMIN', 'WAITER', 'KITCHEN_STAFF', 'CASHIER'],
-    features: {
-      pos: true,
-      kds: true,
-      menu: true,
-      tables: true,
-      orders: true,
-      basicReports: true,
-      cashier: true,
-      inventory: true,
-      messaging: true,
-      advancedReports: true,
-      branding: true,
-      receiptManagement: true,
-      multiBranch: true,
-      apiAccess: true,
-      whiteLabel: true,
-      customIntegrations: true,
-    }
-  },
-  ENTERPRISE: {
     maxStaff: 99999,
     maxBranches: 99999,
     allowedRoles: ['ADMIN', 'WAITER', 'KITCHEN_STAFF', 'CASHIER'],
@@ -97,23 +51,23 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimit> = {
 };
 
 export const SubscriptionService = {
-  isFeatureAllowed(plan: PlanType, feature: keyof PlanLimit['features']): boolean {
-    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.PRO;
+  isFeatureAllowed(plan: string, feature: keyof PlanLimit['features']): boolean {
+    const limits = PLAN_LIMITS[plan as PlanType] || PLAN_LIMITS.PRO;
     return !!limits.features[feature];
   },
 
-  isRoleAllowed(plan: PlanType, role: string): boolean {
-    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.PRO;
+  isRoleAllowed(plan: string, role: string): boolean {
+    const limits = PLAN_LIMITS[plan as PlanType] || PLAN_LIMITS.PRO;
     return limits.allowedRoles.includes(role);
   },
 
-  getStaffLimit(plan: PlanType): number {
-    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.PRO;
+  getStaffLimit(plan: string): number {
+    const limits = PLAN_LIMITS[plan as PlanType] || PLAN_LIMITS.PRO;
     return limits.maxStaff;
   },
 
-  getBranchLimit(plan: PlanType): number {
-    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.PRO;
+  getBranchLimit(plan: string): number {
+    const limits = PLAN_LIMITS[plan as PlanType] || PLAN_LIMITS.PRO;
     return limits.maxBranches;
   }
 };

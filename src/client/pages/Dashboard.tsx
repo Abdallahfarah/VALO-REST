@@ -165,12 +165,7 @@ export const Dashboard = () => {
     { label: "OCCUPANCY", value: `${metrics.occupancyPercentage.toFixed(0)}%`, sub: 'Table Capacity', icon: Users, color: 'text-purple-500', bg: 'bg-purple-50', badge: 'In Use', showArrow: false },
   ], [metrics, format]);
 
-  const planDisplay: Record<string, string> = {
-    BASIC: 'Basic Plan',
-    PRO: 'Professional Plan',
-    ENTERPRISE: 'Enterprise Plan'
-  };
-  const planLabel = planDisplay[tenant?.plan || 'PRO'];
+  const planLabel = 'Professional Plan';
 
   const occupiedCountStr = tables.filter((t: any) => t.status === 'OCCUPIED').length.toString().padStart(2, '0');
 

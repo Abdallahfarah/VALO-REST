@@ -22,9 +22,7 @@ export const Receipts = () => {
   const { tenant } = useTenant();
   const { format } = useCurrency();
 
-  if (tenant?.plan === 'BASIC') {
-    return <UpgradePlaceholder feature="Receipt & Invoicing Management" requiredPlan="Professional" />;
-  }
+
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMethod, setSelectedMethod] = useState('All');

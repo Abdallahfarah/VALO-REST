@@ -501,53 +501,23 @@ export const Register = () => {
                         </div>
                      </div>
 
-                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                           <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Country</label>
-                           <div className="relative">
-                              <select 
-                                className="w-full h-12 pl-4 pr-10 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#F97316] transition-all appearance-none cursor-pointer" 
-                                name="country"
-                                value={formData.country}
-                                onChange={handleCountryChange}
-                                required
-                              >
-                                 <option value="ET">🇪🇹 Ethiopia (ET)</option>
-                                 <option value="SO">🇸🇴 Somalia (SO)</option>
-                                 <option value="SL">🏳️ Somaliland (SL)</option>
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
-                           </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                           <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Subscription Plan</label>
-                           <div className="relative">
-                              <select 
-                                className="w-full h-12 pl-4 pr-10 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#F97316] transition-all appearance-none cursor-pointer" 
-                                name="planName"
-                                value={formData.planName}
-                                onChange={handleChange}
-                                required
-                              >
-                                 {dbPlans.length > 0 ? (
-                                    dbPlans.map((p: any) => (
-                                      <option key={p.id} value={p.name}>
-                                        {getPlanDisplayName(p.name)}
-                                      </option>
-                                    ))
-                                 ) : (
-                                    <>
-                                       <option value="BASIC">Basic</option>
-                                       <option value="PRO">Pro</option>
-                                       <option value="ENTERPRISE">Enterprise</option>
-                                    </>
-                                 )}
-                              </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
-                           </div>
-                        </div>
-                     </div>
+                     <div className="space-y-1.5">
+                         <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Country</label>
+                         <div className="relative">
+                            <select 
+                              className="w-full h-12 pl-4 pr-10 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#F97316] transition-all appearance-none cursor-pointer" 
+                              name="country"
+                              value={formData.country}
+                              onChange={handleCountryChange}
+                              required
+                            >
+                               <option value="ET">🇪🇹 Ethiopia (ET)</option>
+                               <option value="SO">🇸🇴 Somalia (SO)</option>
+                               <option value="SL">🏳️ Somaliland (SL)</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
+                         </div>
+                      </div>
 
                      {/* 14-Day Trial Checkbox */}
                      <div className="flex items-center gap-3 pt-2">

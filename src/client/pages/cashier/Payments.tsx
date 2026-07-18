@@ -29,9 +29,7 @@ export const Payments = () => {
   const { format } = useCurrency();
   const queryClient = useQueryClient();
 
-  if (tenant?.plan === 'BASIC') {
-    return <UpgradePlaceholder feature="Cashier & Payments POS" requiredPlan="Professional" />;
-  }
+
   const [selectedMethod, setSelectedMethod] = useState('Cash');
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
