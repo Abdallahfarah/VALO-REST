@@ -26,9 +26,9 @@ export interface PlanLimit {
 
 export const PLAN_LIMITS: Record<PlanType, PlanLimit> = {
   BASIC: {
-    maxStaff: 3,
-    maxBranches: 1,
-    allowedRoles: ['ADMIN', 'WAITER', 'KITCHEN_STAFF'],
+    maxStaff: 99999,
+    maxBranches: 3,
+    allowedRoles: ['ADMIN', 'WAITER', 'KITCHEN_STAFF', 'CASHIER'],
     features: {
       pos: true,
       kds: true,
@@ -36,20 +36,20 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimit> = {
       tables: true,
       orders: true,
       basicReports: true,
-      cashier: false,
-      inventory: false,
-      messaging: false,
-      advancedReports: false,
-      branding: false,
-      receiptManagement: false,
-      multiBranch: false,
+      cashier: true,
+      inventory: true,
+      messaging: true,
+      advancedReports: true,
+      branding: true,
+      receiptManagement: true,
+      multiBranch: true,
       apiAccess: false,
       whiteLabel: false,
       customIntegrations: false,
     }
   },
   PRO: {
-    maxStaff: 99999, // unlimited in practice
+    maxStaff: 99999,
     maxBranches: 3,
     allowedRoles: ['ADMIN', 'WAITER', 'KITCHEN_STAFF', 'CASHIER'],
     features: {
@@ -73,7 +73,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimit> = {
   },
   ENTERPRISE: {
     maxStaff: 99999,
-    maxBranches: 99999,
+    maxBranches: 3,
     allowedRoles: ['ADMIN', 'WAITER', 'KITCHEN_STAFF', 'CASHIER'],
     features: {
       pos: true,
@@ -89,9 +89,9 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimit> = {
       branding: true,
       receiptManagement: true,
       multiBranch: true,
-      apiAccess: true,
-      whiteLabel: true,
-      customIntegrations: true,
+      apiAccess: false,
+      whiteLabel: false,
+      customIntegrations: false,
     }
   }
 };
