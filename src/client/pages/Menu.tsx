@@ -10,7 +10,6 @@ import { useCurrency } from '../services/CurrencyService';
 import { toast } from '../lib/toast-store';
 
 import { menuItemSchema, categorySchema } from '../lib/validations';
-import { PageLoader } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ChefHat } from 'lucide-react';
 
