@@ -262,12 +262,16 @@ export const OrderService = {
       .insert({
         tenant_id: paymentData.tenantId,
         order_id: orderId,
+        cashier_id: paymentData.cashierId || null,
         receipt_number: receiptNumber,
         subtotal: subtotal.toFixed(2),
         tax_amount: taxAmount.toFixed(2),
         total_amount: totalAmount.toFixed(2),
         payment_method: paymentData.method || 'Cash',
-        payment_status: 'PAID'
+        payment_status: 'PAID',
+        amount_received: Number(paymentData.amountReceived ?? totalAmount),
+        change_amount: Number(paymentData.changeAmount ?? 0),
+        notes: paymentData.notes || null
       });
 
     if (receiptErr) throw receiptErr;

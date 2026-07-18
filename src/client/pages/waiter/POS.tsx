@@ -12,7 +12,8 @@ import {
   Smartphone,
   Printer,
   X,
-  AlertTriangle
+  AlertTriangle,
+  Download
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
@@ -50,12 +51,16 @@ export const WaiterPOS = () => {
     updateTenantState(tenantId, { waiterCart: nextCart });
   };
 
-  // Modals / Warnings
+  // Modals / Warnings / Payment inputs
   const [showAssignWarning, setShowAssignWarning] = useState(false);
   const [warningWaiterName, setWarningWaiterName] = useState('');
   const [isBillModalOpen, setIsBillModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Cash');
+  const [amountReceived, setAmountReceived] = useState('');
+  const [paymentNotes, setPaymentNotes] = useState('');
+  const [settledReceipt, setSettledReceipt] = useState<any | null>(null);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
 
   useEffect(() => {
     if (tableId) {
@@ -110,7 +115,6 @@ export const WaiterPOS = () => {
     if (selectedTable && settings?.tableAssignmentMode === 'ASSIGNED') {
       const currentTableObj = tables.find((t: any) => t.id === selectedTable);
       if (currentTableObj && currentTableObj.waiterId && currentTableObj.waiterId !== user?.id) {
-        // Warning triggers if current user is not admin
         if (user?.role !== 'ADMIN') {
           setWarningWaiterName(currentTableObj.waiter?.name || 'another waiter');
           setShowAssignWarning(true);
@@ -184,7 +188,15 @@ export const WaiterPOS = () => {
 
   const settleOrderMutation = useMutation({
     mutationFn: (paymentData: any) => OrderService.settleOrder(activeOrder?.id || '', paymentData),
-    onSuccess: () => {
+    onSuccess: async () => {
+      const { data: recData } = await supabase
+        .from('receipts')
+        .select('*')
+        .eq('order_id', activeOrder?.id)
+        .single();
+
+      setSettledReceipt(recData);
+
       ActivityLogService.log({
         tenantId: tenant?.id || '',
         userId: user?.id || '',
@@ -193,13 +205,13 @@ export const WaiterPOS = () => {
         entityId: activeOrder?.id || '',
         details: `Settled order by Waiter with total ${total.toFixed(2)} using ${selectedPaymentMethod}`,
       });
-      setCart([]);
-      setSelectedTable('');
+      
       setIsPaymentModalOpen(false);
+      setIsReceiptModalOpen(true);
+      
       queryClient.invalidateQueries({ queryKey: ['tables'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
-      toast.success('Payment completed', 'Table is now Available!');
-      navigate('/waiter/tables');
+      toast.success('Payment completed', 'Order settled and receipt generated!');
     },
     onError: (err: any) => {
       toast.error('Payment failed', err?.message || 'Failed to settle payment.');
@@ -274,10 +286,66 @@ export const WaiterPOS = () => {
   };
 
   const handleSettlePayment = () => {
+    const amtReceived = selectedPaymentMethod === 'Cash' ? Number(amountReceived) : total;
+    if (selectedPaymentMethod === 'Cash' && amtReceived < total) {
+      toast.warning('Invalid Amount', 'Amount received cannot be less than total.');
+      return;
+    }
+    const change = selectedPaymentMethod === 'Cash' ? Math.max(0, amtReceived - total) : 0;
+    
     settleOrderMutation.mutate({
       method: selectedPaymentMethod,
-      tenantId: tenant?.id
+      tenantId: tenant?.id,
+      cashierId: user?.id,
+      amountReceived: amtReceived,
+      changeAmount: change,
+      notes: paymentNotes
     });
+  };
+
+  const handleReceiptDone = () => {
+    setCart([]);
+    setSelectedTable('');
+    setAmountReceived('');
+    setPaymentNotes('');
+    setSettledReceipt(null);
+    setIsReceiptModalOpen(false);
+    navigate('/waiter/tables');
+  };
+
+  const handleDownloadReceipt = () => {
+    if (!settledReceipt) return;
+    const content = `
+=========================================
+          ${tenant?.name || 'VALO BISTRO'}
+=========================================
+Receipt No:     ${settledReceipt.receipt_number}
+Date:           ${new Date(settledReceipt.created_at).toLocaleString()}
+Table:          Table ${tables.find((t: any) => t.id === activeOrder?.table_id)?.number || 'N/A'}
+Waiter:         ${user?.name || user?.email?.split('@')[0]}
+-----------------------------------------
+Items:
+${cart.map(item => ` - ${item.quantity}x ${item.name} @ ${format(item.price)} = ${format(item.price * item.quantity)}`).join('\n')}
+-----------------------------------------
+Subtotal:       ${format(settledReceipt.subtotal)}
+Tax (15%):      ${format(settledReceipt.tax_amount)}
+Grand Total:    ${format(settledReceipt.total_amount)}
+-----------------------------------------
+Payment Method: ${settledReceipt.payment_method}
+Amount Tendered:${format(settledReceipt.amount_received)}
+Change:         ${format(settledReceipt.change_amount)}
+Notes:          ${settledReceipt.notes || 'None'}
+-----------------------------------------
+      Thank you for dining with us!
+=========================================
+    `;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Receipt_${settledReceipt.receipt_number}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const subtotal = cart.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0);
@@ -285,6 +353,9 @@ export const WaiterPOS = () => {
   const total = subtotal + tax;
 
   const newItems = cart.filter(item => !item.sent);
+  const calculatedChange = selectedPaymentMethod === 'Cash' && Number(amountReceived) >= total
+    ? Number(amountReceived) - total
+    : 0;
 
   return (
     <div className="h-auto lg:h-[calc(100vh-120px)] flex flex-col lg:flex-row gap-8">
@@ -502,7 +573,7 @@ export const WaiterPOS = () => {
               <AlertTriangle size={32} />
             </div>
             <div>
-              <h3 className="text-xl font-black text-[#0B1630]">Assigned Table Warning</h3>
+              <h3 className="text-xl font-black text-[#0B1630]">Table Assignment Restriction</h3>
               <p className="text-sm text-[#64748B] mt-2">
                 This table is assigned to <span className="font-bold text-[#0B1630]">{warningWaiterName}</span>.
               </p>
@@ -597,7 +668,7 @@ export const WaiterPOS = () => {
              </button>
              <div>
                 <h3 className="text-xl font-black text-[#0B1630]">Collect Payment</h3>
-                <p className="text-xs text-[#64748B] font-medium">Select a payment method to settle the table bill</p>
+                <p className="text-xs text-[#64748B] font-medium">Settle the table bill by entering transaction details</p>
              </div>
 
              <div className="grid grid-cols-3 gap-3">
@@ -608,7 +679,12 @@ export const WaiterPOS = () => {
                 ].map(method => (
                   <div 
                     key={method.id}
-                    onClick={() => setSelectedPaymentMethod(method.id)}
+                    onClick={() => {
+                      setSelectedPaymentMethod(method.id);
+                      if (method.id !== 'Cash') {
+                        setAmountReceived('');
+                      }
+                    }}
                     className={cn(
                       "p-3 rounded-2xl border transition-all cursor-pointer flex flex-col gap-2 items-center text-center",
                       selectedPaymentMethod === method.id 
@@ -627,15 +703,55 @@ export const WaiterPOS = () => {
                 ))}
              </div>
 
-             <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 text-center">
-                <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-wider">Total amount due</span>
-                <h2 className="text-3xl font-black text-[#0B1630] mt-1">{format(total)}</h2>
+             <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 text-center">
+                <span className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">Total amount due</span>
+                <h2 className="text-3xl font-black text-indigo-900 mt-1">{format(total)}</h2>
+             </div>
+
+             {/* Dynamic Cash Payment fields */}
+             {selectedPaymentMethod === 'Cash' && (
+                <div className="space-y-4">
+                   <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase text-[#0B1630]">Amount Received</label>
+                      <div className="relative">
+                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#94A3B8]">
+                            {format(0).replace(/[\d.,\s]+/g, '')}
+                         </div>
+                         <input 
+                            type="number"
+                            required
+                            value={amountReceived}
+                            onChange={(e) => setAmountReceived(e.target.value)}
+                            className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-250 text-sm font-bold text-[#0B1630] focus:outline-none focus:border-[#F97316]"
+                            placeholder="e.g. 100"
+                         />
+                      </div>
+                   </div>
+                   
+                   {calculatedChange > 0 && (
+                      <div className="flex justify-between items-center bg-emerald-50 text-emerald-700 px-4 py-3 rounded-xl border border-emerald-100 text-xs font-bold">
+                         <span>Change Back</span>
+                         <span className="text-sm font-black">{format(calculatedChange)}</span>
+                      </div>
+                   )}
+                </div>
+             )}
+
+             {/* Payment Notes */}
+             <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-[#0B1630]">Payment Notes (Optional)</label>
+                <textarea 
+                   value={paymentNotes}
+                   onChange={(e) => setPaymentNotes(e.target.value)}
+                   className="w-full min-h-[60px] px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#F97316]"
+                   placeholder="Add table references, receipt notes, split payment details..."
+                />
              </div>
 
              <div className="flex gap-4">
                 <button 
                   onClick={handleSettlePayment}
-                  disabled={settleOrderMutation.isPending}
+                  disabled={settleOrderMutation.isPending || (selectedPaymentMethod === 'Cash' && Number(amountReceived) < total)}
                   className="flex-1 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                 >
                    {settleOrderMutation.isPending ? 'Settle...' : 'Confirm Paid'}
@@ -650,6 +766,83 @@ export const WaiterPOS = () => {
           </Card>
         </div>
       )}
+
+      {/* --- MODAL: OFFICIAL RECEIPT PREVIEW --- */}
+      {isReceiptModalOpen && settledReceipt && (
+        <div className="fixed inset-0 z-50 bg-[#0B1630]/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <Card className="w-full max-w-md p-8 border-none shadow-2xl relative bg-white flex flex-col gap-6 max-h-[90vh] overflow-y-auto">
+             <div className="text-center pb-4 border-b border-dashed border-slate-200 flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-3">
+                   <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black text-[#0B1630] uppercase tracking-wider">{tenant?.name || 'VALO BISTRO'}</h3>
+                <p className="text-xs text-[#94A3B8] font-bold mt-1">Transaction Successful</p>
+             </div>
+             
+             <div className="space-y-4 text-xs font-semibold text-[#64748B]">
+                <div className="flex justify-between">
+                   <span>Receipt No: {settledReceipt.receipt_number}</span>
+                   <span>Table {tables.find((t: any) => t.id === activeOrder?.table_id)?.number || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                   <span>Waiter: {user?.name || user?.email?.split('@')[0]}</span>
+                   <span>{new Date(settledReceipt.created_at).toLocaleTimeString()}</span>
+                </div>
+                
+                <div className="divide-y divide-slate-100 border-t border-b border-slate-100 py-2">
+                   {cart.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center py-2 text-[#0B1630] font-bold">
+                         <span>{item.quantity}x {item.name}</span>
+                         <span>{format(item.price * item.quantity)}</span>
+                      </div>
+                   ))}
+                </div>
+
+                <div className="space-y-2 pt-2">
+                   <div className="flex justify-between"><span>Subtotal</span><span className="text-[#0B1630]">{format(Number(settledReceipt.subtotal))}</span></div>
+                   <div className="flex justify-between"><span>Tax (15%)</span><span className="text-[#0B1630]">{format(Number(settledReceipt.tax_amount))}</span></div>
+                   <div className="flex justify-between text-base font-black text-[#0B1630] pt-2 border-t border-dashed border-slate-200"><span>Grand Total</span><span>{format(Number(settledReceipt.total_amount))}</span></div>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl space-y-2 border border-slate-100 text-[11px]">
+                   <div className="flex justify-between"><span>Payment Method</span><span className="text-[#0B1630] font-bold">{settledReceipt.payment_method}</span></div>
+                   <div className="flex justify-between"><span>Amount Received</span><span className="text-[#0B1630] font-bold">{format(Number(settledReceipt.amount_received))}</span></div>
+                   <div className="flex justify-between"><span>Change Given</span><span className="text-[#0B1630] font-bold">{format(Number(settledReceipt.change_amount))}</span></div>
+                   {settledReceipt.notes && (
+                      <div className="pt-2 border-t border-slate-200/50 mt-1">
+                         <span className="block text-[#94A3B8] font-bold uppercase text-[9px]">Notes</span>
+                         <p className="text-[#0B1630] mt-0.5 leading-relaxed">{settledReceipt.notes}</p>
+                      </div>
+                   )}
+                </div>
+             </div>
+
+             <div className="flex flex-col gap-2 pt-4 border-t border-slate-100">
+                <div className="grid grid-cols-2 gap-2">
+                   <button 
+                     onClick={() => window.print()}
+                     className="py-3 px-4 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+                   >
+                      <Printer size={15} /> Print
+                   </button>
+                   <button 
+                     onClick={handleDownloadReceipt}
+                     className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-slate-50"
+                   >
+                      <Download size={15} /> Download
+                   </button>
+                </div>
+                <button 
+                  onClick={handleReceiptDone}
+                  className="py-3.5 rounded-xl bg-[#0B1630] hover:bg-slate-900 text-white font-black text-xs uppercase tracking-widest text-center shadow-lg"
+                >
+                   Close & Free Table
+                </button>
+             </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
+export default WaiterPOS;

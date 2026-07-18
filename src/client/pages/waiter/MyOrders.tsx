@@ -1,4 +1,4 @@
-
+import { useState, useEffect } from 'react';
 import { 
   Search, 
   Filter, 
@@ -10,22 +10,30 @@ import {
   ChevronRight,
   TrendingUp,
   CheckCircle2,
-  Receipt
+  Receipt,
+  X,
+  Printer,
+  Download
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
-import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase';
 import { OrderService } from '../../services/ApiService';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../services/CurrencyService';
 
 export const MyOrders = () => {
   const { tenant } = useTenant();
   const { user } = useAuth();
-
+  const { format } = useCurrency();
   const queryClient = useQueryClient();
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [orderReceipt, setOrderReceipt] = useState<any | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const { data: allOrders = [] } = useQuery({
     queryKey: ['orders', tenant?.id],
@@ -33,7 +41,7 @@ export const MyOrders = () => {
     enabled: !!tenant?.id,
   });
 
-  // Realtime subscription for orders
+  // Set up realtime updates for orders
   useEffect(() => {
     if (!tenant?.id) return;
 
@@ -43,7 +51,7 @@ export const MyOrders = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders', filter: `tenant_id=eq.${tenant.id}` },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['orders', tenant.id] });
+          queryClient.invalidateQueries({ queryKey: ['orders'] });
         }
       )
       .subscribe();
@@ -55,6 +63,13 @@ export const MyOrders = () => {
 
   // Filter orders assigned to this waiter OR newly placed QR orders
   const waiterOrders = allOrders.filter((o: any) => o.waiterId === user?.id || (o.customerName && o.customerName.includes('(QR')));
+
+  // Filter based on search term
+  const searchedOrders = waiterOrders.filter((o: any) => 
+    o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (o.table?.number && o.table.number.toString().includes(searchTerm)) ||
+    (o.customerName && o.customerName.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   // Compute KPIs dynamically
   const activeOrdersCount = waiterOrders.filter((o: any) => o.status !== 'COMPLETED' && o.status !== 'CANCELED').length;
@@ -68,8 +83,62 @@ export const MyOrders = () => {
     { label: 'Active Orders', value: activeOrdersCount.toString(), sub: 'Currently in progress', icon: Receipt, color: 'text-indigo-500', bg: 'bg-indigo-50' },
     { label: 'Served Orders', value: servedOrdersCount.toString(), sub: 'Completed today', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50' },
     { label: 'Preparing', value: preparingOrdersCount.toString(), sub: 'In preparation', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50' },
-    { label: 'Total Sales', value: `ETB ${totalSalesToday.toFixed(0)}`, sub: 'From your orders today', icon: TrendingUp, color: 'text-blue-500', bg: 'bg-blue-50' },
+    { label: 'Total Sales', value: format(totalSalesToday), sub: 'From your orders today', icon: TrendingUp, color: 'text-blue-500', bg: 'bg-blue-50' },
   ];
+
+  const handleViewOrder = async (order: any) => {
+    setSelectedOrder(order);
+    if (order.status === 'COMPLETED') {
+      const { data: rec, error } = await supabase
+        .from('receipts')
+        .select('*, users(*)')
+        .eq('order_id', order.id)
+        .maybeSingle();
+      if (!error && rec) {
+        setOrderReceipt(rec);
+      } else {
+        setOrderReceipt(null);
+      }
+    } else {
+      setOrderReceipt(null);
+    }
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleDownloadReceipt = () => {
+    if (!selectedOrder || !orderReceipt) return;
+    const content = `
+=========================================
+          ${tenant?.name || 'VALO BISTRO'}
+=========================================
+Receipt No:     ${orderReceipt.receipt_number}
+Date:           ${new Date(orderReceipt.created_at).toLocaleString()}
+Table:          Table ${selectedOrder.table?.number || 'N/A'}
+Waiter:         ${selectedOrder.waiterName || user?.email?.split('@')[0]}
+-----------------------------------------
+Items:
+${(selectedOrder.items || []).map((item: any) => ` - ${item.quantity}x ${item.menuItem?.name} @ ${format(item.unitPrice)} = ${format(item.price)}`).join('\n')}
+-----------------------------------------
+Subtotal:       ${format(Number(orderReceipt.subtotal))}
+Tax (15%):      ${format(Number(orderReceipt.tax_amount))}
+Grand Total:    ${format(Number(orderReceipt.total_amount))}
+-----------------------------------------
+Payment Method: ${orderReceipt.payment_method}
+Amount Tendered:${format(Number(orderReceipt.amount_received ?? orderReceipt.total_amount))}
+Change:         ${format(Number(orderReceipt.change_amount ?? 0))}
+Notes:          ${orderReceipt.notes || 'None'}
+-----------------------------------------
+      Thank you for dining with us!
+=========================================
+    `;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Receipt_${orderReceipt.receipt_number}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-8 max-w-[1400px]">
@@ -107,24 +176,20 @@ export const MyOrders = () => {
         <div className="p-6 border-b border-slate-50 flex flex-wrap items-center gap-4 bg-white">
           <div className="relative flex-1 min-w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-            <input className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-100 bg-slate-50/50 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]" placeholder="Search orders by ID, table or customer..." />
+            <input 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-100 bg-slate-50/50 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]" 
+              placeholder="Search orders by ID, table or customer..." 
+            />
           </div>
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-[#0B1630] cursor-pointer hover:bg-slate-50">
-            All Status <ChevronDown size={14} className="text-[#94A3B8]" />
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-[#0B1630] cursor-pointer hover:bg-slate-50">
-            All Tables <ChevronDown size={14} className="text-[#94A3B8]" />
-          </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-[#0B1630] hover:bg-slate-50">
-            <Filter size={14} /> Filters
-          </button>
         </div>
 
-        {/* Orders Table */}
+        {/* Table Content */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-50">
+              <tr className="border-b border-slate-50 bg-slate-50/20">
                 <th className="px-6 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Order ID</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Table</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Guests</th>
@@ -136,7 +201,7 @@ export const MyOrders = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {waiterOrders.map((order: any) => (
+              {searchedOrders.map((order: any) => (
                 <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <span className="text-xs font-black text-[#0B1630]">#{order.id.slice(0, 8)}</span>
@@ -158,12 +223,14 @@ export const MyOrders = () => {
                       order.status === 'PREPARING' ? "bg-indigo-50 text-indigo-600" :
                       order.status === 'PENDING' ? "bg-orange-50 text-orange-600" :
                       order.status === 'READY' ? "bg-emerald-50 text-emerald-600" :
+                      order.status === 'COMPLETED' ? "bg-teal-50 text-teal-600" :
                       "bg-blue-50 text-blue-600"
                     )}>
                       <div className={cn("w-1.5 h-1.5 rounded-full", 
                         order.status === 'PREPARING' ? "bg-indigo-500" :
                         order.status === 'PENDING' ? "bg-orange-500" :
-                        order.status === 'READY' ? "bg-emerald-500" : "bg-blue-500"
+                        order.status === 'READY' ? "bg-emerald-500" : 
+                        order.status === 'COMPLETED' ? "bg-teal-500" : "bg-blue-500"
                       )} />
                       {order.status}
                     </span>
@@ -184,7 +251,7 @@ export const MyOrders = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                       <span className="text-xs font-black text-[#0B1630]">ETB {Number(order.totalAmount).toFixed(0)}</span>
+                       <span className="text-xs font-black text-[#0B1630]">{format(Number(order.totalAmount))}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -195,7 +262,10 @@ export const MyOrders = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                       <button className="h-8 px-3 rounded-lg border border-slate-200 text-[10px] font-bold text-[#0B1630] hover:bg-slate-50 transition-all flex items-center gap-1.5 shadow-sm">
+                       <button 
+                         onClick={() => handleViewOrder(order)}
+                         className="h-8 px-3 rounded-lg border border-slate-200 text-[10px] font-bold text-[#0B1630] hover:bg-slate-50 transition-all flex items-center gap-1.5 shadow-sm"
+                       >
                           <Eye size={12} /> View
                        </button>
                     </div>
@@ -208,7 +278,7 @@ export const MyOrders = () => {
 
         {/* Table Footer / Pagination */}
         <div className="p-6 border-t border-slate-50 flex items-center justify-between bg-white">
-           <span className="text-xs font-medium text-[#94A3B8]">Showing {waiterOrders.length} orders</span>
+           <span className="text-xs font-medium text-[#94A3B8]">Showing {searchedOrders.length} orders</span>
            <div className="flex items-center gap-2">
               <button className="p-2 rounded-xl border border-slate-200 text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-50 transition-all">
                  <ChevronLeft size={16} />
@@ -222,6 +292,109 @@ export const MyOrders = () => {
            </div>
         </div>
       </Card>
+
+      {/* --- MODAL: ORDER DETAILS & RECEIPT VIEW --- */}
+      {isDetailsModalOpen && selectedOrder && (
+        <div className="fixed inset-0 z-50 bg-[#0B1630]/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg p-8 border-none shadow-2xl relative bg-white flex flex-col gap-6 max-h-[90vh] overflow-y-auto">
+             <button 
+               onClick={() => {
+                 setIsDetailsModalOpen(false);
+                 setSelectedOrder(null);
+                 setOrderReceipt(null);
+               }}
+               className="absolute top-6 right-6 text-slate-400 hover:text-slate-600"
+             >
+                <X size={20} />
+             </button>
+             <div>
+                <h3 className="text-xl font-black text-[#0B1630]">Order Details</h3>
+                <p className="text-xs text-[#64748B] font-medium">Order ID: #{selectedOrder.id}</p>
+             </div>
+
+             <div className="grid grid-cols-2 gap-4 text-xs font-bold text-[#64748B] bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div className="space-y-1">
+                   <span>Table</span>
+                   <p className="text-sm font-black text-[#0B1630]">Table {selectedOrder.table?.number || 'N/A'}</p>
+                </div>
+                <div className="space-y-1">
+                   <span>Status</span>
+                   <p className="text-sm font-black text-indigo-600 uppercase">{selectedOrder.status}</p>
+                </div>
+                <div className="space-y-1">
+                   <span>Placed Time</span>
+                   <p className="text-sm font-black text-[#0B1630]">{new Date(selectedOrder.createdAt).toLocaleTimeString()}</p>
+                </div>
+                <div className="space-y-1">
+                   <span>Assigned Waiter</span>
+                   <p className="text-sm font-black text-[#0B1630]">{selectedOrder.waiterName || 'Unassigned'}</p>
+                </div>
+             </div>
+
+             <div className="space-y-3">
+                <h4 className="text-xs font-black text-[#0B1630] uppercase tracking-wider">Itemized Checklist</h4>
+                <div className="divide-y divide-slate-100 border-t border-b border-slate-100 max-h-48 overflow-y-auto">
+                   {(selectedOrder.items || []).map((item: any, idx: number) => (
+                      <div key={idx} className="flex justify-between items-center py-2.5 text-xs text-[#0B1630] font-bold">
+                         <span>{item.quantity}x {item.menuItem?.name || 'Item'}</span>
+                         <span>{format(item.price)}</span>
+                      </div>
+                   ))}
+                </div>
+                <div className="flex justify-between text-sm font-black text-[#0B1630] pt-2">
+                   <span>Grand Total</span>
+                   <span>{format(Number(selectedOrder.totalAmount))}</span>
+                </div>
+             </div>
+
+             {/* Receipt section for COMPLETED orders */}
+             {selectedOrder.status === 'COMPLETED' && orderReceipt && (
+                <div className="space-y-4 border-t border-dashed border-slate-200 pt-6">
+                   <h4 className="text-xs font-black text-[#0B1630] uppercase tracking-wider">Official Payment Receipt</h4>
+                   <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 space-y-2 text-xs font-semibold text-[#64748B]">
+                      <div className="flex justify-between"><span>Receipt Number</span><span className="text-[#0B1630] font-bold">{orderReceipt.receipt_number}</span></div>
+                      <div className="flex justify-between"><span>Payment Method</span><span className="text-[#0B1630] font-bold">{orderReceipt.payment_method}</span></div>
+                      <div className="flex justify-between"><span>Amount Tendered</span><span className="text-[#0B1630] font-bold">{format(Number(orderReceipt.amount_received ?? orderReceipt.total_amount))}</span></div>
+                      <div className="flex justify-between"><span>Change Returned</span><span className="text-[#0B1630] font-bold">{format(Number(orderReceipt.change_amount ?? 0))}</span></div>
+                      {orderReceipt.notes && (
+                         <div className="pt-2 border-t border-emerald-100 mt-1">
+                            <span className="block text-[#94A3B8] font-bold uppercase text-[9px]">Notes</span>
+                            <p className="text-[#0B1630] mt-0.5 leading-relaxed font-normal">{orderReceipt.notes}</p>
+                         </div>
+                      )}
+                   </div>
+                   
+                   <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        onClick={() => window.print()}
+                        className="py-3 px-4 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+                      >
+                         <Printer size={15} /> Print/Reprint
+                      </button>
+                      <button 
+                        onClick={handleDownloadReceipt}
+                        className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-slate-50"
+                      >
+                         <Download size={15} /> Download
+                      </button>
+                   </div>
+                </div>
+             )}
+
+             <button 
+               onClick={() => {
+                 setIsDetailsModalOpen(false);
+                 setSelectedOrder(null);
+                 setOrderReceipt(null);
+               }}
+               className="py-3.5 rounded-xl bg-[#0B1630] hover:bg-slate-900 text-white font-black text-xs uppercase tracking-widest text-center shadow-lg mt-2"
+             >
+                Close View
+             </button>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
+export default MyOrders;
