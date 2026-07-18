@@ -14,6 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 import { GoogleComingSoonModal } from '../../components/GoogleComingSoonModal';
 import { cn } from '../../lib/utils';
 import valoLogo from '../../../../Docs/valo-logo.webp';
+import { ValoSaaSBackground } from '../../components/layout/ValoSaaSBackground';
 
 const ROLE_ROUTES: Record<string, string> = {
   ADMIN: '/admin',
@@ -209,10 +210,11 @@ export const Login = () => {
       </div>
 
       {/* Right Pane - White Rounded Card Form Container */}
-      <div className="flex-1 bg-slate-50 md:bg-[#FFFFFF] flex flex-col justify-center p-4 sm:p-8 md:p-12 lg:p-16 min-h-screen relative">
+      <div className="flex-1 bg-slate-50 md:bg-transparent flex flex-col justify-center p-4 sm:p-8 md:p-12 lg:p-16 min-h-screen relative overflow-hidden">
+         <ValoSaaSBackground type="default" />
          
          {/* Mobile Hero Banner */}
-         <div className="relative w-full h-40 overflow-hidden rounded-[20px] mb-6 md:hidden shadow-sm">
+         <div className="relative w-full h-40 overflow-hidden rounded-[20px] mb-6 md:hidden shadow-sm z-10">
             <img 
                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=70&w=600" 
                alt="Restaurant Interior Mobile"
@@ -227,7 +229,7 @@ export const Login = () => {
          </div>
 
          {/* Form Card */}
-         <div className="w-full max-w-lg bg-[#FFFFFF] rounded-[24px] border border-[#E5E7EB] p-6 sm:p-10 md:p-12 shadow-sm animate-scale-in flex flex-col mx-auto my-auto justify-center">
+         <div className="w-full max-w-lg bg-[#FFFFFF] rounded-[24px] border border-[#E5E7EB] p-6 sm:p-10 md:p-12 shadow-sm animate-scale-in flex flex-col mx-auto my-auto justify-center relative z-10">
             {/* Center Logo */}
             <div className="mb-6 flex justify-center animate-fade-down">
                <img 
