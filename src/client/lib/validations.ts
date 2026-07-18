@@ -18,6 +18,9 @@ export const menuItemSchema = z.object({
   price: z.coerce.number().min(0.01, 'Price must be greater than 0'),
   categoryId: z.string().min(1, 'Category is required'),
   description: z.string().optional().or(z.literal('')),
+  preparationStation: z.enum(['Chef', 'Barista', 'Kitchen Staff'], {
+    required_error: 'Preparation station is required',
+  }),
 });
 
 export type MenuItemForm = z.infer<typeof menuItemSchema>;

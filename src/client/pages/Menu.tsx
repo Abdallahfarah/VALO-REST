@@ -35,7 +35,8 @@ export const Menu = () => {
     price: '',
     description: '',
     icon: '🍔',
-    isAvailable: true
+    isAvailable: true,
+    preparationStation: 'Chef'
   });
 
   const [categoryForm, setCategoryForm] = useState({
@@ -159,7 +160,8 @@ export const Menu = () => {
       price: '',
       description: '',
       icon: '🍔',
-      isAvailable: true
+      isAvailable: true,
+      preparationStation: 'Chef'
     });
     setSelectedItem(null);
   };
@@ -172,7 +174,8 @@ export const Menu = () => {
       price: String(item.price),
       description: item.description || '',
       icon: item.icon || '🍔',
-      isAvailable: item.isAvailable
+      isAvailable: item.isAvailable,
+      preparationStation: item.preparationStation || 'Chef'
     });
     setIsItemModalOpen(true);
   };
@@ -185,6 +188,7 @@ export const Menu = () => {
       price: itemForm.price,
       categoryId: itemForm.categoryId,
       description: itemForm.description,
+      preparationStation: itemForm.preparationStation,
     });
 
     if (!validation.success) {
@@ -200,7 +204,8 @@ export const Menu = () => {
       description: itemForm.description,
       price: Number(itemForm.price),
       icon: itemForm.icon,
-      isAvailable: itemForm.isAvailable
+      isAvailable: itemForm.isAvailable,
+      preparationStation: itemForm.preparationStation
     };
 
     if (selectedItem) {
@@ -397,6 +402,21 @@ export const Menu = () => {
                     ))}
                   </select>
                 </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-[#0B1630]">Preparation Station</label>
+                  <select
+                    value={itemForm.preparationStation}
+                    onChange={(e) => setItemForm({ ...itemForm, preparationStation: e.target.value })}
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#F97316]"
+                  >
+                    <option value="Chef">Chef</option>
+                    <option value="Barista">Barista</option>
+                    <option value="Kitchen Staff">Kitchen Staff</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-[#0B1630]">Icon Emoji</label>
                   <input 

@@ -20,6 +20,7 @@ const mapMenuItem = (row: any) => ({
   icon: row.icon,
   isAvailable: row.is_available ?? true,
   category: row.categories ? { id: row.categories.id, name: row.categories.name } : null,
+  preparationStation: row.preparation_station || 'Chef',
 });
 
 const mapTable = (row: any) => ({
@@ -353,7 +354,8 @@ export const MenuService = {
         description: item.description || null,
         price: item.price,
         icon: item.icon || '🍔',
-        is_available: item.isAvailable ?? true
+        is_available: item.isAvailable ?? true,
+        preparation_station: item.preparationStation || 'Chef'
       })
       .select('*, categories(id, name)')
       .single();
@@ -372,6 +374,7 @@ export const MenuService = {
         price: item.price,
         icon: item.icon || '🍔',
         is_available: item.isAvailable,
+        preparation_station: item.preparationStation || 'Chef',
         updated_at: new Date().toISOString()
       })
       .eq('id', itemId)
