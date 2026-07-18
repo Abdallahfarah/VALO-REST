@@ -13,7 +13,8 @@ import {
   Printer,
   X,
   AlertTriangle,
-  Download
+  Download,
+  CheckCircle2
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
@@ -322,7 +323,7 @@ export const WaiterPOS = () => {
 Receipt No:     ${settledReceipt.receipt_number}
 Date:           ${new Date(settledReceipt.created_at).toLocaleString()}
 Table:          Table ${tables.find((t: any) => t.id === activeOrder?.table_id)?.number || 'N/A'}
-Waiter:         ${user?.name || user?.email?.split('@')[0]}
+    Waiter:         ${user?.email ? user.email.split('@')[0] : 'Waiter'}
 -----------------------------------------
 Items:
 ${cart.map(item => ` - ${item.quantity}x ${item.name} @ ${format(item.price)} = ${format(item.price * item.quantity)}`).join('\n')}
@@ -785,7 +786,7 @@ Notes:          ${settledReceipt.notes || 'None'}
                    <span>Table {tables.find((t: any) => t.id === activeOrder?.table_id)?.number || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
-                   <span>Waiter: {user?.name || user?.email?.split('@')[0]}</span>
+                    <span>Waiter: {user?.email ? user.email.split('@')[0] : 'Waiter'}</span>
                    <span>{new Date(settledReceipt.created_at).toLocaleTimeString()}</span>
                 </div>
                 

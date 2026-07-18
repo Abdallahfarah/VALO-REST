@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
   Search, 
-  Filter, 
-  ChevronDown, 
   Clock, 
   Users as UsersIcon, 
   Eye, 
