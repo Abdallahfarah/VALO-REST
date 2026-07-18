@@ -3,6 +3,7 @@
 
 import { supabase } from '../../lib/supabase';
 import { CURRENCY_CONFIGS } from './CurrencyService';
+import { getEmojiForIconId } from '../lib/icon-library';
 
 // ─── Helper: map snake_case DB rows to camelCase frontend shapes ───
 const mapCategory = (row: any) => ({
@@ -17,7 +18,8 @@ const mapMenuItem = (row: any) => ({
   name: row.name,
   description: row.description,
   price: Number(row.price),
-  icon: row.icon,
+  icon: getEmojiForIconId(row.icon),
+  iconId: row.icon || 'burger',
   isAvailable: row.is_available ?? true,
   category: row.categories ? { id: row.categories.id, name: row.categories.name } : null,
   preparationStation: row.preparation_station || 'Chef',

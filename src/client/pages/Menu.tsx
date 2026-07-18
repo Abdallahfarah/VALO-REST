@@ -12,6 +12,7 @@ import { toast } from '../lib/toast-store';
 import { menuItemSchema, categorySchema } from '../lib/validations';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ChefHat } from 'lucide-react';
+import { ICON_LIBRARY, getEmojiForIconId } from '../lib/icon-library';
 
 
 export const Menu = () => {
@@ -33,10 +34,11 @@ export const Menu = () => {
     categoryId: '',
     price: '',
     description: '',
-    icon: '🍔',
+    iconId: 'burger',
     isAvailable: true,
     preparationStation: 'Chef'
   });
+  const [iconSearchQuery, setIconSearchQuery] = useState('');
 
   const [categoryForm, setCategoryForm] = useState({
     name: '',
@@ -158,10 +160,11 @@ export const Menu = () => {
       categoryId: '',
       price: '',
       description: '',
-      icon: '🍔',
+      iconId: 'burger',
       isAvailable: true,
       preparationStation: 'Chef'
     });
+    setIconSearchQuery('');
     setSelectedItem(null);
   };
 
@@ -172,10 +175,11 @@ export const Menu = () => {
       categoryId: item.categoryId || '',
       price: String(item.price),
       description: item.description || '',
-      icon: item.icon || '🍔',
+      iconId: item.iconId || 'burger',
       isAvailable: item.isAvailable,
       preparationStation: item.preparationStation || 'Chef'
     });
+    setIconSearchQuery('');
     setIsItemModalOpen(true);
   };
 
@@ -202,7 +206,7 @@ export const Menu = () => {
       name: itemForm.name,
       description: itemForm.description,
       price: Number(itemForm.price),
-      icon: itemForm.icon,
+      icon: itemForm.iconId,
       isAvailable: itemForm.isAvailable,
       preparationStation: itemForm.preparationStation
     };
@@ -415,16 +419,54 @@ export const Menu = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-[#0B1630]">Icon Emoji</label>
-                  <input 
+              <div className="space-y-2 border-t border-slate-50 pt-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black uppercase text-[#0B1630]">Select Menu Icon</label>
+                  <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-100 px-2.5 py-1 rounded-lg text-xs font-black text-[#F97316]">
+                    <span className="text-sm">{getEmojiForIconId(itemForm.iconId)}</span>
+                    <span className="uppercase tracking-wider text-[9px]">{ICON_LIBRARY.find(i => i.id === itemForm.iconId)?.name || 'Default'}</span>
+                  </div>
+                </div>
+                
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                  <input
                     type="text"
-                    value={itemForm.icon}
-                    onChange={(e) => setItemForm({ ...itemForm, icon: e.target.value })}
-                    className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#F97316]"
-                    placeholder="e.g. 🍔"
+                    value={iconSearchQuery}
+                    onChange={(e) => setIconSearchQuery(e.target.value)}
+                    className="w-full h-9 pl-9 pr-4 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#F97316]"
+                    placeholder="Search food/drink icons..."
                   />
+                </div>
+                
+                <div className="grid grid-cols-8 gap-2 max-h-32 overflow-y-auto p-1.5 bg-slate-50/50 rounded-xl border border-slate-100">
+                  {ICON_LIBRARY.filter(item => 
+                    item.name.toLowerCase().includes(iconSearchQuery.toLowerCase()) || 
+                    item.category.toLowerCase().includes(iconSearchQuery.toLowerCase())
+                  ).map(icon => (
+                    <button
+                      key={icon.id}
+                      type="button"
+                      onClick={() => setItemForm({ ...itemForm, iconId: icon.id })}
+                      className={cn(
+                        "w-full aspect-square rounded-lg flex items-center justify-center text-xl transition-all border cursor-pointer",
+                        itemForm.iconId === icon.id
+                          ? "bg-orange-100 border-[#F97316] ring-2 ring-orange-200 scale-105"
+                          : "bg-white border-slate-100 hover:border-slate-300"
+                      )}
+                      title={icon.name}
+                    >
+                      {icon.emoji}
+                    </button>
+                  ))}
+                  {ICON_LIBRARY.filter(item => 
+                    item.name.toLowerCase().includes(iconSearchQuery.toLowerCase()) || 
+                    item.category.toLowerCase().includes(iconSearchQuery.toLowerCase())
+                  ).length === 0 && (
+                    <div className="col-span-full py-4 text-center text-[10px] text-[#94A3B8] font-bold">
+                      No matching icons found
+                    </div>
+                  )}
                 </div>
               </div>
 
