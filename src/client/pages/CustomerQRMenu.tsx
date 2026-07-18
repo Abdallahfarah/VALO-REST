@@ -9,6 +9,7 @@ import { cn } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 import { NotificationService, MenuService } from '../services/ApiService';
 import { toast } from '../lib/toast-store';
+import { ValoSaaSBackground } from '../components/layout/ValoSaaSBackground';
 
 export const CustomerQRMenu = () => {
   const { slug, tableNumber } = useParams<{ slug: string; tableNumber?: string }>();
@@ -401,6 +402,7 @@ export const CustomerQRMenu = () => {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-24 relative flex flex-col">
+      <ValoSaaSBackground type="customer" />
       {/* Restaurant Header Banner */}
       <header className="bg-white border-b border-slate-100 px-6 py-5 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
@@ -440,7 +442,7 @@ export const CustomerQRMenu = () => {
       </header>
 
       {/* Main categories & products listing */}
-      <div className="p-4 space-y-6 flex-1 max-w-lg mx-auto w-full">
+      <div className="p-4 space-y-6 flex-1 max-w-lg mx-auto w-full relative z-10">
         {/* Welcome Card */}
         <div className="bg-gradient-to-br from-[#0B1630] to-[#152549] rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
           <div className="absolute -right-4 -bottom-4 opacity-10">

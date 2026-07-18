@@ -5,6 +5,7 @@ import { CashierHeader } from './CashierHeader';
 import { ValoAiPanel } from '../../../components/ValoAiPanel';
 import { Sparkles } from 'lucide-react';
 import { RestaurantIdentityHeader } from '../../../components/layout/RestaurantIdentityHeader';
+import { ValoSaaSBackground } from '../../../components/layout/ValoSaaSBackground';
 
 export const CashierLayout = () => {
   const [isAiOpen, setIsAiOpen] = useState(false);
@@ -15,12 +16,15 @@ export const CashierLayout = () => {
       <CashierSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="lg:pl-[260px] pl-0 flex-1 flex flex-col min-h-screen relative overflow-hidden">
         <CashierHeader onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-          <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
-            <Outlet />
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+          <main className="relative flex-1 p-4 sm:p-8 overflow-y-auto">
+            <ValoSaaSBackground type="cashier" />
+            <div className="relative z-10">
+              <Outlet />
+            </div>
           </main>
           {isAiOpen && (
-            <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-slate-200 bg-white flex flex-col shadow-2xl shrink-0 animate-in slide-in-from-right duration-200 h-[50vh] lg:h-auto">
+            <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-slate-200 bg-white flex flex-col shadow-2xl shrink-0 animate-in slide-in-from-right duration-200 h-[50vh] lg:h-auto z-10">
               <ValoAiPanel onClose={() => setIsAiOpen(false)} />
             </div>
           )}
