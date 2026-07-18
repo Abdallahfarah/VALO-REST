@@ -448,7 +448,8 @@ export const Settings = () => {
                         setBusinessForm({
                           currency: settings.currency || 'USD',
                           timezone: settings.timezone || 'UTC',
-                          taxRate: Number(settings.taxRate ?? 15.00)
+                          taxRate: Number(settings.taxRate ?? 15.00),
+                          tableAssignmentMode: settings.tableAssignmentMode || 'OPEN'
                         });
                       }
                     }}

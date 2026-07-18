@@ -175,7 +175,7 @@ export const OrderService = {
   },
 
   async updateOrderStatus(orderId: string, status: string) {
-    const { data: orderData, error: fetchErr } = await supabase
+    const { data: orderData } = await supabase
       .from('orders')
       .select('table_id')
       .eq('id', orderId)

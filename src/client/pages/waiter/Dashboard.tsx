@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Plus, 
   ShoppingCart, 
@@ -8,7 +8,6 @@ import {
   Clock,
   TrendingUp,
   LayoutGrid,
-  ChefHat,
   ChevronRight,
   AlertTriangle
 } from 'lucide-react';
@@ -110,7 +109,7 @@ export const WaiterDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[#0B1630]">Waiter Dashboard</h1>
-          <p className="text-[#64748B] mt-1 text-sm font-medium">Good evening, <span className="text-[#F97316]">{user?.name || 'Waiter'}!</span> Let's take great care of our guests today.</p>
+          <p className="text-[#64748B] mt-1 text-sm font-medium">Good evening, <span className="text-[#F97316]">{user?.email ? user.email.split('@')[0] : 'Waiter'}!</span> Let's take great care of our guests today.</p>
         </div>
         <button onClick={() => navigate('/waiter/tables')} className="bg-[#F97316] text-white px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-2 hover:bg-[#ea580c] transition-all shadow-xl shadow-orange-500/20 active:scale-[0.98]">
           <Plus size={20} strokeWidth={3} /> New Order
@@ -232,7 +231,7 @@ export const WaiterDashboard = () => {
                         </div>
                         <div className="flex justify-between items-center pt-2 border-t border-slate-50">
                            <div className="flex -space-x-2">
-                              {order.items?.slice(0, 3).map((item: any, i: number) => (
+                              {order.items?.slice(0, 3).map((_: any, i: number) => (
                                  <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[10px]">🍳</div>
                               ))}
                               {order.items?.length > 3 && (

@@ -4,16 +4,12 @@ import {
   Search, 
   LayoutGrid, 
   List, 
-  MoreVertical,
-  ChevronDown,
-  Armchair,
-  CheckCircle2,
-  AlertCircle,
-  AlertTriangle,
-  Clock,
-  Coins,
-  ShieldCheck,
-  X
+  ChevronDown, 
+  Armchair, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Clock, 
+  Coins
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';

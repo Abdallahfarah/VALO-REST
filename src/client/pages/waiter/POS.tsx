@@ -5,7 +5,6 @@ import {
   Minus, 
   Trash2, 
   Users, 
-  PauseCircle, 
   Send,
   Armchair,
   DollarSign,
@@ -13,7 +12,6 @@ import {
   Smartphone,
   Printer,
   X,
-  CheckCircle2,
   AlertTriangle
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
