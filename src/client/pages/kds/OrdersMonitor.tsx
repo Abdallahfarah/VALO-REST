@@ -149,16 +149,56 @@ export const OrdersMonitor = () => {
                            <div className="text-[10px] font-bold text-indigo-500 mb-4">
                               🧑‍🍳 {order.waiterName || 'Unassigned'}
                            </div>
-                           <div className="flex items-center gap-1.5 mb-6">
-                              <div className="flex -space-x-1.5">
-                                 {order.items?.slice(0, 3).map((item: any, j: number) => (
-                                    <div key={j} className="w-8 h-8 rounded-lg border-2 border-white bg-slate-100 flex items-center justify-center text-xs shadow-sm" title={item.menuItem?.name}>
-                                       🍳
-                                    </div>
-                                 ))}
-                              </div>
-                              {order.items?.length > 3 && <span className="text-[10px] font-black text-[#94A3B8] ml-2">+{order.items.length - 3}</span>}
-                           </div>
+                            {/* Grouped Items List */}
+                            <div className="space-y-3 mb-6">
+                              {(() => {
+                                const activeItems = (order.items || []).filter((item: any) => 
+                                  col.title === 'NEW ORDERS' ? item.status === 'PENDING' : 
+                                  col.title === 'PREPARING' ? item.status === 'PREPARING' :
+                                  item.status === 'READY'
+                                );
+                                const historyItems = (order.items || []).filter((item: any) => 
+                                  col.title === 'NEW ORDERS' ? item.status !== 'PENDING' : 
+                                  col.title === 'PREPARING' ? item.status !== 'PREPARING' :
+                                  item.status !== 'READY'
+                                );
+
+                                return (
+                                  <>
+                                    {activeItems.length > 0 && (
+                                      <div>
+                                        <span className="text-[8px] font-black text-[#F97316] uppercase tracking-wider block mb-1">
+                                           {col.title === 'NEW ORDERS' ? 'To Prepare (New)' : 'Cooking'}
+                                        </span>
+                                        <div className="space-y-1">
+                                          {activeItems.map((item: any, idx: number) => (
+                                            <div key={idx} className="flex justify-between items-center text-xs font-bold text-[#0B1630] bg-orange-50/50 px-2.5 py-1 rounded-lg">
+                                               <span>{item.quantity}x {item.menuItem?.name || 'Item'}</span>
+                                               <span className="text-[8px] uppercase font-black text-[#F97316]">Active</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {historyItems.length > 0 && (
+                                      <div className="mt-3">
+                                        <span className="text-[8px] font-black text-[#94A3B8] uppercase tracking-wider block mb-1">
+                                           Previous / History
+                                        </span>
+                                        <div className="space-y-1">
+                                          {historyItems.map((item: any, idx: number) => (
+                                            <div key={idx} className="flex justify-between items-center text-xs font-bold text-[#64748B] bg-slate-50 px-2.5 py-1 rounded-lg opacity-60">
+                                               <span>{item.quantity}x {item.menuItem?.name || 'Item'}</span>
+                                               <span className="text-[8px] uppercase font-black text-[#94A3B8]">{item.status}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </div>
 
                            <div className="flex items-center justify-between pt-4 border-t border-slate-50">
                               {col.title !== 'READY' && col.title !== 'CANCELED' ? (

@@ -33,10 +33,12 @@ const mapTable = (row: any) => ({
 });
 
 const mapOrderItem = (row: any) => ({
+  id: row.id,
   menuItem: { name: row.menu_items?.name || 'Item' },
   quantity: row.quantity,
   unitPrice: Number(row.unit_price),
   price: Number(row.price),
+  status: row.status || 'PENDING',
 });
 
 const mapOrder = (row: any) => ({
@@ -92,29 +94,60 @@ export const OrderService = {
       }
     }
 
-    // 1. Insert the order
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        tenant_id: payload.tenantId,
-        table_id: payload.tableId,
-        waiter_id: waiterId || null,
-        customer_name: payload.customerName || null,
-        status: 'PENDING',
-        total_amount: payload.totalAmount,
-      })
-      .select('*')
-      .single();
+    // Check if there is already an active order for this table
+    let activeOrder = null;
+    if (payload.tableId) {
+      const { data: activeOrders } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('table_id', payload.tableId)
+        .not('status', 'in', '("COMPLETED","CANCELED")')
+        .limit(1);
+      if (activeOrders && activeOrders.length > 0) {
+        activeOrder = activeOrders[0];
+      }
+    }
 
-    if (orderError) throw orderError;
+    let orderId = '';
+    if (activeOrder) {
+      orderId = activeOrder.id;
+      const newTotal = Number(activeOrder.total_amount) + Number(payload.totalAmount);
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({
+          total_amount: newTotal,
+          status: 'PENDING',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+      if (orderError) throw orderError;
+    } else {
+      // Insert the order
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          tenant_id: payload.tenantId,
+          table_id: payload.tableId,
+          waiter_id: waiterId || null,
+          customer_name: payload.customerName || null,
+          status: 'PENDING',
+          total_amount: payload.totalAmount,
+        })
+        .select('*')
+        .single();
+
+      if (orderError) throw orderError;
+      orderId = order.id;
+    }
 
     // 2. Insert order items
     const orderItems = payload.items.map((item: any) => ({
-      order_id: order.id,
+      order_id: orderId,
       menu_item_id: item.menuItemId,
       quantity: item.quantity,
       unit_price: item.price,
       price: item.price * item.quantity,
+      status: 'PENDING',
     }));
 
     const { error: itemsError } = await supabase
@@ -135,13 +168,19 @@ export const OrderService = {
     const { data: fullOrder } = await supabase
       .from('orders')
       .select('*, tables(number), users(*), order_items(*, menu_items(name))')
-      .eq('id', order.id)
+      .eq('id', orderId)
       .single();
 
-    return fullOrder ? mapOrder(fullOrder) : order;
+    return fullOrder ? mapOrder(fullOrder) : { id: orderId };
   },
 
   async updateOrderStatus(orderId: string, status: string) {
+    const { data: orderData, error: fetchErr } = await supabase
+      .from('orders')
+      .select('table_id')
+      .eq('id', orderId)
+      .single();
+
     const { data, error } = await supabase
       .from('orders')
       .update({ status, updated_at: new Date().toISOString() })
@@ -151,12 +190,39 @@ export const OrderService = {
 
     if (error) throw error;
 
-    // If order is completed or canceled, release table
-    if ((status === 'COMPLETED' || status === 'CANCELED') && data?.table_id) {
+    // Propagate status to order items
+    if (status === 'PREPARING') {
       await supabase
-        .from('tables')
-        .update({ status: 'AVAILABLE' })
-        .eq('id', data.table_id);
+        .from('order_items')
+        .update({ status: 'PREPARING' })
+        .eq('order_id', orderId)
+        .eq('status', 'PENDING');
+    } else if (status === 'READY') {
+      await supabase
+        .from('order_items')
+        .update({ status: 'READY' })
+        .eq('order_id', orderId)
+        .eq('status', 'PREPARING');
+    }
+
+    // Keep table status in sync
+    if (orderData?.table_id) {
+      if (status === 'COMPLETED' || status === 'CANCELED') {
+        await supabase
+          .from('tables')
+          .update({ status: 'AVAILABLE' })
+          .eq('id', orderData.table_id);
+      } else if (status === 'PREPARING') {
+        await supabase
+          .from('tables')
+          .update({ status: 'PREPARING' })
+          .eq('id', orderData.table_id);
+      } else if (status === 'READY') {
+        await supabase
+          .from('tables')
+          .update({ status: 'READY' })
+          .eq('id', orderData.table_id);
+      }
     }
 
     return data ? mapOrder(data) : null;
@@ -215,6 +281,12 @@ export const OrderService = {
       .single();
 
     if (error) throw error;
+
+    // 4b. Update all order items status to READY
+    await supabase
+      .from('order_items')
+      .update({ status: 'READY' })
+      .eq('order_id', orderId);
 
     // 5. Release the table
     if (data?.table_id) {
@@ -473,7 +545,8 @@ const mapRestaurantSettings = (row: any) => ({
   businessHours: row.business_hours || {
     mon_fri: '08:00 AM - 10:00 PM',
     sat_sun: '09:00 AM - 11:00 PM'
-  }
+  },
+  tableAssignmentMode: row.table_assignment_mode || 'OPEN',
 });
 
 export const SettingService = {
@@ -526,6 +599,7 @@ export const SettingService = {
         primary_color: settings.primaryColor,
         secondary_color: settings.secondaryColor,
         business_hours: settings.businessHours,
+        table_assignment_mode: settings.tableAssignmentMode || 'OPEN',
         updated_at: new Date().toISOString(),
       })
       .eq('tenant_id', tenantId)

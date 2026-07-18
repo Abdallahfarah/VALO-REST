@@ -75,7 +75,8 @@ export const Settings = () => {
   const [businessForm, setBusinessForm] = useState({
     currency: 'USD',
     timezone: 'UTC',
-    taxRate: 15.00
+    taxRate: 15.00,
+    tableAssignmentMode: 'OPEN'
   });
 
   // ─── Queries ───
@@ -117,7 +118,8 @@ export const Settings = () => {
       setBusinessForm({
         currency: settings.currency || 'USD',
         timezone: settings.timezone || 'UTC',
-        taxRate: Number(settings.taxRate ?? 15.00)
+        taxRate: Number(settings.taxRate ?? 15.00),
+        tableAssignmentMode: settings.tableAssignmentMode || 'OPEN'
       });
     }
   }, [settings]);
@@ -258,7 +260,8 @@ export const Settings = () => {
       ...settings,
       currency: businessForm.currency,
       timezone: businessForm.timezone,
-      taxRate: Number(businessForm.taxRate)
+      taxRate: Number(businessForm.taxRate),
+      tableAssignmentMode: businessForm.tableAssignmentMode
     });
   };
 
@@ -520,6 +523,27 @@ export const Settings = () => {
                       />
                     ) : (
                       <p className="font-bold text-[#0B1630]">{settings?.taxRate ?? 15}%</p>
+                    )}
+                 </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                 <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center text-violet-500 shrink-0">
+                    <UserCheck size={18} />
+                 </div>
+                 <div className="flex-1">
+                    <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">Table Assignment Mode</p>
+                    {isEditingBusiness ? (
+                      <select 
+                        value={businessForm.tableAssignmentMode}
+                        onChange={(e) => setBusinessForm({ ...businessForm, tableAssignmentMode: e.target.value })}
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#F97316] font-bold text-[#0B1630]"
+                      >
+                        <option value="OPEN">Open Mode (Default)</option>
+                        <option value="ASSIGNED">Assigned Mode</option>
+                      </select>
+                    ) : (
+                      <p className="font-bold text-[#0B1630]">{settings?.tableAssignmentMode === 'ASSIGNED' ? 'Assigned Mode' : 'Open Mode'}</p>
                     )}
                  </div>
               </div>
