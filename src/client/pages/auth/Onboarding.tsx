@@ -7,7 +7,7 @@ import { toast } from '../../lib/toast-store';
 export const Onboarding = () => {
   const [restaurantName, setRestaurantName] = useState('');
   const [currency, setCurrency] = useState('ETB');
-  const [plan, setPlan] = useState('PRO');
+  const plan = 'PRO';
   const [loading, setLoading] = useState(false);
 
   const { signOut } = useAuth();
