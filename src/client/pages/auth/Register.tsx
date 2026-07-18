@@ -412,8 +412,8 @@ export const Register = () => {
       </div>
 
       {/* Right Pane - White Rounded Card Form Container */}
-      <div className="flex-1 bg-slate-50 md:bg-transparent flex flex-col justify-center p-4 sm:p-8 md:p-12 lg:p-16 min-h-screen relative overflow-hidden">
-         <ValoSaaSBackground type="default" />
+      <div className="flex-1 flex flex-col justify-center p-4 sm:p-8 md:p-12 lg:p-16 min-h-screen relative">
+         <ValoSaaSBackground />
          
          {/* Mobile Hero Banner */}
          <div className="relative w-full h-40 overflow-hidden rounded-[20px] mb-6 md:hidden shadow-sm z-10">
