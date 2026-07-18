@@ -43,7 +43,7 @@ export const ValoAiPanel: React.FC<ValoAiPanelProps> = ({ onClose }) => {
   }, [messages, loading]);
 
   // ─── Plan Protection Guard ───
-  if (tenant?.plan !== 'ENTERPRISE') {
+  if (tenant?.plan !== 'PRO' && tenant?.plan !== 'ENTERPRISE') {
     return (
       <div className="h-full flex flex-col justify-center items-center p-8 bg-slate-900 text-white relative">
         <button 
