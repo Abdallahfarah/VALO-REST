@@ -174,6 +174,72 @@ export const OrderService = {
         .eq('id', payload.tableId);
     }
 
+    // 3b. Smart Operations Telemetry (Notifications & Audit Logs)
+    try {
+      const isNewOrder = !activeOrder;
+      const actionType = isNewOrder ? 'ORDER_CREATED' : 'ORDER_MODIFIED';
+
+      // Insert audit log
+      await supabase.from('activity_logs').insert({
+        user_id: waiterId || null,
+        action: actionType,
+        entity_type: 'order',
+        entity_id: orderId,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Group items by preparation station for notifications
+      const menuItemIds = payload.items.map((item: any) => item.menuItemId);
+      const { data: menuItems } = await supabase
+        .from('menu_items')
+        .select('id, name, preparation_station')
+        .in('id', menuItemIds);
+
+      const stationMap: Record<string, string[]> = {};
+      if (menuItems) {
+        menuItems.forEach((m: any) => {
+          const station = m.preparation_station || 'Chef';
+          if (!stationMap[station]) stationMap[station] = [];
+          stationMap[station].push(m.name);
+        });
+      }
+
+      // Fetch table number
+      let tableNumber = '?';
+      if (payload.tableId) {
+        const { data: tableData } = await supabase
+          .from('tables')
+          .select('number')
+          .eq('id', payload.tableId)
+          .single();
+        if (tableData) {
+          tableNumber = String(tableData.number);
+        }
+      }
+
+      // Send notification to each station KDS
+      for (const [station, names] of Object.entries(stationMap)) {
+        let title = 'New Kitchen Items';
+        if (station === 'Chef') {
+          title = 'New Chef Items';
+        } else if (station === 'Barista') {
+          title = 'New Drinks';
+        } else if (station === 'Kitchen Staff') {
+          title = 'New Side Items';
+        }
+
+        await supabase.from('notifications').insert({
+          tenant_id: payload.tenantId,
+          role: 'KITCHEN_STAFF',
+          title,
+          message: `${isNewOrder ? 'New order' : 'Additional items'} for Table ${tableNumber}: ${names.join(', ')}.`,
+          is_read: false
+        });
+      }
+    } catch (e) {
+      console.warn('[createOrder] Smart operations telemetry failed:', e);
+    }
+
     // 4. Fetch and return the complete order
     const { data: fullOrder } = await supabase
       .from('orders')
@@ -322,6 +388,36 @@ export const OrderService = {
       }
     }
 
+    // 7. Send "Items Ready" notification to Waiter if all station's items are now READY
+    if (nextStatus === 'READY' && targetItemIds.length > 0) {
+      try {
+        const { data: updatedOrder } = await supabase
+          .from('orders')
+          .select('waiter_id, tenant_id, tables(number)')
+          .eq('id', orderId)
+          .single();
+
+        if (updatedOrder) {
+          const waiterId = updatedOrder.waiter_id;
+          const tableNumber = updatedOrder.tables?.number || '?';
+          const tenantId = updatedOrder.tenant_id || '';
+
+          if (tenantId) {
+            await supabase.from('notifications').insert({
+              tenant_id: tenantId,
+              user_id: waiterId || null,
+              role: 'WAITER',
+              title: 'Items Ready',
+              message: `${station} items are ready for Table ${tableNumber}.`,
+              is_read: false
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('[updateStationItemsStatus] Waiter notification failed silently:', e);
+      }
+    }
+
     return true;
   },
 
@@ -414,17 +510,26 @@ export const OrderService = {
   },
 
   async settleOrder(orderId: string, paymentData: any) {
-    // 1. Fetch current order details
+    const now = new Date().toISOString();
 
+    // 1. Fetch current order details
     const { data: order, error: fetchErr } = await supabase
       .from('orders')
-      .select('*')
+      .select('*, tables(number)')
       .eq('id', orderId)
       .single();
 
     if (fetchErr) throw fetchErr;
 
-    // 2. Fetch restaurant tax settings to compute subtotal and tax
+    // 2. Fetch order items to calculate base subtotal
+    const { data: items } = await supabase
+      .from('order_items')
+      .select('price')
+      .eq('order_id', orderId);
+
+    const subtotal = (items || []).reduce((acc: number, item: any) => acc + Number(item.price), 0);
+
+    // 3. Fetch tax settings
     const { data: settings } = await supabase
       .from('restaurant_settings')
       .select('tax_rate')
@@ -432,17 +537,32 @@ export const OrderService = {
       .single();
 
     const taxRate = Number(settings?.tax_rate ?? 15.00);
-    const totalAmount = Number(order.total_amount);
-    
-    // total = subtotal * (1 + taxRate/100)
-    // subtotal = total / (1 + taxRate/100)
-    const subtotal = totalAmount / (1 + taxRate / 100);
-    const taxAmount = totalAmount - subtotal;
+    const discountRate = Number(paymentData.discountRate || 0);
+    const serviceChargeRate = Number(paymentData.serviceChargeRate || 0);
+
+    const discountAmount = subtotal * (discountRate / 100);
+    const subtotalAfterDiscount = subtotal - discountAmount;
+    const taxAmount = subtotalAfterDiscount * (taxRate / 100);
+    const serviceChargeAmount = subtotalAfterDiscount * (serviceChargeRate / 100);
+    const finalTotalAmount = subtotalAfterDiscount + taxAmount + serviceChargeAmount;
+
+    // Fetch tenant currency config
+    const { data: tenantData } = await supabase
+      .from('tenants')
+      .select('currency_code, currency_symbol')
+      .eq('id', paymentData.tenantId)
+      .single();
+
+    const currencyCode = tenantData?.currency_code || 'ETB';
+    const currencySymbol = tenantData?.currency_symbol || 'ETB';
 
     // Generate unique receipt number
     const receiptNumber = 'REC-' + Math.random().toString(36).substring(2, 9).toUpperCase();
 
-    // 3. Insert receipt
+    const serviceChargeNote = serviceChargeRate > 0 ? `Service Charge: ${serviceChargeRate}% (${serviceChargeAmount.toFixed(2)}). ` : '';
+    const finalNotes = (serviceChargeNote + (paymentData.notes || '')).trim() || null;
+
+    // 4. Insert receipt
     const { error: receiptErr } = await supabase
       .from('receipts')
       .insert({
@@ -452,38 +572,83 @@ export const OrderService = {
         receipt_number: receiptNumber,
         subtotal: subtotal.toFixed(2),
         tax_amount: taxAmount.toFixed(2),
-        total_amount: totalAmount.toFixed(2),
+        discount_amount: discountAmount.toFixed(2),
+        total_amount: finalTotalAmount.toFixed(2),
         payment_method: paymentData.method || 'Cash',
         payment_status: 'PAID',
-        amount_received: Number(paymentData.amountReceived ?? totalAmount),
+        amount_received: Number(paymentData.amountReceived ?? finalTotalAmount),
         change_amount: Number(paymentData.changeAmount ?? 0),
-        notes: paymentData.notes || null
+        notes: finalNotes,
+        currency: currencyCode,
+        currency_symbol: currencySymbol,
+        exchange_rate: 1.0,
+        original_amount: finalTotalAmount.toFixed(2),
+        base_amount: finalTotalAmount.toFixed(2)
       });
 
     if (receiptErr) throw receiptErr;
 
-    // 4. Update order to COMPLETED
+    // 5. Update order to COMPLETED
     const { data, error } = await supabase
       .from('orders')
-      .update({ status: 'COMPLETED', updated_at: new Date().toISOString() })
+      .update({ 
+        status: 'COMPLETED', 
+        total_amount: finalTotalAmount.toFixed(2),
+        updated_at: now 
+      })
       .eq('id', orderId)
       .select('*, tables(number), users(*), order_items(*, menu_items(name, preparation_station))')
       .single();
 
     if (error) throw error;
 
-    // 4b. Update all order items status to READY
+    // 5b. Update all order items status to READY
     await supabase
       .from('order_items')
       .update({ status: 'READY' })
       .eq('order_id', orderId);
 
-    // 5. Release the table
+    // 6. Release the table
     if (data?.table_id) {
       await supabase
         .from('tables')
         .update({ status: 'AVAILABLE' })
         .eq('id', data.table_id);
+    }
+
+    // 7. Smart Notifications
+    try {
+      await supabase.from('notifications').insert([
+        {
+          tenant_id: paymentData.tenantId,
+          role: 'CASHIER',
+          title: 'Payment Completed',
+          message: `Payment of ${currencySymbol} ${finalTotalAmount.toFixed(2)} completed for Table ${order?.tables?.number || '?'}.`,
+          is_read: false
+        },
+        {
+          tenant_id: paymentData.tenantId,
+          role: 'ADMIN',
+          title: 'Important Event: Payment Completed',
+          message: `Revenue of ${currencySymbol} ${finalTotalAmount.toFixed(2)} recorded from Table ${order?.tables?.number || '?'}.`,
+          is_read: false
+        }
+      ]);
+    } catch {
+      console.warn('[settleOrder] Notification failed silently');
+    }
+
+    // 8. Audit log
+    try {
+      await supabase.from('activity_logs').insert({
+        user_id: paymentData.cashierId || null,
+        action: 'ORDER_PAID',
+        entity_type: 'order',
+        entity_id: orderId,
+        timestamp: now,
+      });
+    } catch {
+      console.warn('[settleOrder] Audit log failed silently');
     }
 
     return data ? mapOrder(data) : null;
@@ -846,10 +1011,12 @@ const mapReceipt = (row: any) => ({
   receiptNumber: row.receipt_number,
   subtotal: Number(row.subtotal),
   taxAmount: Number(row.tax_amount),
+  discountAmount: Number(row.discount_amount || 0),
   totalAmount: Number(row.total_amount),
   paymentMethod: row.payment_method,
   status: row.payment_status,
   createdAt: row.created_at,
+  currency: row.currency || 'ETB',
   order: row.orders ? {
     id: row.orders.id,
     tableNumber: row.orders.tables?.number,

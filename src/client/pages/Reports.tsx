@@ -15,7 +15,7 @@ import { cn } from '../../lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { OrderService, StaffService, ReceiptService } from '../services/ApiService';
 import { useTenant } from '../context/TenantContext';
-import { useCurrency } from '../services/CurrencyService';
+import { useCurrency, CurrencyService } from '../services/CurrencyService';
 import { useState, useMemo } from 'react';
 import { SubscriptionService } from '../services/SubscriptionService';
 import { UpgradeDialog } from '../components/UpgradeDialog';
@@ -133,6 +133,8 @@ export const Reports = () => {
   let cashRevenue = 0;
   let cardRevenue = 0;
   let mobileRevenue = 0;
+  let etbRevenue = 0;
+  let usdRevenue = 0;
 
   receipts.forEach((r: any) => {
     const method = (r.paymentMethod || 'CASH').toUpperCase();
@@ -140,6 +142,10 @@ export const Reports = () => {
     if (method === 'CASH') cashRevenue += amt;
     else if (method === 'CARD' || method === 'CREDIT_CARD') cardRevenue += amt;
     else mobileRevenue += amt; // Mobile, Mobile money, etc.
+
+    const currency = (r.currency || 'ETB').toUpperCase();
+    if (currency === 'USD') usdRevenue += amt;
+    else etbRevenue += amt;
   });
 
   const totalRecRevenue = cashRevenue + cardRevenue + mobileRevenue;
@@ -297,6 +303,18 @@ export const Reports = () => {
                       </div>
                    </div>
                  ))}
+                 
+                 {/* Currency Split */}
+                 <div className="pt-4 border-t border-slate-100 space-y-2">
+                    <div className="flex justify-between text-xs">
+                       <span className="text-[#64748B] font-bold">ETB REVENUE</span>
+                       <span className="font-extrabold text-[#0B1630]">{CurrencyService.format(etbRevenue, 'ETB')}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                       <span className="text-[#64748B] font-bold">USD REVENUE</span>
+                       <span className="font-extrabold text-[#0B1630]">{CurrencyService.format(usdRevenue, 'USD')}</span>
+                    </div>
+                 </div>
               </div>
            </div>
         </Card>
