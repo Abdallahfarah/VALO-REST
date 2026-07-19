@@ -584,7 +584,7 @@ export const Staff = () => {
               <button 
                 onClick={() => {
                   setIsAddingStaff(false);
-                  setNewStaffForm({ fullName: '', email: '', password: '', role: 'WAITER' });
+                  setNewStaffForm({ fullName: '', email: '', password: '', role: 'WAITER', preparationStation: '' });
                 }} 
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer"
               >
