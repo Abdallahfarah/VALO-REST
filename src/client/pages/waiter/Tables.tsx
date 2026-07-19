@@ -80,29 +80,29 @@ export const WaiterTables = () => {
   };
 
   const stats = [
-    { label: 'Total Tables', value: tables.length.toString(), icon: LayoutGrid, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-    { label: 'Available', value: tables.filter((t: any) => t.status === 'AVAILABLE').length.toString(), icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-    { label: 'Occupied', value: tables.filter((t: any) => t.status === 'OCCUPIED').length.toString(), icon: Users, color: 'text-orange-500', bg: 'bg-orange-50' },
-    { label: 'Preparing', value: tables.filter((t: any) => t.status === 'PREPARING').length.toString(), icon: Clock, color: 'text-blue-500', bg: 'bg-blue-50' },
-    { label: 'Awaiting Pay', value: tables.filter((t: any) => t.status === 'AWAITING_PAYMENT').length.toString(), icon: Coins, color: 'text-purple-500', bg: 'bg-purple-50' },
+    { label: 'Total Tables', value: tables.length.toString(), icon: LayoutGrid, color: 'text-indigo-500 lg:text-indigo-500', bg: 'lg:bg-indigo-50 bg-indigo-500/10' },
+    { label: 'Available', value: tables.filter((t: any) => t.status === 'AVAILABLE').length.toString(), icon: CheckCircle2, color: 'text-emerald-500 lg:text-emerald-500', bg: 'lg:bg-emerald-50 bg-emerald-500/10' },
+    { label: 'Occupied', value: tables.filter((t: any) => t.status === 'OCCUPIED').length.toString(), icon: Users, color: 'text-orange-500 lg:text-orange-500', bg: 'lg:bg-orange-50 bg-orange-500/10' },
+    { label: 'Preparing', value: tables.filter((t: any) => t.status === 'PREPARING').length.toString(), icon: Clock, color: 'text-blue-500 lg:text-blue-500', bg: 'lg:bg-blue-50 bg-blue-500/10' },
+    { label: 'Awaiting Pay', value: tables.filter((t: any) => t.status === 'AWAITING_PAYMENT').length.toString(), icon: Coins, color: 'text-purple-500 lg:text-purple-500', bg: 'lg:bg-purple-50 bg-purple-500/10' },
   ];
 
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'AVAILABLE':
-        return { label: 'Available', dot: 'bg-emerald-500', bg: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
+        return { label: 'Available', dot: 'bg-emerald-500', bg: 'lg:bg-emerald-50 lg:text-emerald-600 lg:border-emerald-100 bg-emerald-500/10 text-emerald-500 border-emerald-500/30' };
       case 'OCCUPIED':
-        return { label: 'Occupied', dot: 'bg-orange-500', bg: 'bg-orange-50 text-orange-600 border-orange-100' };
+        return { label: 'Occupied', dot: 'bg-orange-500', bg: 'lg:bg-orange-50 lg:text-orange-600 lg:border-orange-100 bg-orange-500/10 text-orange-500 border-orange-500/30' };
       case 'PREPARING':
-        return { label: 'Preparing', dot: 'bg-indigo-500', bg: 'bg-indigo-50 text-indigo-600 border-indigo-100' };
+        return { label: 'Preparing', dot: 'bg-indigo-500', bg: 'lg:bg-indigo-50 lg:text-indigo-600 lg:border-indigo-100 bg-indigo-500/10 text-indigo-400 border-indigo-500/30' };
       case 'READY':
-        return { label: 'Ready', dot: 'bg-amber-500', bg: 'bg-amber-50 text-amber-600 border-amber-100' };
+        return { label: 'Ready', dot: 'bg-amber-500', bg: 'lg:bg-amber-50 lg:text-amber-600 lg:border-amber-100 bg-amber-500/10 text-amber-500 border-amber-500/30' };
       case 'AWAITING_PAYMENT':
-        return { label: 'Awaiting Payment', dot: 'bg-purple-500', bg: 'bg-purple-50 text-purple-600 border-purple-100' };
+        return { label: 'Awaiting Payment', dot: 'bg-purple-500', bg: 'lg:bg-purple-50 lg:text-purple-600 lg:border-purple-100 bg-purple-500/10 text-purple-400 border-purple-500/30' };
       case 'PAID':
-        return { label: 'Paid', dot: 'bg-teal-500', bg: 'bg-teal-50 text-teal-600 border-teal-100' };
+        return { label: 'Paid', dot: 'bg-teal-500', bg: 'lg:bg-teal-50 lg:text-teal-600 lg:border-teal-100 bg-teal-500/10 text-teal-500 border-teal-500/30' };
       default:
-        return { label: status, dot: 'bg-slate-500', bg: 'bg-slate-50 text-slate-600 border-slate-100' };
+        return { label: status, dot: 'bg-slate-500', bg: 'lg:bg-slate-50 lg:text-slate-600 lg:border-slate-100 bg-slate-500/10 text-slate-500 border-slate-500/30' };
     }
   };
 
@@ -110,13 +110,13 @@ export const WaiterTables = () => {
     <div className="space-y-8 max-w-[1400px]">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#0B1630]">Interactive Floor Plan</h1>
+          <h1 className="text-3xl font-bold lg:text-[#0B1630] text-white">Interactive Floor Plan</h1>
           <div className="flex items-center gap-2 mt-1">
              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-             <span className="text-emerald-600 text-xs font-bold uppercase tracking-wider">Live Floor Status</span>
+             <span className="lg:text-emerald-600 text-emerald-400 text-xs font-bold uppercase tracking-wider">Live Floor Status</span>
              {settings?.tableAssignmentMode === 'ASSIGNED' && (
-               <span className="ml-3 bg-violet-100 text-violet-700 text-[10px] font-black uppercase px-2 py-0.5 rounded">
-                  Assigned Mode Active
+               <span className="ml-3 bg-violet-100 lg:text-violet-700 text-[#090D1F] text-[10px] font-black uppercase px-2 py-0.5 rounded">
+                   Assigned Mode Active
                </span>
              )}
           </div>
@@ -126,42 +126,42 @@ export const WaiterTables = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {stats.map((stat, i) => (
-          <Card key={i} className="p-4 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex items-center gap-4">
+          <Card key={i} className="p-4 lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none lg:border-none border border-[#232B5E]/50 shadow-2xl lg:shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex items-center gap-4">
             <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", stat.bg, stat.color)}>
               <stat.icon size={18} />
             </div>
             <div>
               <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-0.5">{stat.label}</p>
-              <h3 className="text-xl font-black text-[#0B1630]">{stat.value}</h3>
+              <h3 className="text-xl font-black lg:text-[#0B1630] text-white">{stat.value}</h3>
             </div>
           </Card>
         ))}
       </div>
 
       {/* Filters Bar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1 flex items-center gap-4">
-           <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex-1 flex flex-wrap items-center gap-4">
+           <div className="relative flex-1 min-w-[200px] max-w-sm">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-             <input className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]" placeholder="Search tables..." />
+             <input className="w-full h-10 pl-10 pr-4 rounded-xl lg:bg-white bg-[#1E293B] lg:border lg:border-slate-200 border border-[#232B5E]/30 lg:text-slate-800 text-white text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]" placeholder="Search tables..." />
            </div>
-           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-[#0B1630] cursor-pointer">
+           <div className="flex items-center gap-2 lg:bg-white bg-[#1E293B]/70 px-4 py-2 rounded-xl lg:border lg:border-slate-200 border border-[#232B5E]/30 text-sm font-bold lg:text-[#0B1630] text-white cursor-pointer">
               All Status <ChevronDown size={14} className="text-[#94A3B8]" />
            </div>
-           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-[#0B1630] cursor-pointer">
+           <div className="flex items-center gap-2 lg:bg-white bg-[#1E293B]/70 px-4 py-2 rounded-xl lg:border lg:border-slate-200 border border-[#232B5E]/30 text-sm font-bold lg:text-[#0B1630] text-white cursor-pointer">
               All Areas <ChevronDown size={14} className="text-[#94A3B8]" />
            </div>
         </div>
-        <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+        <div className="flex items-center lg:bg-slate-100 bg-[#1E293B]/70 p-1 rounded-xl w-fit">
            <button 
             onClick={() => setView('grid')}
-            className={cn("flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all", view === 'grid' ? "bg-white text-[#0B1630] shadow-sm" : "text-[#64748B] hover:text-[#0B1630]")}
+            className={cn("flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all", view === 'grid' ? "lg:bg-white bg-[#1E295D] lg:text-[#0B1630] text-white shadow-sm" : "lg:text-[#64748B] text-[#94A3B8] lg:hover:text-[#0B1630] hover:text-white")}
            >
              <LayoutGrid size={14} /> Grid View
            </button>
            <button 
             onClick={() => setView('list')}
-            className={cn("flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all", view === 'list' ? "bg-white text-[#0B1630] shadow-sm" : "text-[#64748B] hover:text-[#0B1630]")}
+            className={cn("flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all", view === 'list' ? "lg:bg-white bg-[#1E295D] lg:text-[#0B1630] text-white shadow-sm" : "lg:text-[#64748B] text-[#94A3B8] lg:hover:text-[#0B1630] hover:text-white")}
            >
              <List size={14} /> List View
            </button>
@@ -180,10 +180,10 @@ export const WaiterTables = () => {
               key={table.id} 
               onClick={() => handleTableClick(table)}
               className={cn(
-                "p-4 border shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-md transition-all group relative cursor-pointer",
+                "p-4 border lg:shadow-[0_2px_12px_rgba(0,0,0,0.04)] shadow-2xl hover:shadow-md transition-all group relative cursor-pointer lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none",
                 settings?.tableAssignmentMode === 'ASSIGNED' && isAssignedToSelf
                   ? "border-[#F97316] ring-2 ring-orange-100 bg-orange-50/10" 
-                  : "border-slate-100"
+                  : "lg:border-slate-100 border-[#232B5E]/50"
               )}
             >
               <div className="flex items-center justify-between mb-4">
@@ -193,7 +193,7 @@ export const WaiterTables = () => {
                 {settings?.tableAssignmentMode === 'ASSIGNED' && hasAssignment && (
                   <span className={cn(
                     "text-[8px] font-black uppercase px-2 py-0.5 rounded tracking-wider",
-                    isAssignedToSelf ? "bg-[#F97316] text-white" : "bg-slate-100 text-slate-500"
+                    isAssignedToSelf ? "bg-[#F97316] text-white" : "lg:bg-slate-100 bg-[#1E293B] lg:text-slate-500 text-[#94A3B8]"
                   )}>
                      {isAssignedToSelf ? 'Mine' : 'Assigned'}
                   </span>
@@ -201,8 +201,8 @@ export const WaiterTables = () => {
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-black text-[#0B1630]">T{table.number}</h3>
-                  <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">{table.capacity} Seats</span>
+                  <h3 className="text-lg font-black lg:text-[#0B1630] text-white">T{table.number}</h3>
+                  <span className="text-[10px] font-bold lg:text-[#94A3B8] text-white/50 uppercase tracking-wider">{table.capacity} Seats</span>
                 </div>
                 <div className={cn(
                   "text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider w-fit mt-3 inline-flex items-center gap-1.5",
@@ -211,7 +211,7 @@ export const WaiterTables = () => {
                   <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
                   {cfg.label}
                 </div>
-                <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                <div className="mt-4 pt-4 lg:border-t lg:border-slate-50 border-t border-[#232B5E]/20 flex items-center justify-between">
                   <div className="text-[10px] text-[#94A3B8] font-bold">
                      Waiter
                   </div>
@@ -219,7 +219,7 @@ export const WaiterTables = () => {
                      {isAssignedToSelf ? (
                        <span className="text-[#F97316]">You</span>
                      ) : table.waiter ? (
-                       <span className="text-[#64748B]">{table.waiter.name}</span>
+                       <span className="lg:text-[#64748B] text-[#94A3B8]">{table.waiter.name}</span>
                      ) : (
                        <span className="text-slate-400 font-medium">Unassigned</span>
                      )}
@@ -232,36 +232,36 @@ export const WaiterTables = () => {
       </div>
 
       {/* Legend Block */}
-      <div className="flex flex-wrap items-center justify-center gap-6 py-6 border-t border-slate-100">
-         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500" /><span className="text-[10px] font-bold text-[#64748B] uppercase">Available</span></div>
-         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-500" /><span className="text-[10px] font-bold text-[#64748B] uppercase">Occupied</span></div>
-         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500" /><span className="text-[10px] font-bold text-[#64748B] uppercase">Preparing</span></div>
-         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-amber-500" /><span className="text-[10px] font-bold text-[#64748B] uppercase">Ready</span></div>
-         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-purple-500" /><span className="text-[10px] font-bold text-[#64748B] uppercase">Awaiting Payment</span></div>
-         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-teal-500" /><span className="text-[10px] font-bold text-[#64748B] uppercase">Paid</span></div>
+      <div className="flex flex-wrap items-center justify-center gap-6 py-6 lg:border-t lg:border-slate-100 border-t border-[#232B5E]/20">
+         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500" /><span className="text-[10px] font-bold lg:text-[#64748B] text-[#94A3B8] uppercase">Available</span></div>
+         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-500" /><span className="text-[10px] font-bold lg:text-[#64748B] text-[#94A3B8] uppercase">Occupied</span></div>
+         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500" /><span className="text-[10px] font-bold lg:text-[#64748B] text-[#94A3B8] uppercase">Preparing</span></div>
+         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-amber-500" /><span className="text-[10px] font-bold lg:text-[#64748B] text-[#94A3B8] uppercase">Ready</span></div>
+         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-purple-500" /><span className="text-[10px] font-bold lg:text-[#64748B] text-[#94A3B8] uppercase">Awaiting Payment</span></div>
+         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-teal-500" /><span className="text-[10px] font-bold lg:text-[#64748B] text-[#94A3B8] uppercase">Paid</span></div>
       </div>
 
       {/* --- WARNING MODAL: ASSIGNED TABLE ACCESS --- */}
       {showWarningModal && (
-        <div className="fixed inset-0 z-50 bg-[#0B1630]/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <Card className="w-full max-w-md p-8 border-none shadow-2xl relative bg-white flex flex-col items-center text-center gap-6">
-            <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-[#090D1F]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <Card className="w-full max-w-md p-8 lg:bg-white bg-[#131A38] lg:border-none border border-[#232B5E]/50 shadow-2xl relative flex flex-col items-center text-center gap-6">
+            <div className="w-16 h-16 rounded-full lg:bg-amber-50 bg-amber-500/10 text-amber-500 flex items-center justify-center">
               <AlertTriangle size={32} />
             </div>
             <div>
-              <h3 className="text-xl font-black text-[#0B1630]">Table Assignment Restriction</h3>
-              <p className="text-sm text-[#64748B] mt-2">
-                This table is assigned to <span className="font-bold text-[#0B1630]">{targetTable?.waiter?.name || 'another waiter'}</span>.
+              <h3 className="text-xl font-black lg:text-[#0B1630] text-white">Table Assignment Restriction</h3>
+              <p className="text-sm lg:text-[#64748B] text-[#94A3B8] mt-2">
+                This table is assigned to <span className="font-bold lg:text-[#0B1630] text-white">{targetTable?.waiter?.name || 'another waiter'}</span>.
                 You are not allowed to access this table.
               </p>
             </div>
-            <div className="flex gap-4 w-full pt-4 border-t border-slate-100">
+            <div className="flex gap-4 w-full pt-4 lg:border-t lg:border-slate-100 border-t border-[#232B5E]/20">
               <button 
                 onClick={() => {
                   setShowWarningModal(false);
                   setTargetTable(null);
                 }}
-                className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-500 font-bold text-xs hover:bg-slate-50 uppercase tracking-wider"
+                className="flex-1 py-3 px-4 rounded-xl lg:bg-white bg-[#1E293B] lg:border lg:border-slate-200 border-none font-bold text-xs hover:bg-slate-50 lg:hover:bg-slate-50 hover:bg-[#334155] uppercase tracking-wider transition-all"
               >
                 Go Back
               </button>

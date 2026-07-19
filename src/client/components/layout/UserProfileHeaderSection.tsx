@@ -146,15 +146,15 @@ export const UserProfileHeaderSection = () => {
     switch (role) {
       case 'ADMIN':
       case 'SUPER_ADMIN':
-        return 'bg-[#282764] text-white';
+        return 'lg:bg-[#282764] bg-[#282764] text-white';
       case 'WAITER':
-        return 'bg-[#3A36A0]/10 text-[#3A36A0]';
+        return 'lg:bg-[#3A36A0]/10 lg:text-[#3A36A0] bg-[#F97316]/20 text-[#F97316]';
       case 'CASHIER':
-        return 'bg-[#F97316]/10 text-[#F97316]';
+        return 'lg:bg-[#F97316]/10 lg:text-[#F97316] bg-[#F97316]/20 text-[#F97316]';
       case 'KITCHEN_STAFF':
-        return 'bg-[#10B981]/10 text-[#10B981]';
+        return 'lg:bg-[#10B981]/10 lg:text-[#10B981] bg-[#10B981]/20 text-[#10B981]';
       default:
-        return 'bg-slate-100 text-slate-800';
+        return 'lg:bg-slate-100 bg-slate-800 text-slate-400';
     }
   };
 
@@ -166,14 +166,14 @@ export const UserProfileHeaderSection = () => {
       <button 
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 hover:bg-slate-50 p-1.5 pr-2.5 rounded-xl transition-all cursor-pointer text-left focus:outline-none"
+        className="flex items-center gap-3 lg:hover:bg-slate-50 hover:bg-[#131A38]/30 p-1.5 pr-2.5 rounded-xl transition-all cursor-pointer text-left focus:outline-none"
       >
-        <div className="w-9 h-9 rounded-xl bg-[#0B1630] text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-[#0B1630] lg:bg-[#0B1630] bg-[#1E295D] text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
           {avatarChar}
         </div>
         <div className="hidden sm:flex flex-col text-left min-w-0">
-          <span className="text-xs font-bold text-[#0B1630] truncate max-w-[120px] leading-tight">{fullName}</span>
-          <span className="text-[10px] text-[#64748B] font-medium truncate max-w-[150px] leading-none mt-0.5">{email}</span>
+          <span className="text-xs font-bold lg:text-[#0B1630] text-white truncate max-w-[120px] leading-tight">{fullName}</span>
+          <span className="text-[10px] lg:text-[#64748B] text-[#94A3B8] font-medium truncate max-w-[150px] leading-none mt-0.5">{email}</span>
           <span className={cn(
             "inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border border-transparent mt-1 w-fit",
             getRoleBadgeClasses()
