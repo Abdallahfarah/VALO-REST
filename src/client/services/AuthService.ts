@@ -86,16 +86,7 @@ export const AuthService = {
     if (error) throw error;
   },
 
-  async loginWithGoogle() {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
-    });
-    if (error) throw error;
-    return data;
-  },
+
 
   async getCurrentUser() {
     const { data: { user }, error } = await supabase.auth.getUser();

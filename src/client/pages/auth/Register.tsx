@@ -17,7 +17,6 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AuthService } from '../../services/AuthService';
-import { GoogleComingSoonModal } from '../../components/GoogleComingSoonModal';
 import { cn } from '../../lib/utils';
 import { supabase } from '../../../lib/supabase';
 
@@ -100,7 +99,7 @@ export const Register = () => {
   const [agreeToTerms, setAgreeToTerms] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = React.useState(false);
+
 
   React.useEffect(() => {
     setFormData({
@@ -687,21 +686,6 @@ export const Register = () => {
                      </div>
                   </div>
                )}
-
-               <div className="relative py-4 flex flex-col items-center">
-                  <div className="absolute top-1/2 w-full h-[1px] bg-slate-100" />
-                  <span className="relative z-10 bg-white px-3 text-[9px] font-black text-[#64748B] uppercase tracking-widest">or</span>
-               </div>
-
-               <button 
-                 type="button" 
-                 onClick={() => setIsGoogleModalOpen(true)} 
-                 disabled={isLoading}
-                 className="w-full bg-white h-12 rounded-xl border border-[#E5E7EB] flex items-center justify-center gap-2.5 text-xs font-bold text-[#0F172A] hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
-               >
-                  <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" loading="lazy" decoding="async" width={16} height={16} />
-                  Continue with Google
-               </button>
             </form>
 
             <div className="text-center mt-8 text-xs font-medium text-[#64748B]">
@@ -709,7 +693,6 @@ export const Register = () => {
             </div>
          </div>
       </div>
-      <GoogleComingSoonModal isOpen={isGoogleModalOpen} onClose={() => setIsGoogleModalOpen(false)} />
     </div>
   );
 };

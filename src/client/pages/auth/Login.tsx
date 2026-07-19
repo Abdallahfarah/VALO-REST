@@ -11,7 +11,6 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../../services/AuthService';
 import { useAuth } from '../../context/AuthContext';
-import { GoogleComingSoonModal } from '../../components/GoogleComingSoonModal';
 import { cn } from '../../lib/utils';
 import valoLogo from '../../../../Docs/valo-logo.webp';
 
@@ -82,7 +81,6 @@ export const Login = () => {
   const [rememberMe, setRememberMe] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
 
   const { role: currentRole } = useAuth();
@@ -325,28 +323,13 @@ export const Login = () => {
                   {isLoading ? 'Signing In...' : 'Sign In'}
                </button>
 
-               <div className="relative py-4 flex flex-col items-center">
-                  <div className="absolute top-1/2 w-full h-[1px] bg-slate-100" />
-                  <span className="relative z-10 bg-white px-3 text-[9px] font-black text-[#64748B] uppercase tracking-widest">or</span>
-               </div>
-
-               <button 
-                 type="button" 
-                 onClick={() => setIsGoogleModalOpen(true)} 
-                 disabled={isLoading}
-                 className="w-full bg-white h-12 rounded-xl border border-[#E5E7EB] flex items-center justify-center gap-2.5 text-xs font-bold text-[#0F172A] hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
-               >
-                  <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" />
-                  Continue with Google
-               </button>
-            </form>
-
-            <div className="text-center mt-8 text-xs font-medium text-[#64748B]">
-               Need a restaurant workspace? <Link to="/register" className="text-[#F97316] font-bold hover:underline ml-1">Create Restaurant →</Link>
-            </div>
-         </div>
-      </div>
-      <GoogleComingSoonModal isOpen={isGoogleModalOpen} onClose={() => setIsGoogleModalOpen(false)} />
+             </form>
+ 
+             <div className="text-center mt-8 text-xs font-medium text-[#64748B]">
+                Need a restaurant workspace? <Link to="/register" className="text-[#F97316] font-bold hover:underline ml-1">Create Restaurant →</Link>
+             </div>
+          </div>
+       </div>
     </div>
   );
 };
