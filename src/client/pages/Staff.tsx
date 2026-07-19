@@ -372,7 +372,8 @@ export const Staff = () => {
     fullName: '',
     email: '',
     password: '',
-    role: 'WAITER'
+    role: 'WAITER',
+    preparationStation: ''
   });
 
   // Action Menu States
@@ -381,7 +382,7 @@ export const Staff = () => {
   const [editStaff, setEditStaff] = useState<any>(null);
   const [suspendStaff, setSuspendStaff] = useState<any>(null);
   const [deleteStaff, setDeleteStaff] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ fullName: '', role: 'WAITER', newPassword: '' });
+  const [editForm, setEditForm] = useState({ fullName: '', role: 'WAITER', newPassword: '', preparationStation: '' });
   const [showEditPassword, setShowEditPassword] = useState(false);
 
   const queryClient = useQueryClient();
@@ -407,7 +408,7 @@ export const Staff = () => {
     if (staffMembers.length >= limit) {
       setShowUpgradeModal(true);
     } else {
-      setNewStaffForm({ fullName: '', email: '', password: '', role: 'WAITER' });
+      setNewStaffForm({ fullName: '', email: '', password: '', role: 'WAITER', preparationStation: '' });
       setIsAddingStaff(true);
     }
   };
@@ -422,12 +423,13 @@ export const Staff = () => {
         newStaffForm.password,
         newStaffForm.fullName,
         newStaffForm.role,
-        tenant.id
+        tenant.id,
+        newStaffForm.role === 'KITCHEN_STAFF' ? (newStaffForm.preparationStation || 'Chef') : undefined
       );
       toast.success('Staff Created', `${newStaffForm.fullName} has been provisioned successfully.`);
       queryClient.invalidateQueries({ queryKey: ['staff', tenant.id] });
       setIsAddingStaff(false);
-      setNewStaffForm({ fullName: '', email: '', password: '', role: 'WAITER' });
+      setNewStaffForm({ fullName: '', email: '', password: '', role: 'WAITER', preparationStation: '' });
     } catch (err: any) {
       toast.error('Provisioning Failed', err.message);
     } finally {
@@ -447,7 +449,7 @@ export const Staff = () => {
       setProfileStaff(staff);
     } else if (action === 'edit') {
       setEditStaff(staff);
-      setEditForm({ fullName: staff.name, role: staff.role, newPassword: '' });
+      setEditForm({ fullName: staff.name, role: staff.role, newPassword: '', preparationStation: staff.preparationStation || 'Chef' });
       setShowEditPassword(false);
     } else if (action === 'reset-password') {
       handleResetPassword(staff.email);
@@ -522,7 +524,8 @@ export const Staff = () => {
         .update({
           first_name: first,
           last_name: last,
-          role: editForm.role
+          role: editForm.role,
+          preparation_station: editForm.role === 'KITCHEN_STAFF' ? (editForm.preparationStation || 'Chef') : null
         })
         .eq('id', editStaff.id);
 
@@ -549,7 +552,9 @@ export const Staff = () => {
     return (
       staff.name?.toLowerCase().includes(q) || 
       staff.email?.toLowerCase().includes(q) || 
-      staff.role?.toLowerCase().includes(q)
+      staff.role?.toLowerCase().includes(q) ||
+      staff.preparationStation?.toLowerCase().includes(q) ||
+      staff.status?.toLowerCase().includes(q)
     );
   });
 
@@ -616,7 +621,11 @@ export const Staff = () => {
                 <label className="text-[10px] font-black uppercase text-[#0B1630]">Role</label>
                 <select 
                   value={newStaffForm.role}
-                  onChange={e => setNewStaffForm(prev => ({ ...prev, role: e.target.value }))}
+                  onChange={e => setNewStaffForm(prev => ({ 
+                    ...prev, 
+                    role: e.target.value,
+                    preparationStation: e.target.value === 'KITCHEN_STAFF' ? (prev.preparationStation || 'Chef') : ''
+                  }))}
                   className="w-full h-10 px-3 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-[#F97316] bg-white cursor-pointer"
                 >
                   <option value="WAITER">Waiter</option>
@@ -625,6 +634,23 @@ export const Staff = () => {
                   <option value="ADMIN">Manager (Admin)</option>
                 </select>
               </div>
+
+              {newStaffForm.role === 'KITCHEN_STAFF' && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-[#0B1630]">Preparation Station</label>
+                  <select 
+                    value={newStaffForm.preparationStation || 'Chef'}
+                    onChange={e => setNewStaffForm(prev => ({ ...prev, preparationStation: e.target.value }))}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-[#F97316] bg-white cursor-pointer"
+                    required
+                  >
+                    <option value="Chef">Chef</option>
+                    <option value="Barista">Barista</option>
+                    <option value="Kitchen Staff">Kitchen Staff</option>
+                  </select>
+                </div>
+              )}
+
 
               <button 
                 type="submit"
@@ -902,7 +928,11 @@ export const Staff = () => {
                 <label className="text-[10px] font-black uppercase text-[#0B1630]">Role</label>
                 <select 
                   value={editForm.role}
-                  onChange={e => setEditForm(prev => ({ ...prev, role: e.target.value }))}
+                  onChange={e => setEditForm(prev => ({ 
+                    ...prev, 
+                    role: e.target.value,
+                    preparationStation: e.target.value === 'KITCHEN_STAFF' ? (prev.preparationStation || 'Chef') : ''
+                  }))}
                   className="w-full h-10 px-3 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-[#F97316] bg-white cursor-pointer"
                 >
                   <option value="WAITER">Waiter</option>
@@ -911,6 +941,23 @@ export const Staff = () => {
                   <option value="ADMIN">Manager (Admin)</option>
                 </select>
               </div>
+
+              {editForm.role === 'KITCHEN_STAFF' && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-[#0B1630]">Preparation Station</label>
+                  <select 
+                    value={editForm.preparationStation || 'Chef'}
+                    onChange={e => setEditForm(prev => ({ ...prev, preparationStation: e.target.value }))}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-[#F97316] bg-white cursor-pointer"
+                    required
+                  >
+                    <option value="Chef">Chef</option>
+                    <option value="Barista">Barista</option>
+                    <option value="Kitchen Staff">Kitchen Staff</option>
+                  </select>
+                </div>
+              )}
+
 
               <div className="space-y-1">
                 <label className="text-[10px] font-black uppercase text-[#0B1630]">New Password</label>

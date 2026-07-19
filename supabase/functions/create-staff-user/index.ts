@@ -65,12 +65,28 @@ Deno.serve(async (req: Request) => {
     console.log("Caller profile resolved. Role:", callerProfile.role, "Tenant ID:", callerProfile.tenant_id);
 
     // 3. Parse input parameters
-    const { email, password, role, tenantId, fullName } = await req.json();
-    console.log("Input payload received. Email:", email, "Role:", role, "Tenant:", tenantId);
+    const { email, password, role, tenantId, fullName, preparationStation } = await req.json();
+    console.log("Input payload received. Email:", email, "Role:", role, "Tenant:", tenantId, "Station:", preparationStation);
 
     if (!email || !password || !role || !fullName) {
       console.error("Missing required fields in payload.");
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    if (role === "KITCHEN_STAFF" && !preparationStation) {
+      console.error("Missing preparationStation for KITCHEN_STAFF.");
+      return new Response(JSON.stringify({ error: "Preparation station is required for Kitchen Display Staff" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    if (preparationStation && !["Chef", "Barista", "Kitchen Staff"].includes(preparationStation)) {
+      console.error("Invalid preparationStation:", preparationStation);
+      return new Response(JSON.stringify({ error: "Invalid preparation station. Must be Chef, Barista, or Kitchen Staff" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
@@ -121,7 +137,8 @@ Deno.serve(async (req: Request) => {
       user_metadata: {
         full_name: fullName,
         role: role,
-        tenant_id: tenantId
+        tenant_id: tenantId,
+        preparation_station: preparationStation || null
       }
     });
 

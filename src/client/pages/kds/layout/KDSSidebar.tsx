@@ -50,7 +50,7 @@ export interface KDSSidebarProps {
 }
 
 export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
-  const { signOut } = useAuth();
+  const { signOut, preparationStation } = useAuth();
   const { tenant } = useTenant();
   return (
     <>
@@ -74,7 +74,9 @@ export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
             </div>
             <div className="flex flex-col">
               <span className="text-white font-bold text-lg leading-none drop-shadow-sm truncate max-w-[150px]">{tenant?.name || 'RESTAURANT'}</span>
-              <span className="text-[#F97316] text-[10px] font-bold tracking-wider mt-1 uppercase">KITCHEN DISPLAY</span>
+              <span className="text-[#F97316] text-[10px] font-bold tracking-wider mt-1 uppercase">
+                KITCHEN DISPLAY {preparationStation ? ` - ${preparationStation}` : ''}
+              </span>
             </div>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white transition-colors lg:hidden cursor-pointer">

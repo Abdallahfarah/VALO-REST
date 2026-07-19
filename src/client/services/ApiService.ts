@@ -37,7 +37,10 @@ const mapTable = (row: any) => ({
 
 const mapOrderItem = (row: any) => ({
   id: row.id,
-  menuItem: { name: row.menu_items?.name || 'Item' },
+  menuItem: { 
+    name: row.menu_items?.name || 'Item',
+    preparationStation: row.menu_items?.preparation_station || 'Chef'
+  },
   quantity: row.quantity,
   unitPrice: Number(row.unit_price),
   price: Number(row.price),
@@ -65,7 +68,8 @@ const mapUser = (row: any) => ({
   name: `${row.first_name} ${row.last_name}`,
   email: row.email,
   role: row.role,
-  section: '',
+  section: row.preparation_station || '',
+  preparationStation: row.preparation_station || null,
   status: row.is_active ? 'Active' : 'Inactive',
 });
 
@@ -74,7 +78,7 @@ export const OrderService = {
   async getOrders(tenantId: string, status?: string) {
     let query = supabase
       .from('orders')
-      .select('*, tables(number), users(*), order_items(*, menu_items(name))')
+      .select('*, tables(number), users(*), order_items(*, menu_items(name, preparation_station))')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
 
@@ -173,7 +177,7 @@ export const OrderService = {
     // 4. Fetch and return the complete order
     const { data: fullOrder } = await supabase
       .from('orders')
-      .select('*, tables(number), users(*), order_items(*, menu_items(name))')
+      .select('*, tables(number), users(*), order_items(*, menu_items(name, preparation_station))')
       .eq('id', orderId)
       .single();
 
@@ -191,7 +195,7 @@ export const OrderService = {
       .from('orders')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', orderId)
-      .select('*, tables(number), users(*), order_items(*, menu_items(name))')
+      .select('*, tables(number), users(*), order_items(*, menu_items(name, preparation_station))')
       .single();
 
     if (error) throw error;
@@ -234,6 +238,93 @@ export const OrderService = {
     return data ? mapOrder(data) : null;
   },
 
+  async updateStationItemsStatus(orderId: string, station: string, nextStatus: string) {
+    const now = new Date().toISOString();
+    
+    // 1. Get all items for this order with their menu item preparation station
+    const { data: items, error: fetchErr } = await supabase
+      .from('order_items')
+      .select('*, menu_items(preparation_station)')
+      .eq('order_id', orderId);
+      
+    if (fetchErr) throw fetchErr;
+
+    // 2. Filter items belonging to this station
+    const stationItems = items.filter((item: any) => {
+      const itemStation = item.menu_items?.preparation_station || 'Chef';
+      return itemStation === station;
+    });
+
+    if (stationItems.length === 0) return null;
+
+    // 3. Determine source status to update
+    const sourceStatus = nextStatus === 'PREPARING' ? 'PENDING' : 'PREPARING';
+    const targetItemIds = stationItems
+      .filter((item: any) => item.status === sourceStatus)
+      .map((item: any) => item.id);
+
+    if (targetItemIds.length > 0) {
+      const { error: updateErr } = await supabase
+        .from('order_items')
+        .update({ status: nextStatus })
+        .in('id', targetItemIds);
+        
+      if (updateErr) throw updateErr;
+    }
+
+    // 4. Fetch the updated state of all items for the order
+    const { data: allItems } = await supabase
+      .from('order_items')
+      .select('*, menu_items(preparation_station)')
+      .eq('order_id', orderId);
+
+    const activeItems = allItems || [];
+
+    // 5. Update overall order status
+    // If all items are READY or CANCELED, order becomes READY (unless cancelled/completed already)
+    const allReadyOrCanceled = activeItems.every((item: any) => item.status === 'READY' || item.status === 'CANCELED');
+    const hasAnyPreparing = activeItems.some((item: any) => item.status === 'PREPARING');
+    
+    let orderStatus = 'PENDING';
+    if (allReadyOrCanceled && activeItems.length > 0) {
+      orderStatus = 'READY';
+    } else if (hasAnyPreparing) {
+      orderStatus = 'PREPARING';
+    }
+
+    // Update order
+    const { data: orderData } = await supabase
+      .from('orders')
+      .select('status, table_id')
+      .eq('id', orderId)
+      .single();
+
+    if (orderData && orderData.status !== 'COMPLETED' && orderData.status !== 'CANCELED') {
+      await supabase
+        .from('orders')
+        .update({ status: orderStatus, updated_at: now })
+        .eq('id', orderId);
+
+      // Keep table status in sync
+      if (orderData.table_id) {
+        let tableStatus = 'AVAILABLE';
+        if (orderStatus === 'PREPARING') {
+          tableStatus = 'PREPARING';
+        } else if (orderStatus === 'READY') {
+          tableStatus = 'READY';
+        } else if (orderStatus === 'COMPLETED') {
+          tableStatus = 'AVAILABLE';
+        }
+        await supabase
+          .from('tables')
+          .update({ status: tableStatus })
+          .eq('id', orderData.table_id);
+      }
+    }
+
+    return true;
+  },
+
   async cancelOrder(params: {
     orderId: string;
     reason: string;
@@ -271,7 +362,7 @@ export const OrderService = {
         updated_at: now,
       })
       .eq('id', orderId)
-      .select('*, tables(number), users(*), order_items(*, menu_items(name))')
+      .select('*, tables(number), users(*), order_items(*, menu_items(name, preparation_station))')
       .single();
 
     if (error) throw error;
@@ -376,7 +467,7 @@ export const OrderService = {
       .from('orders')
       .update({ status: 'COMPLETED', updated_at: new Date().toISOString() })
       .eq('id', orderId)
-      .select('*, tables(number), users(*), order_items(*, menu_items(name))')
+      .select('*, tables(number), users(*), order_items(*, menu_items(name, preparation_station))')
       .single();
 
     if (error) throw error;
@@ -872,9 +963,9 @@ export const SuperAdminService = {
     return (data || []).map(mapUser);
   },
 
-  async createTenantStaff(email: string, password: string, fullName: string, role: string, tenantId: string) {
+  async createTenantStaff(email: string, password: string, fullName: string, role: string, tenantId: string, preparationStation?: string) {
     const { data, error } = await supabase.functions.invoke('create-staff-user', {
-      body: { email, password, role, tenantId, fullName }
+      body: { email, password, role, tenantId, fullName, preparationStation }
     });
 
     if (error) {

@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: string | null;
+  preparationStation: string | null;
   loading: boolean;
   signOut: () => Promise<void>;
   impersonatedTenantId: string | null;
@@ -23,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [dbRole, setDbRole] = useState<string | null>(null);
+  const [preparationStation, setPreparationStation] = useState<string | null>(null);
   const [userTenantId, setUserTenantId] = useState<string | null>(null);
   const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
   const [impersonatedTenantId, setImpersonatedTenantIdState] = useState<string | null>(
@@ -51,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(null);
           setUser(null);
           setDbRole(null);
+          setPreparationStation(null);
           setUserTenantId(null);
           setLoadedUserId(null);
           setLoading(false);
@@ -66,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const { data: profile, error } = await supabase
           .from('users')
-          .select('role, tenant_id')
+          .select('role, tenant_id, preparation_station')
           .eq('id', activeSession.user.id)
           .maybeSingle();
 
@@ -76,6 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (profile) {
             setDbRole(profile.role);
             setUserTenantId(profile.tenant_id);
+            setPreparationStation(profile.preparation_station);
           }
           setLoadedUserId(activeSession.user.id);
         }
@@ -109,6 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(null);
         setUser(null);
         setDbRole(null);
+        setPreparationStation(null);
         setUserTenantId(null);
         setLoadedUserId(null);
         setLoading(false);
@@ -166,6 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(null);
     setImpersonatedTenantIdState(null);
     setDbRole(null);
+    setPreparationStation(null);
     setUserTenantId(null);
     setLoadedUserId(null);
 
@@ -179,12 +185,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     role,
+    preparationStation,
     loading: isAuthLoading,
     signOut,
     impersonatedTenantId,
     setImpersonatedTenantId,
     userTenantId
   };
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

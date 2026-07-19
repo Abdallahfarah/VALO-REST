@@ -173,10 +173,24 @@ interface OrderDetailsDialogProps {
   onStatusUpdate: (orderId: string, currentStatus: string) => void;
   onCancel: (order: any) => void;
   isUpdating: boolean;
+  activeStation: string;
 }
 
-const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdating }: OrderDetailsDialogProps) => {
-  const isCancellable = order.status === 'PENDING' || order.status === 'PREPARING';
+const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdating, activeStation }: OrderDetailsDialogProps) => {
+  const stationItems = (order.items || []).filter((item: any) => {
+    const itemStation = item.menuItem?.preparationStation || 'Chef';
+    return itemStation === activeStation;
+  });
+
+  const getStationOrderStatus = () => {
+    if (order.status === 'CANCELED') return 'CANCELED';
+    if (stationItems.some((i: any) => i.status === 'PREPARING')) return 'PREPARING';
+    if (stationItems.every((i: any) => i.status === 'READY' || i.status === 'CANCELED') && stationItems.length > 0) return 'READY';
+    return 'PENDING';
+  };
+
+  const currentStationStatus = getStationOrderStatus();
+  const isCancellable = currentStationStatus === 'PENDING' || currentStationStatus === 'PREPARING';
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -188,7 +202,7 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
               <FileText size={20} />
             </div>
             <div>
-              <h2 className="text-sm font-black text-[#0B1630] uppercase tracking-wider">Order Details</h2>
+              <h2 className="text-sm font-black text-[#0B1630] uppercase tracking-wider">Order Details ({activeStation})</h2>
               <p className="text-[11px] text-[#94A3B8] font-medium mt-0.5">
                 #{order.id?.toUpperCase()}
               </p>
@@ -224,9 +238,9 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
 
           {/* Details list */}
           <div className="space-y-3">
-            <h3 className="text-[10px] font-black text-[#0B1630] uppercase tracking-wider">Order Items</h3>
+            <h3 className="text-[10px] font-black text-[#0B1630] uppercase tracking-wider">{activeStation} Station Items</h3>
             <div className="space-y-2">
-              {order.items?.map((item: any, idx: number) => (
+              {stationItems?.map((item: any, idx: number) => (
                 <div key={idx} className="flex justify-between items-center bg-slate-50/50 border border-slate-100 px-4 py-3 rounded-xl">
                   <div>
                     <p className="text-xs font-bold text-[#0B1630]">{item.quantity}x {item.menuItem?.name}</p>
@@ -263,11 +277,11 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
         <div className="px-6 pb-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 bg-slate-50/20">
           <span className={cn(
             "text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest",
-            order.status === 'PENDING' ? 'bg-indigo-50 text-indigo-600' :
-            order.status === 'PREPARING' ? 'bg-orange-50 text-orange-600' :
-            order.status === 'READY' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+            currentStationStatus === 'PENDING' ? 'bg-indigo-50 text-indigo-600' :
+            currentStationStatus === 'PREPARING' ? 'bg-orange-50 text-orange-600' :
+            currentStationStatus === 'READY' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
           )}>
-            Status: {order.status}
+            Station: {currentStationStatus}
           </span>
           <div className="flex items-center gap-2">
             {isCancellable && (
@@ -279,13 +293,13 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
                 Cancel Order
               </button>
             )}
-            {order.status !== 'READY' && order.status !== 'CANCELED' && (
+            {currentStationStatus !== 'READY' && currentStationStatus !== 'CANCELED' && (
               <button
-                onClick={() => { onClose(); onStatusUpdate(order.id, order.status); }}
+                onClick={() => { onClose(); onStatusUpdate(order.id, currentStationStatus); }}
                 disabled={isUpdating}
                 className="px-4 py-2.5 rounded-2xl bg-[#F97316] text-white hover:bg-[#ea580c] text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
               >
-                {order.status === 'PENDING' ? 'Start Preparing' : 'Mark as Ready'}
+                {currentStationStatus === 'PENDING' ? 'Start Preparing' : 'Mark as Ready'}
               </button>
             )}
             <button
@@ -311,6 +325,7 @@ interface ViewAllOrdersDialogProps {
   onStatusUpdate: (orderId: string, currentStatus: string) => void;
   onCancel: (order: any) => void;
   isUpdating: boolean;
+  activeStation: string;
 }
 
 const ViewAllOrdersDialog = ({
@@ -321,9 +336,28 @@ const ViewAllOrdersDialog = ({
   onSelectOrder,
   onStatusUpdate,
   onCancel,
-  isUpdating
+  isUpdating,
+  activeStation
 }: ViewAllOrdersDialogProps) => {
-  const filtered = orders.filter((o) => o.status === status);
+  
+  const getStationOrderStatus = (order: any) => {
+    if (order.status === 'CANCELED') return 'CANCELED';
+    const stationItems = (order.items || []).filter((item: any) => {
+      const itemStation = item.menuItem?.preparationStation || 'Chef';
+      return itemStation === activeStation;
+    });
+    if (stationItems.some((i: any) => i.status === 'PREPARING')) return 'PREPARING';
+    if (stationItems.every((i: any) => i.status === 'READY' || i.status === 'CANCELED') && stationItems.length > 0) return 'READY';
+    return 'PENDING';
+  };
+
+  const filtered = orders.map((o) => {
+    const stationItems = (o.items || []).filter((item: any) => {
+      const itemStation = item.menuItem?.preparationStation || 'Chef';
+      return itemStation === activeStation;
+    });
+    return { ...o, stationItems };
+  }).filter((o) => o.stationItems.length > 0 && getStationOrderStatus(o) === status);
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -332,7 +366,7 @@ const ViewAllOrdersDialog = ({
         <div className="border-b border-slate-100 p-6 flex items-start justify-between bg-slate-50/50">
           <div>
             <h2 className="text-sm font-black text-[#0B1630] uppercase tracking-wider">{title} ({filtered.length})</h2>
-            <p className="text-[11px] text-[#94A3B8] font-medium mt-0.5">Viewing filtered status list</p>
+            <p className="text-[11px] text-[#94A3B8] font-medium mt-0.5">Viewing {activeStation} status list</p>
           </div>
           <button
             onClick={onClose}
@@ -362,13 +396,13 @@ const ViewAllOrdersDialog = ({
                     <span className="text-[9px] font-bold text-[#94A3B8]">Table {order.table?.number || 'N/A'}</span>
                   </div>
                   <p className="text-[10px] text-[#64748B] font-medium">
-                    {order.items?.length || 0} items · ${Number(order.totalAmount).toFixed(2)}
+                    {order.stationItems?.length || 0} station items · ${Number(order.totalAmount).toFixed(2)}
                   </p>
                 </div>
                 <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                   {status !== 'READY' && status !== 'CANCELED' && (
                     <button
-                      onClick={() => onStatusUpdate(order.id, order.status)}
+                      onClick={() => onStatusUpdate(order.id, getStationOrderStatus(order))}
                       disabled={isUpdating}
                       className="px-3 py-1.5 rounded-xl bg-orange-50 text-[#F97316] text-[9px] font-black uppercase tracking-wider hover:bg-orange-100 transition-all disabled:opacity-50"
                     >
@@ -408,7 +442,7 @@ const ViewAllOrdersDialog = ({
 // ── OrdersMonitor ────────────────────────────────────────────────────────────
 export const OrdersMonitor = () => {
   const { tenant } = useTenant();
-  const { user } = useAuth();
+  const { user, role, preparationStation } = useAuth();
   const queryClient = useQueryClient();
 
   // Accordion open state for mobile sections
@@ -417,6 +451,17 @@ export const OrdersMonitor = () => {
   const [cancelling, setCancelling] = useState<any | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [viewingAllStatus, setViewingAllStatus] = useState<string | null>(null);
+
+  // 1. Determine active station
+  const userStation = preparationStation || 'Chef';
+  const isKdsUser = role === 'KITCHEN_STAFF';
+  const [activeStation, setActiveStation] = useState<string>('Chef');
+
+  useEffect(() => {
+    if (isKdsUser && preparationStation) {
+      setActiveStation(preparationStation);
+    }
+  }, [isKdsUser, preparationStation]);
 
   useEffect(() => {
     if (!tenant?.id) return;
@@ -445,7 +490,7 @@ export const OrdersMonitor = () => {
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string, status: string }) => 
-      OrderService.updateOrderStatus(orderId, status),
+      OrderService.updateStationItemsStatus(orderId, activeStation, status),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Order updated', `Status → ${variables.status}`);
@@ -473,6 +518,26 @@ export const OrdersMonitor = () => {
     },
   });
 
+  // Filter orders and map stationItems
+  const filteredOrdersForStation = orders.map((order: any) => {
+    const stationItems = (order.items || []).filter((item: any) => {
+      const itemStation = item.menuItem?.preparationStation || 'Chef';
+      return itemStation === activeStation;
+    });
+    return {
+      ...order,
+      stationItems,
+    };
+  }).filter((order: any) => order.stationItems.length > 0);
+
+  const getStationOrderStatus = (order: any) => {
+    if (order.status === 'CANCELED') return 'CANCELED';
+    const items = order.stationItems || [];
+    if (items.some((i: any) => i.status === 'PREPARING')) return 'PREPARING';
+    if (items.every((i: any) => i.status === 'READY' || i.status === 'CANCELED') && items.length > 0) return 'READY';
+    return 'PENDING';
+  };
+
   const handleStatusUpdate = (orderId: string, currentStatus: string) => {
     let nextStatus = '';
     if (currentStatus === 'PENDING') nextStatus = 'PREPARING';
@@ -485,56 +550,78 @@ export const OrdersMonitor = () => {
 
   const isCancellable = (status: string) => status === 'PENDING' || status === 'PREPARING';
 
+  // Average preparation time calculation
+  const readyOrders = filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'READY');
+  const avgPrepTime = readyOrders.length > 0
+    ? Math.round(readyOrders.reduce((acc: number, o: any) => {
+        const diff = new Date(o.updatedAt).getTime() - new Date(o.createdAt).getTime();
+        return acc + (diff / 60000);
+      }, 0) / readyOrders.length)
+    : 12; // default fallback if no orders prepared yet
+
   const kpis = [
-    { label: 'New Orders', value: orders.filter((o: any) => o.status === 'PENDING').length.toString(), sub: 'Start', icon: Receipt, color: 'text-indigo-500', bg: 'bg-indigo-50', darkBg: 'bg-indigo-500/10', darkColor: 'text-indigo-400' },
-    { label: 'Preparing', value: orders.filter((o: any) => o.status === 'PREPARING').length.toString(), sub: 'In Progress', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', darkBg: 'bg-orange-500/10', darkColor: 'text-orange-400' },
-    { label: 'Ready', value: orders.filter((o: any) => o.status === 'READY').length.toString(), sub: 'Finished Cooking', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50', darkBg: 'bg-emerald-500/10', darkColor: 'text-emerald-400' },
-    { label: 'Canceled', value: orders.filter((o: any) => o.status === 'CANCELED').length.toString(), sub: 'Canceled Orders', icon: XCircle, color: 'text-red-500', bg: 'bg-red-50', darkBg: 'bg-red-500/10', darkColor: 'text-red-400' },
+    { label: 'New Orders', value: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'PENDING').length.toString(), sub: 'Start', icon: Receipt, color: 'text-indigo-500', bg: 'bg-indigo-50', darkBg: 'bg-indigo-500/10', darkColor: 'text-indigo-400' },
+    { label: 'Preparing', value: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'PREPARING').length.toString(), sub: 'In Progress', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', darkBg: 'bg-orange-500/10', darkColor: 'text-orange-400' },
+    { label: 'Ready', value: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'READY').length.toString(), sub: 'Finished Cooking', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50', darkBg: 'bg-emerald-500/10', darkColor: 'text-emerald-400' },
+    { label: 'Canceled', value: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'CANCELED').length.toString(), sub: 'Canceled Orders', icon: XCircle, color: 'text-red-500', bg: 'bg-red-50', darkBg: 'bg-red-500/10', darkColor: 'text-red-400' },
   ];
+
+  if (activeStation === 'Chef') {
+    kpis.push({
+      label: 'Avg Prep Time',
+      value: `${avgPrepTime} min`,
+      sub: "Today's average",
+      icon: Clock,
+      color: 'text-purple-500',
+      bg: 'bg-purple-50',
+      darkBg: 'bg-purple-500/10',
+      darkColor: 'text-purple-400'
+    });
+  }
 
   const columns = [
     {
       title: 'NEW ORDERS',
       status: 'PENDING',
-      count: orders.filter((o: any) => o.status === 'PENDING').length,
+      count: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'PENDING').length,
       color: 'border-indigo-500',
       accentColor: 'text-indigo-400',
-      orders: orders.filter((o: any) => o.status === 'PENDING')
+      orders: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'PENDING')
     },
     {
       title: 'PREPARING',
       status: 'PREPARING',
-      count: orders.filter((o: any) => o.status === 'PREPARING').length,
+      count: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'PREPARING').length,
       color: 'border-orange-500',
       accentColor: 'text-orange-400',
-      orders: orders.filter((o: any) => o.status === 'PREPARING')
+      orders: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'PREPARING')
     },
     {
       title: 'READY',
       status: 'READY',
-      count: orders.filter((o: any) => o.status === 'READY').length,
+      count: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'READY').length,
       color: 'border-emerald-500',
       accentColor: 'text-emerald-400',
-      orders: orders.filter((o: any) => o.status === 'READY')
+      orders: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'READY')
     },
     {
       title: 'CANCELED',
       status: 'CANCELED',
-      count: orders.filter((o: any) => o.status === 'CANCELED').length,
+      count: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'CANCELED').length,
       color: 'border-red-500',
       accentColor: 'text-red-400',
-      orders: orders.filter((o: any) => o.status === 'CANCELED')
+      orders: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'CANCELED')
     },
   ];
 
   // ── Shared order card content renderer ──────────────────────────────────
   const renderOrderItems = (order: any, col: typeof columns[0]) => {
-    const activeItems = (order.items || []).filter((item: any) => 
+    const activeItems = (order.stationItems || []).filter((item: any) => 
       col.title === 'NEW ORDERS' ? item.status === 'PENDING' : 
       col.title === 'PREPARING' ? item.status === 'PREPARING' :
       item.status === 'READY'
     );
-    const historyItems = (order.items || []).filter((item: any) => 
+    const historyItems = (order.stationItems || []).filter((item: any) => 
       col.title === 'NEW ORDERS' ? item.status !== 'PENDING' : 
       col.title === 'PREPARING' ? item.status !== 'PREPARING' :
       item.status !== 'READY'
@@ -612,19 +699,44 @@ export const OrdersMonitor = () => {
 
   return (
     <div className="h-[calc(100vh-160px)] flex flex-col gap-8 overflow-hidden">
-      {/* ── Page title (shared) ── */}
-      <div className="flex items-center justify-between shrink-0">
+      {/* ── Page title & station switcher ── */}
+      <div className="flex items-center justify-between shrink-0 flex-wrap gap-4">
         <div className="flex items-center gap-4">
-           <h1 className="text-3xl font-bold lg:text-[#0B1630] text-white">My Orders</h1>
+           <h1 className="text-3xl font-bold lg:text-[#0B1630] text-white">
+             {activeStation} Dashboard
+           </h1>
            <div className="flex items-center gap-2">
              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
              <span className="lg:text-emerald-600 text-emerald-400 text-xs font-bold uppercase tracking-wider">Live</span>
           </div>
         </div>
+
+        {/* Station switcher for ADMIN / SUPER_ADMIN */}
+        {!isKdsUser && (
+          <div className="flex items-center gap-2 bg-slate-100 lg:bg-slate-100 bg-[#131A38]/50 p-1.5 rounded-2xl border border-[#232B5E]/30 lg:border-slate-200">
+            {['Chef', 'Barista', 'Kitchen Staff'].map((station) => (
+              <button
+                key={station}
+                onClick={() => setActiveStation(station)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+                  activeStation === station
+                    ? "bg-[#F97316] text-white shadow-md shadow-orange-500/20"
+                    : "text-[#64748B] hover:text-[#0B1630] dark:hover:text-white"
+                )}
+              >
+                {station}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── KPI Row — Desktop (lg+) ── */}
-      <div className="hidden lg:grid grid-cols-4 gap-6 shrink-0">
+      <div className={cn(
+        "hidden lg:grid gap-6 shrink-0",
+        activeStation === 'Chef' ? "grid-cols-5" : "grid-cols-4"
+      )}>
         {kpis.map((kpi, i) => (
           <Card key={i} className="p-4 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex items-center gap-4">
              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm", kpi.bg, kpi.color)}>
@@ -642,7 +754,10 @@ export const OrdersMonitor = () => {
       </div>
 
       {/* ── KPI Row — Mobile/Tablet (below lg) ── */}
-      <div className="lg:hidden grid grid-cols-2 gap-3 shrink-0">
+      <div className={cn(
+        "lg:hidden grid gap-3 shrink-0",
+        activeStation === 'Chef' ? "grid-cols-3" : "grid-cols-2"
+      )}>
         {kpis.map((kpi, i) => (
           <div key={i} className={cn(
             "bg-[#131A38]/70 backdrop-blur-md border border-[#232B5E]/50 rounded-2xl p-3 flex items-center gap-3",
@@ -679,7 +794,7 @@ export const OrdersMonitor = () => {
                               <span className="text-[10px] text-[#94A3B8] font-bold">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                            </div>
                            <div className="flex items-center justify-between text-[10px] font-bold text-[#64748B] mb-2">
-                              <span>Table {order.table?.number || 'N/A'} • {order.items?.length || 0} Items</span>
+                              <span>Table {order.table?.number || 'N/A'} • {order.stationItems?.length || 0} Items</span>
                               <span className="text-[#F97316]">${Number(order.totalAmount).toFixed(2)}</span>
                            </div>
                            <div className="text-[10px] font-bold text-indigo-500 mb-4">
@@ -697,7 +812,7 @@ export const OrdersMonitor = () => {
                               {/* Progress action */}
                               {col.title !== 'READY' && col.title !== 'CANCELED' ? (
                                  <button 
-                                   onClick={() => handleStatusUpdate(order.id, order.status)}
+                                   onClick={() => handleStatusUpdate(order.id, getStationOrderStatus(order))}
                                    disabled={updateStatusMutation.isPending}
                                    className="flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-[#F97316] hover:bg-orange-50 transition-colors disabled:opacity-50"
                                  >
@@ -710,7 +825,7 @@ export const OrdersMonitor = () => {
                                ) : null}
 
                               {/* Cancel button — only for PENDING / PREPARING */}
-                              {isCancellable(order.status) && (
+                              {isCancellable(getStationOrderStatus(order)) && (
                                 <button
                                   onClick={() => setCancelling(order)}
                                   disabled={updateStatusMutation.isPending || cancelMutation.isPending}
@@ -789,7 +904,7 @@ export const OrdersMonitor = () => {
                         </div>
                         {/* Table / amount / waiter */}
                         <div className="flex items-center justify-between text-[10px] font-bold">
-                          <span className="text-[#94A3B8]">Table {order.table?.number || 'N/A'} • {order.items?.length || 0} Items</span>
+                          <span className="text-[#94A3B8]">Table {order.table?.number || 'N/A'} • {order.stationItems?.length || 0} Items</span>
                           <span className="text-[#F97316]">${Number(order.totalAmount).toFixed(2)}</span>
                         </div>
                         <div className="text-[10px] font-bold text-indigo-400">
@@ -808,7 +923,7 @@ export const OrdersMonitor = () => {
                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           {col.title !== 'READY' && col.title !== 'CANCELED' ? (
                             <button
-                              onClick={() => handleStatusUpdate(order.id, order.status)}
+                              onClick={() => handleStatusUpdate(order.id, getStationOrderStatus(order))}
                               disabled={updateStatusMutation.isPending}
                               className="flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#F97316] border border-[#F97316]/30 hover:bg-[#F97316]/10 transition-colors disabled:opacity-50 flex items-center justify-between px-4"
                             >
@@ -822,7 +937,7 @@ export const OrdersMonitor = () => {
                           ) : null}
 
                           {/* Cancel button mobile */}
-                          {isCancellable(order.status) && (
+                          {isCancellable(getStationOrderStatus(order)) && (
                             <button
                               onClick={() => setCancelling(order)}
                               disabled={updateStatusMutation.isPending || cancelMutation.isPending}
@@ -888,6 +1003,7 @@ export const OrdersMonitor = () => {
           onStatusUpdate={handleStatusUpdate}
           onCancel={setCancelling}
           isUpdating={updateStatusMutation.isPending || cancelMutation.isPending}
+          activeStation={activeStation}
         />
       )}
 
@@ -902,6 +1018,7 @@ export const OrdersMonitor = () => {
           onStatusUpdate={handleStatusUpdate}
           onCancel={(order) => { setCancelling(order); setViewingAllStatus(null); }}
           isUpdating={updateStatusMutation.isPending || cancelMutation.isPending}
+          activeStation={activeStation}
         />
       )}
     </div>
