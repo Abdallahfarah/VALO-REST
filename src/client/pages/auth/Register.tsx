@@ -15,7 +15,6 @@ import {
   Phone
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { AuthService } from '../../services/AuthService';
 import { cn } from '../../lib/utils';
 import { supabase } from '../../../lib/supabase';
@@ -120,18 +119,7 @@ export const Register = () => {
     setStep(1);
   }, []);
 
-  // Fetch available subscription plans from database
-  const { data: dbPlans = [] } = useQuery({
-    queryKey: ['register-plans'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('plans')
-        .select('id, name, price')
-        .order('price', { ascending: true });
-      if (error) throw error;
-      return data || [];
-    }
-  });
+
 
   const getErrorMessage = (err: any): string => {
     if (!err) return 'An unexpected error occurred. Please try again.';
@@ -329,10 +317,7 @@ export const Register = () => {
     }
   };
 
-  const getPlanDisplayName = (name: string) => {
-    if (!name) return '';
-    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-  };
+
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#FFFFFF]">
