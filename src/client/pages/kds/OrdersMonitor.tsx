@@ -8,7 +8,10 @@ import {
   Lightbulb,
   ChevronDown,
   AlertTriangle,
-  X
+  X,
+  FileText,
+  User,
+  DollarSign
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
@@ -163,6 +166,245 @@ const CancellationDialog = ({ order, onConfirm, onClose, isPending }: Cancellati
   );
 };
 
+// ── OrderDetailsDialog ───────────────────────────────────────────────────────
+interface OrderDetailsDialogProps {
+  order: any;
+  onClose: () => void;
+  onStatusUpdate: (orderId: string, currentStatus: string) => void;
+  onCancel: (order: any) => void;
+  isUpdating: boolean;
+}
+
+const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdating }: OrderDetailsDialogProps) => {
+  const isCancellable = order.status === 'PENDING' || order.status === 'PREPARING';
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="border-b border-slate-100 p-6 flex items-start justify-between gap-4 bg-slate-50/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
+              <FileText size={20} />
+            </div>
+            <div>
+              <h2 className="text-sm font-black text-[#0B1630] uppercase tracking-wider">Order Details</h2>
+              <p className="text-[11px] text-[#94A3B8] font-medium mt-0.5">
+                #{order.id?.toUpperCase()}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-100 transition-all"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+          {/* Metadata Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
+              <User size={16} className="text-[#94A3B8]" />
+              <div>
+                <p className="text-[9px] font-bold text-[#94A3B8] uppercase">Waiter</p>
+                <p className="text-xs font-bold text-[#0B1630]">{order.waiterName || 'Unassigned'}</p>
+              </div>
+            </div>
+            <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
+              <DollarSign size={16} className="text-[#94A3B8]" />
+              <div>
+                <p className="text-[9px] font-bold text-[#94A3B8] uppercase">Total Amount</p>
+                <p className="text-xs font-black text-[#F97316]">${Number(order.totalAmount || 0).toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Details list */}
+          <div className="space-y-3">
+            <h3 className="text-[10px] font-black text-[#0B1630] uppercase tracking-wider">Order Items</h3>
+            <div className="space-y-2">
+              {order.items?.map((item: any, idx: number) => (
+                <div key={idx} className="flex justify-between items-center bg-slate-50/50 border border-slate-100 px-4 py-3 rounded-xl">
+                  <div>
+                    <p className="text-xs font-bold text-[#0B1630]">{item.quantity}x {item.menuItem?.name}</p>
+                    <p className="text-[9px] font-medium text-[#94A3B8]">Unit Price: ${item.unitPrice?.toFixed(2)}</p>
+                  </div>
+                  <span className={cn(
+                    "text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider",
+                    item.status === 'PENDING' ? 'bg-indigo-50 text-indigo-600' :
+                    item.status === 'PREPARING' ? 'bg-orange-50 text-orange-600' :
+                    item.status === 'READY' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                  )}>
+                    {item.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Cancellation Info if cancelled */}
+          {order.status === 'CANCELED' && (
+            <div className="bg-red-50 border border-red-100 p-4 rounded-2xl space-y-1">
+              <p className="text-[10px] font-black text-red-700 uppercase">Cancellation Details</p>
+              <p className="text-xs font-bold text-red-800">Reason: {order.cancellationReason || 'No reason specified'}</p>
+              {order.cancelledAt && (
+                <p className="text-[10px] font-medium text-red-600">
+                  Time: {new Date(order.cancelledAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 pb-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 bg-slate-50/20">
+          <span className={cn(
+            "text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest",
+            order.status === 'PENDING' ? 'bg-indigo-50 text-indigo-600' :
+            order.status === 'PREPARING' ? 'bg-orange-50 text-orange-600' :
+            order.status === 'READY' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+          )}>
+            Status: {order.status}
+          </span>
+          <div className="flex items-center gap-2">
+            {isCancellable && (
+              <button
+                onClick={() => { onClose(); onCancel(order); }}
+                disabled={isUpdating}
+                className="px-4 py-2.5 rounded-2xl border border-red-200 text-red-500 hover:bg-red-50 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              >
+                Cancel Order
+              </button>
+            )}
+            {order.status !== 'READY' && order.status !== 'CANCELED' && (
+              <button
+                onClick={() => { onClose(); onStatusUpdate(order.id, order.status); }}
+                disabled={isUpdating}
+                className="px-4 py-2.5 rounded-2xl bg-[#F97316] text-white hover:bg-[#ea580c] text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              >
+                {order.status === 'PENDING' ? 'Start Preparing' : 'Mark as Ready'}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="px-4 py-2.5 rounded-2xl border border-slate-200 text-[#64748B] hover:bg-slate-50 text-[10px] font-black uppercase tracking-widest transition-all"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── ViewAllOrdersDialog ──────────────────────────────────────────────────────
+interface ViewAllOrdersDialogProps {
+  title: string;
+  status: string;
+  orders: any[];
+  onClose: () => void;
+  onSelectOrder: (order: any) => void;
+  onStatusUpdate: (orderId: string, currentStatus: string) => void;
+  onCancel: (order: any) => void;
+  isUpdating: boolean;
+}
+
+const ViewAllOrdersDialog = ({
+  title,
+  status,
+  orders,
+  onClose,
+  onSelectOrder,
+  onStatusUpdate,
+  onCancel,
+  isUpdating
+}: ViewAllOrdersDialogProps) => {
+  const filtered = orders.filter((o) => o.status === status);
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="border-b border-slate-100 p-6 flex items-start justify-between bg-slate-50/50">
+          <div>
+            <h2 className="text-sm font-black text-[#0B1630] uppercase tracking-wider">{title} ({filtered.length})</h2>
+            <p className="text-[11px] text-[#94A3B8] font-medium mt-0.5">Viewing filtered status list</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-100 transition-all"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* List Content */}
+        <div className="p-6 max-h-[60vh] overflow-y-auto space-y-3">
+          {filtered.length === 0 ? (
+            <div className="text-center py-12">
+              <Receipt size={40} className="mx-auto text-[#CBD5E1] mb-3" />
+              <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest">No orders in this status</p>
+            </div>
+          ) : (
+            filtered.map((order) => (
+              <div
+                key={order.id}
+                onClick={() => onSelectOrder(order)}
+                className="flex items-center justify-between p-4 border border-slate-100 rounded-2xl hover:border-orange-200 hover:bg-orange-50/10 transition-all cursor-pointer group"
+              >
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-black text-[#0B1630]">#{order.id.slice(0, 8).toUpperCase()}</span>
+                    <span className="text-[9px] font-bold text-[#94A3B8]">Table {order.table?.number || 'N/A'}</span>
+                  </div>
+                  <p className="text-[10px] text-[#64748B] font-medium">
+                    {order.items?.length || 0} items · ${Number(order.totalAmount).toFixed(2)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                  {status !== 'READY' && status !== 'CANCELED' && (
+                    <button
+                      onClick={() => onStatusUpdate(order.id, order.status)}
+                      disabled={isUpdating}
+                      className="px-3 py-1.5 rounded-xl bg-orange-50 text-[#F97316] text-[9px] font-black uppercase tracking-wider hover:bg-orange-100 transition-all disabled:opacity-50"
+                    >
+                      {status === 'PENDING' ? 'Start Preparing' : 'Mark Ready'}
+                    </button>
+                  )}
+                  {(status === 'PENDING' || status === 'PREPARING') && (
+                    <button
+                      onClick={() => onCancel(order)}
+                      disabled={isUpdating}
+                      className="p-1.5 rounded-xl border border-red-100 text-red-400 hover:bg-red-50 hover:text-red-600 transition-all disabled:opacity-50"
+                    >
+                      <XCircle size={14} />
+                    </button>
+                  )}
+                  <ChevronRight size={16} className="text-[#94A3B8] group-hover:text-[#0B1630] transition-colors" />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 pb-6 pt-4 border-t border-slate-100 bg-slate-50/20 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-2xl bg-[#0B1630] text-white hover:bg-[#1E293B] text-[10px] font-black uppercase tracking-widest transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── OrdersMonitor ────────────────────────────────────────────────────────────
 export const OrdersMonitor = () => {
   const { tenant } = useTenant();
@@ -171,8 +413,10 @@ export const OrdersMonitor = () => {
 
   // Accordion open state for mobile sections
   const [openSection, setOpenSection] = useState<string | null>('NEW ORDERS');
-  // Cancellation dialog state
+  // Dialog / Modal states
   const [cancelling, setCancelling] = useState<any | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [viewingAllStatus, setViewingAllStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!tenant?.id) return;
@@ -251,6 +495,7 @@ export const OrdersMonitor = () => {
   const columns = [
     {
       title: 'NEW ORDERS',
+      status: 'PENDING',
       count: orders.filter((o: any) => o.status === 'PENDING').length,
       color: 'border-indigo-500',
       accentColor: 'text-indigo-400',
@@ -258,6 +503,7 @@ export const OrdersMonitor = () => {
     },
     {
       title: 'PREPARING',
+      status: 'PREPARING',
       count: orders.filter((o: any) => o.status === 'PREPARING').length,
       color: 'border-orange-500',
       accentColor: 'text-orange-400',
@@ -265,6 +511,7 @@ export const OrdersMonitor = () => {
     },
     {
       title: 'READY',
+      status: 'READY',
       count: orders.filter((o: any) => o.status === 'READY').length,
       color: 'border-emerald-500',
       accentColor: 'text-emerald-400',
@@ -272,6 +519,7 @@ export const OrdersMonitor = () => {
     },
     {
       title: 'CANCELED',
+      status: 'CANCELED',
       count: orders.filter((o: any) => o.status === 'CANCELED').length,
       color: 'border-red-500',
       accentColor: 'text-red-400',
@@ -421,7 +669,11 @@ export const OrdersMonitor = () => {
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
                      {col.orders.map((order: any) => (
-                        <Card key={order.id} className="p-4 border-none shadow-[0_4px_12px_rgba(0,0,0,0.03)] group hover:shadow-md transition-all">
+                        <Card 
+                          key={order.id} 
+                          onClick={() => setSelectedOrder(order)}
+                          className="p-4 border-none shadow-[0_4px_12px_rgba(0,0,0,0.03)] group hover:shadow-md transition-all cursor-pointer"
+                        >
                            <div className="flex items-center justify-between mb-4">
                               <span className="text-xs font-black text-[#0B1630]">#{order.id.slice(0, 8)}</span>
                               <span className="text-[10px] text-[#94A3B8] font-bold">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -441,7 +693,7 @@ export const OrdersMonitor = () => {
                            {/* Cancelled info */}
                            {col.title === 'CANCELED' && renderCancelledInfo(order)}
 
-                           <div className="flex items-center justify-between pt-4 border-t border-slate-50 gap-2">
+                           <div className="flex items-center justify-between pt-4 border-t border-slate-50 gap-2" onClick={(e) => e.stopPropagation()}>
                               {/* Progress action */}
                               {col.title !== 'READY' && col.title !== 'CANCELED' ? (
                                  <button 
@@ -469,13 +721,19 @@ export const OrdersMonitor = () => {
                                 </button>
                               )}
 
-                              <button className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-50 transition-all">
+                              <button 
+                                onClick={() => setSelectedOrder(order)}
+                                className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-50 transition-all"
+                              >
                                  <ChevronRight size={14} />
                               </button>
                            </div>
                         </Card>
                      ))}
-                     <button className="w-full py-2 flex items-center justify-center gap-2 text-[10px] font-black text-[#94A3B8] uppercase tracking-widest hover:text-[#0B1630] transition-colors">
+                     <button 
+                       onClick={() => setViewingAllStatus(col.status)}
+                       className="w-full py-2 flex items-center justify-center gap-2 text-[10px] font-black text-[#94A3B8] uppercase tracking-widest hover:text-[#0B1630] transition-colors"
+                     >
                         View all orders <ChevronRight size={12} />
                      </button>
                   </div>
@@ -519,7 +777,8 @@ export const OrdersMonitor = () => {
                     col.orders.map((order: any) => (
                       <div
                         key={order.id}
-                        className="bg-[#0E1537]/80 border border-[#232B5E]/40 rounded-xl p-4 space-y-3"
+                        onClick={() => setSelectedOrder(order)}
+                        className="bg-[#0E1537]/80 border border-[#232B5E]/40 rounded-xl p-4 space-y-3 cursor-pointer"
                       >
                         {/* Order header */}
                         <div className="flex items-center justify-between">
@@ -546,7 +805,7 @@ export const OrdersMonitor = () => {
                         {col.title === 'CANCELED' && renderCancelledInfoDark(order)}
 
                         {/* Action */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           {col.title !== 'READY' && col.title !== 'CANCELED' ? (
                             <button
                               onClick={() => handleStatusUpdate(order.id, order.status)}
@@ -578,7 +837,10 @@ export const OrdersMonitor = () => {
                     ))
                   )}
 
-                  <button className="w-full py-2 flex items-center justify-center gap-2 text-[10px] font-black text-[#94A3B8] uppercase tracking-widest hover:text-white transition-colors">
+                  <button 
+                    onClick={() => setViewingAllStatus(col.status)}
+                    className="w-full py-2 flex items-center justify-center gap-2 text-[10px] font-black text-[#94A3B8] uppercase tracking-widest hover:text-white transition-colors"
+                  >
                     View all orders <ChevronRight size={12} />
                   </button>
                 </div>
@@ -615,6 +877,31 @@ export const OrdersMonitor = () => {
           onConfirm={(reason) => cancelMutation.mutate({ orderId: cancelling.id, reason })}
           onClose={() => setCancelling(null)}
           isPending={cancelMutation.isPending}
+        />
+      )}
+
+      {/* ── Order Details Dialog ── */}
+      {selectedOrder && (
+        <OrderDetailsDialog
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          onStatusUpdate={handleStatusUpdate}
+          onCancel={setCancelling}
+          isUpdating={updateStatusMutation.isPending || cancelMutation.isPending}
+        />
+      )}
+
+      {/* ── View All Orders Dialog ── */}
+      {viewingAllStatus && (
+        <ViewAllOrdersDialog
+          title={columns.find((c) => c.status === viewingAllStatus)?.title || 'Orders'}
+          status={viewingAllStatus}
+          orders={orders}
+          onClose={() => setViewingAllStatus(null)}
+          onSelectOrder={(order) => { setSelectedOrder(order); setViewingAllStatus(null); }}
+          onStatusUpdate={handleStatusUpdate}
+          onCancel={(order) => { setCancelling(order); setViewingAllStatus(null); }}
+          isUpdating={updateStatusMutation.isPending || cancelMutation.isPending}
         />
       )}
     </div>
