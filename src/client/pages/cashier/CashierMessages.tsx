@@ -103,13 +103,13 @@ export const CashierMessages = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-160px)] flex gap-8">
+    <div className="h-[calc(100vh-160px)] flex flex-col md:flex-row gap-8">
       {/* Sidebar */}
-      <Card className="w-80 shrink-0 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex flex-col p-0 bg-white">
-        <div className="p-6 border-b border-slate-50">
+      <Card className="w-full md:w-80 shrink-0 lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none lg:border-none border border-[#232B5E]/50 shadow-2xl flex flex-col p-0">
+        <div className="p-6 lg:border-b lg:border-slate-50 border-b border-[#232B5E]/30">
            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-[#0B1630] text-sm uppercase tracking-wider">Cashier Chat</h3>
-              <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#F97316] flex items-center justify-center cursor-pointer hover:bg-orange-100 transition-colors">
+              <h3 className="font-bold lg:text-[#0B1630] text-white text-sm uppercase tracking-wider">Cashier Chat</h3>
+              <div className="w-8 h-8 rounded-lg lg:bg-orange-50 bg-[#1E293B] text-[#F97316] flex items-center justify-center cursor-pointer hover:bg-orange-100 transition-colors">
                  <Plus size={16} strokeWidth={3} />
               </div>
            </div>
@@ -118,7 +118,7 @@ export const CashierMessages = () => {
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-100 bg-slate-50/50 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]"
+                className="w-full h-10 pl-10 pr-4 rounded-xl lg:bg-slate-50/50 bg-[#1E293B] lg:border lg:border-slate-100 border border-[#232B5E]/30 lg:text-slate-800 text-white text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]"
                 placeholder="Search contacts..."
               />
            </div>
@@ -126,59 +126,61 @@ export const CashierMessages = () => {
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
            {filteredConversations.length > 0 ? (
              filteredConversations.map((conv: any) => (
-               <div
-                 key={conv.id}
-                 onClick={() => setActiveConversation(conv.id)}
-                 className={cn(
-                   "p-4 rounded-2xl flex gap-4 cursor-pointer transition-all",
-                   activeConversation === conv.id ? "bg-indigo-50/50 border border-indigo-50" : "hover:bg-slate-50"
-                 )}
-               >
-                  <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-sm">
-                    <MessageSquare size={20} className="text-slate-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                     <div className="flex items-center justify-between mb-1">
-                        <h4 className="text-sm font-bold text-[#0B1630] truncate">{conv.name}</h4>
-                        <span className="text-[10px] text-[#94A3B8] font-medium">{getTimeLabel(conv.lastMessageTime)}</span>
-                     </div>
-                     <p className="text-[11px] text-[#94A3B8] truncate leading-tight">{conv.lastMessage || 'No messages yet'}</p>
-                  </div>
-                  {conv.unreadCount > 0 && (
-                     <div className="w-5 h-5 rounded-full bg-[#F97316] text-white text-[10px] font-black flex items-center justify-center mt-1 shrink-0">
-                        {conv.unreadCount}
-                     </div>
+                <div
+                  key={conv.id}
+                  onClick={() => setActiveConversation(conv.id)}
+                  className={cn(
+                    "p-4 rounded-2xl flex gap-4 cursor-pointer transition-all",
+                    activeConversation === conv.id 
+                      ? "bg-indigo-50/55 lg:bg-indigo-50/50 border lg:border-indigo-50 border-[#232B5E]/30" 
+                      : "hover:bg-slate-50"
                   )}
-               </div>
+                >
+                   <div className="w-12 h-12 rounded-xl lg:bg-white bg-[#1E293B] lg:border lg:border-slate-100 border-none flex items-center justify-center shadow-sm">
+                     <MessageSquare size={20} className="text-slate-400" />
+                   </div>
+                   <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                         <h4 className="text-sm font-bold lg:text-[#0B1630] text-white truncate">{conv.name}</h4>
+                         <span className="text-[10px] text-[#94A3B8] font-medium">{getTimeLabel(conv.lastMessageTime)}</span>
+                      </div>
+                      <p className="text-[11px] text-[#94A3B8] truncate leading-tight">{conv.lastMessage || 'No messages yet'}</p>
+                   </div>
+                   {conv.unreadCount > 0 && (
+                      <div className="w-5 h-5 rounded-full bg-[#F97316] text-white text-[10px] font-black flex items-center justify-center mt-1 shrink-0">
+                         {conv.unreadCount}
+                      </div>
+                   )}
+                </div>
              ))
            ) : (
              <div className="p-6 text-center">
-               <MessageSquare size={32} className="text-[#94A3B8] mx-auto mb-3" />
-               <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest">No conversations</p>
+                <MessageSquare size={32} className="text-[#94A3B8] mx-auto mb-3" />
+                <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest">No conversations</p>
              </div>
            )}
         </div>
       </Card>
 
       {/* Chat Area */}
-      <Card className="flex-1 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex flex-col p-0 overflow-hidden bg-white">
-         <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-white/50 backdrop-blur-sm">
+      <Card className="flex-1 lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none lg:border-none border border-[#232B5E]/50 shadow-2xl flex flex-col p-0 overflow-hidden">
+         <div className="p-6 lg:border-b lg:border-slate-50 border-b border-[#232B5E]/30 flex items-center justify-between lg:bg-white/55 bg-[#131A38]/70 backdrop-blur-sm">
             <div className="flex items-center gap-4">
-               <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shadow-sm">
-                 <MessageSquare size={20} className="text-slate-400" />
+               <div className="w-12 h-12 rounded-xl lg:bg-slate-50 bg-[#1E293B] lg:border lg:border-slate-100 border-none flex items-center justify-center shadow-sm">
+                  <MessageSquare size={20} className="text-slate-400" />
                </div>
                <div>
-                  <h4 className="text-sm font-bold text-[#0B1630]">{activeConvData?.name || 'Select a conversation'}</h4>
+                  <h4 className="text-sm font-bold lg:text-[#0B1630] text-white">{activeConvData?.name || 'Select a conversation'}</h4>
                   <div className="flex items-center gap-1.5 mt-0.5">
                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                     <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Active</span>
+                     <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Active</span>
                   </div>
                </div>
             </div>
-            <button className="w-10 h-10 rounded-xl border border-slate-100 text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-50 transition-all flex items-center justify-center cursor-pointer"><Info size={18} /></button>
+            <button className="w-10 h-10 rounded-xl lg:bg-white bg-[#1E293B] lg:border lg:border-slate-100 border-none lg:text-[#94A3B8] text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-50 transition-all flex items-center justify-center cursor-pointer"><Info size={18} /></button>
          </div>
 
-         <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50/30">
+         <div className="flex-1 overflow-y-auto p-8 space-y-6 lg:bg-slate-50/30 bg-[#090D1F]/40">
             {messages.length > 0 ? (
               messages.map((msg: any) => {
                 const isMe = msg.senderId === user?.id;
@@ -190,7 +192,9 @@ export const CashierMessages = () => {
                      {!isMe && <span className="text-[10px] font-bold text-[#94A3B8] mb-1">{msg.senderName}</span>}
                      <div className={cn(
                        "p-4 rounded-2xl text-sm font-medium shadow-sm",
-                       isMe ? "bg-[#0B1630] text-white rounded-br-none" : "bg-white text-[#0B1630] border border-slate-100 rounded-bl-none"
+                       isMe 
+                         ? "bg-[#0B1630] text-white rounded-br-none" 
+                         : "lg:bg-white bg-[#1E293B] lg:text-[#0B1630] text-white lg:border lg:border-slate-100 border border-[#232B5E]/30 rounded-bl-none"
                      )}>
                         {msg.content}
                      </div>
@@ -203,14 +207,14 @@ export const CashierMessages = () => {
               })
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center py-20">
-                <MessageSquare size={40} className="text-[#E2E8F0] mb-3" />
-                <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest">No messages yet</p>
+                 <MessageSquare size={40} className="text-[#E2E8F0] mb-3" />
+                 <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest">No messages yet</p>
               </div>
             )}
             <div ref={messagesEndRef} />
          </div>
 
-         <div className="p-6 border-t border-slate-50 bg-white">
+         <div className="p-6 lg:border-t lg:border-slate-50 border-t border-[#232B5E]/30 lg:bg-white bg-[#131A38]/70">
             <div className="relative">
                <input
                  value={messageInput}
@@ -218,7 +222,7 @@ export const CashierMessages = () => {
                  onKeyDown={(e) => {
                    if (e.key === 'Enter' && messageInput.trim() && activeConversation) sendMutation.mutate();
                  }}
-                 className="w-full h-14 pl-6 pr-16 rounded-2xl border border-slate-100 bg-slate-50/50 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]"
+                 className="w-full h-14 pl-6 pr-16 rounded-2xl lg:bg-slate-50/50 bg-[#1E293B] lg:border lg:border-slate-100 border border-[#232B5E]/30 lg:text-slate-800 text-white text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]"
                  placeholder="Type your message..."
                  disabled={!activeConversation}
                />
