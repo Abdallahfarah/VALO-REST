@@ -55,6 +55,9 @@ const mapOrder = (row: any) => ({
   table: row.tables ? { number: row.tables.number } : { number: 'N/A' },
   waiterName: row.users ? `${row.users.first_name} ${row.users.last_name}` : 'Unassigned',
   items: (row.order_items || []).map(mapOrderItem),
+  cancellationReason: row.cancellation_reason,
+  cancelledBy: row.cancelled_by,
+  cancelledAt: row.cancelled_at,
 });
 
 const mapUser = (row: any) => ({
@@ -231,8 +234,97 @@ export const OrderService = {
     return data ? mapOrder(data) : null;
   },
 
+  async cancelOrder(params: {
+    orderId: string;
+    reason: string;
+    cancelledBy: string;   // user id of KDS employee
+    tenantId: string;
+    cancelledByName?: string;
+    tableNumber?: string | number;
+  }) {
+    const { orderId, reason, cancelledBy, tenantId, cancelledByName, tableNumber } = params;
+
+    // 1. Fetch current order to verify it is still cancellable
+    const { data: currentOrder, error: fetchErr } = await supabase
+      .from('orders')
+      .select('status, table_id')
+      .eq('id', orderId)
+      .single();
+
+    if (fetchErr) throw fetchErr;
+
+    const cancellableStatuses = ['PENDING', 'PREPARING'];
+    if (!cancellableStatuses.includes(currentOrder?.status)) {
+      throw new Error(`Order cannot be cancelled in status: ${currentOrder?.status}`);
+    }
+
+    const now = new Date().toISOString();
+
+    // 2. Set order status to CANCELED + record who cancelled and why
+    const { data, error } = await supabase
+      .from('orders')
+      .update({
+        status: 'CANCELED',
+        cancellation_reason: reason,
+        cancelled_by: cancelledBy,
+        cancelled_at: now,
+        updated_at: now,
+      })
+      .eq('id', orderId)
+      .select('*, tables(number), users(*), order_items(*, menu_items(name))')
+      .single();
+
+    if (error) throw error;
+
+    // 3. Cancel all active order items (PENDING / PREPARING → CANCELED)
+    await supabase
+      .from('order_items')
+      .update({ status: 'CANCELED' })
+      .eq('order_id', orderId)
+      .in('status', ['PENDING', 'PREPARING']);
+
+    // 4. Free the table
+    if (currentOrder?.table_id) {
+      await supabase
+        .from('tables')
+        .update({ status: 'AVAILABLE' })
+        .eq('id', currentOrder.table_id);
+    }
+
+    // 5. Audit log – reuse existing ActivityLogService pattern
+    try {
+      await supabase.from('activity_logs').insert({
+        user_id: cancelledBy,
+        action: 'ORDER_CANCELED',
+        entity_type: 'order',
+        entity_id: orderId,
+        timestamp: now,
+      });
+    } catch {
+      console.warn('[cancelOrder] Audit log failed silently');
+    }
+
+    // 6. Notify WAITER and ADMIN roles
+    try {
+      const shortId = orderId.slice(0, 8).toUpperCase();
+      const table = tableNumber ? `Table ${tableNumber}` : 'Unknown table';
+      const title = `Order #${shortId} Cancelled by Kitchen`;
+      const message = `${table} — Reason: ${reason} — Cancelled by: ${cancelledByName || 'Kitchen Staff'}`;
+
+      await supabase.from('notifications').insert([
+        { tenant_id: tenantId, user_id: null, role: 'WAITER', title, message, is_read: false },
+        { tenant_id: tenantId, user_id: null, role: 'ADMIN',  title, message, is_read: false },
+      ]);
+    } catch {
+      console.warn('[cancelOrder] Notification failed silently');
+    }
+
+    return data ? mapOrder(data) : null;
+  },
+
   async settleOrder(orderId: string, paymentData: any) {
     // 1. Fetch current order details
+
     const { data: order, error: fetchErr } = await supabase
       .from('orders')
       .select('*')
