@@ -121,11 +121,11 @@ export const KDSMessages = () => {
       </div>
 
       {/* Sidebar: Contacts */}
-      <Card className="w-full md:w-80 shrink-0 lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none lg:border-none border border-[#232B5E]/50 shadow-2xl flex flex-col p-0 z-10">
-        <div className="p-6 lg:border-b lg:border-slate-50 border-b border-[#232B5E]/30">
+      <Card className="w-full md:w-80 shrink-0 bg-[#0C0F24]/50 border border-[#232B5E]/20 shadow-2xl flex flex-col p-0 z-10">
+        <div className="p-6 border-b border-[#232B5E]/20">
            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold lg:text-[#0B1630] text-white text-sm uppercase tracking-wider">Kitchen Chat</h3>
-              <div className="w-8 h-8 rounded-lg lg:bg-orange-50 bg-[#1E293B] text-[#F97316] flex items-center justify-center cursor-pointer hover:bg-orange-100 transition-colors">
+              <h3 className="font-bold text-white text-sm uppercase tracking-wider">Kitchen Chat</h3>
+              <div className="w-8 h-8 rounded-lg bg-[#F97316]/10 text-[#F97316] flex items-center justify-center cursor-pointer hover:bg-[#F97316]/20 transition-colors">
                  <Plus size={16} strokeWidth={3} />
               </div>
            </div>
@@ -134,7 +134,7 @@ export const KDSMessages = () => {
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 rounded-xl lg:bg-slate-50/50 bg-[#1E293B] lg:border lg:border-slate-100 border border-[#232B5E]/30 lg:text-slate-800 text-white text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]"
+                className="w-full h-10 pl-10 pr-4 rounded-xl bg-[#1E293B]/20 border border-[#232B5E]/20 text-white text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]"
                 placeholder="Search staff..."
               />
            </div>
@@ -146,24 +146,24 @@ export const KDSMessages = () => {
                  key={conv.id}
                  onClick={() => setActiveConversation(conv.id)}
                  className={cn(
-                   "p-4 rounded-2xl flex gap-4 cursor-pointer transition-all",
+                   "p-4 rounded-2xl flex gap-4 cursor-pointer transition-all border border-transparent",
                    activeConversation === conv.id 
-                     ? "bg-indigo-50/55 lg:bg-indigo-50/50 border lg:border-indigo-50 border-[#232B5E]/30" 
-                     : "hover:bg-slate-50"
+                     ? "bg-[#3A36A0]/25 border border-[#3A36A0]/40" 
+                     : "hover:bg-[#1E293B]/30"
                  )}
                >
                   <div className="relative shrink-0">
-                     <div className="w-12 h-12 rounded-xl lg:bg-white bg-[#1E293B] lg:border lg:border-slate-100 border-none flex items-center justify-center shadow-sm">
-                       <MessageSquare size={20} className="text-slate-400" />
+                     <div className="w-12 h-12 rounded-xl bg-[#1E293B]/30 border border-[#232B5E]/20 flex items-center justify-center shadow-sm">
+                       <MessageSquare size={20} className="text-[#94A3B8]" />
                      </div>
                   </div>
                   <div className="flex-1 min-w-0">
                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="text-sm font-bold lg:text-[#0B1630] text-white truncate">{conv.name}</h4>
+                        <h4 className="text-sm font-bold text-white truncate">{conv.name}</h4>
                         <span className="text-[10px] text-[#94A3B8] font-medium">{getTimeLabel(conv.lastMessageTime)}</span>
                      </div>
                      <p className="text-[11px] text-[#94A3B8] truncate leading-tight">{conv.lastMessage || 'No messages yet'}</p>
-                  </div>
+                   </div>
                </div>
              ))
            ) : (
@@ -176,58 +176,58 @@ export const KDSMessages = () => {
       </Card>
 
       {/* Main Chat Area */}
-      <Card className="flex-1 lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none lg:border-none border border-[#232B5E]/50 shadow-2xl flex flex-col p-0 overflow-hidden z-10">
-         <div className="p-6 lg:border-b lg:border-slate-50 border-b border-[#232B5E]/30 flex items-center justify-between lg:bg-white/55 bg-[#131A38]/70 backdrop-blur-sm">
+      <Card className="flex-1 bg-[#0C0F24]/50 border border-[#232B5E]/20 shadow-2xl flex flex-col p-0 overflow-hidden z-10">
+         <div className="p-6 border-b border-[#232B5E]/20 flex items-center justify-between bg-[#131A38]/10">
             <div className="flex items-center gap-4">
-               <div className="w-12 h-12 rounded-xl lg:bg-slate-50 bg-[#1E293B] lg:border lg:border-slate-100 border-none flex items-center justify-center shadow-sm">
-                 <MessageSquare size={20} className="text-slate-400" />
+               <div className="w-12 h-12 rounded-xl bg-[#1E293B]/30 border border-[#232B5E]/20 flex items-center justify-center shadow-sm">
+                 <MessageSquare size={20} className="text-[#94A3B8]" />
                </div>
                <div>
-                  <h4 className="text-sm font-bold lg:text-[#0B1630] text-white">{activeConvData?.name || 'Select a conversation'}</h4>
+                  <h4 className="text-sm font-bold text-white">{activeConvData?.name || 'Select a conversation'}</h4>
                   <div className="flex items-center gap-1.5 mt-0.5">
                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                      <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Active</span>
                   </div>
                </div>
             </div>
-            <button className="w-10 h-10 rounded-xl lg:bg-white bg-[#1E293B] lg:border lg:border-slate-100 border-none lg:text-[#94A3B8] text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-50 transition-all flex items-center justify-center cursor-pointer"><Info size={18} /></button>
+            <button className="w-10 h-10 rounded-xl bg-[#1E293B]/30 border border-[#232B5E]/20 text-[#94A3B8] hover:text-white hover:bg-[#1E293B]/50 transition-all flex items-center justify-center cursor-pointer"><Info size={18} /></button>
          </div>
 
-         <div className="flex-1 overflow-y-auto p-8 space-y-6 lg:bg-slate-50/30 bg-[#090D1F]/40">
+         <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-[#090D1F]/20">
             {messages.length > 0 ? (
-              messages.map((msg: any) => {
-                const isMe = msg.senderId === user?.id;
-                return (
-                  <div key={msg.id} className={cn(
-                    "flex flex-col max-w-[70%]",
-                    isMe ? "ml-auto items-end" : "items-start"
-                  )}>
-                     {!isMe && <span className="text-[10px] font-bold text-[#94A3B8] mb-1">{msg.senderName}</span>}
-                     <div className={cn(
-                       "p-4 rounded-2xl text-sm font-medium shadow-sm",
-                       isMe 
-                         ? "bg-[#0B1630] text-white rounded-br-none" 
-                         : "lg:bg-white bg-[#1E293B] lg:text-[#0B1630] text-white lg:border lg:border-slate-100 border border-[#232B5E]/30 rounded-bl-none"
-                     )}>
-                        {msg.content}
-                     </div>
-                     <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[10px] font-bold text-[#94A3B8] uppercase">{getTimeLabel(msg.createdAt)}</span>
-                        {isMe && <CheckCheck size={12} className="text-emerald-500" />}
-                     </div>
-                  </div>
-                );
-              })
+               messages.map((msg: any) => {
+                 const isMe = msg.senderId === user?.id;
+                 return (
+                   <div key={msg.id} className={cn(
+                     "flex flex-col max-w-[70%]",
+                     isMe ? "ml-auto items-end" : "items-start"
+                   )}>
+                      {!isMe && <span className="text-[10px] font-bold text-indigo-300 mb-1">{msg.senderName}</span>}
+                      <div className={cn(
+                        "p-4 rounded-2xl text-sm font-medium shadow-sm",
+                        isMe 
+                          ? "bg-[#3A36A0]/80 text-white rounded-br-none" 
+                          : "bg-[#1E293B]/40 text-white border border-[#232B5E]/20 rounded-bl-none"
+                      )}>
+                         {msg.content}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                         <span className="text-[10px] font-bold text-[#94A3B8] uppercase">{getTimeLabel(msg.createdAt)}</span>
+                         {isMe && <CheckCheck size={12} className="text-emerald-500" />}
+                      </div>
+                   </div>
+                 );
+               })
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center py-20">
-                <MessageSquare size={40} className="text-[#E2E8F0] mb-3" />
+                <MessageSquare size={40} className="text-[#232B5E] mb-3" />
                 <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest">No messages yet</p>
               </div>
             )}
             <div ref={messagesEndRef} />
          </div>
 
-         <div className="p-6 lg:border-t lg:border-slate-50 border-t border-[#232B5E]/30 lg:bg-white bg-[#131A38]/70">
+         <div className="p-6 border-t border-[#232B5E]/20 bg-[#131A38]/10">
             <div className="relative">
                <input
                  value={messageInput}
@@ -235,7 +235,7 @@ export const KDSMessages = () => {
                  onKeyDown={(e) => {
                    if (e.key === 'Enter' && messageInput.trim() && activeConversation) sendMutation.mutate();
                  }}
-                 className="w-full h-14 pl-6 pr-16 rounded-2xl lg:bg-slate-50/50 bg-[#1E293B] lg:border lg:border-slate-100 border border-[#232B5E]/30 lg:text-slate-800 text-white text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]"
+                 className="w-full h-14 pl-6 pr-16 rounded-2xl bg-[#1E293B]/20 border border-[#232B5E]/20 text-white text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]"
                  placeholder="Type a message..."
                  disabled={!activeConversation}
                />

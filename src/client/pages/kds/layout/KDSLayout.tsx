@@ -18,7 +18,7 @@ export const KDSLayout = () => {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen lg:bg-[#F8FAFC] bg-[#090D1F] text-[#64748B] lg:text-[#0B1630] font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#070913] text-[#94A3B8] font-sans relative overflow-x-hidden">
       <KDSSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="lg:pl-[260px] pl-0 flex flex-col min-h-screen">
         <KDSHeader onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
@@ -65,7 +65,7 @@ export const KDSLayout = () => {
       </div>
 
       {/* ── RESPONSIVE BOTTOM NAVIGATION (Tablet Portrait & Mobile) ── */}
-      <nav className="fixed bottom-0 left-0 right-0 h-16 bg-[#090D1F]/90 backdrop-blur-md border-t border-[#232B5E]/30 flex items-center justify-around px-4 z-40 lg:hidden shadow-lg shadow-black/20">
+      <nav className="fixed bottom-0 left-0 right-0 h-16 bg-[#070913]/90 backdrop-blur-md border-t border-[#232B5E]/20 flex items-center justify-around px-4 z-40 lg:hidden shadow-lg shadow-black/20">
         {bottomNavItems.map((item) => {
           const isActive = item.name === 'My Orders' 
             ? (location.pathname === '/kds' || location.pathname === '/kds/')

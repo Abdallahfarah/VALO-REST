@@ -57,19 +57,19 @@ export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
       {/* Mobile Sidebar Backdrop overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-[#0B1630]/60 backdrop-blur-sm z-[49] lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[49] lg:hidden"
           onClick={onClose}
         />
       )}
 
       <aside className={cn(
-        "w-[260px] h-screen bg-[#0B1630] flex flex-col fixed left-0 top-0 overflow-y-auto transition-transform duration-300 z-50 lg:translate-x-0 lg:flex",
+        "w-[260px] h-screen bg-[#070913] border-r border-[#232B5E]/20 flex flex-col fixed left-0 top-0 overflow-y-auto transition-transform duration-300 z-50 lg:translate-x-0 lg:flex",
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         {/* Brand Header */}
         <div className="flex items-center justify-between px-6 py-6 pt-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#F97316] rounded flex items-center justify-center">
+            <div className="w-10 h-10 bg-[#F97316] rounded flex items-center justify-center shadow-md shadow-orange-500/20">
               <span className="text-white font-bold text-lg leading-none">VX</span>
             </div>
             <div className="flex flex-col">
@@ -99,10 +99,10 @@ export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
                   end={item.path === '/kds'}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-colors duration-200 mt-1",
+                      "flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-colors duration-200 mt-1",
                       isActive 
                         ? "bg-[#F97316] text-white shadow-lg shadow-orange-500/20" 
-                        : "text-[#CBD5E1] hover:bg-[#1A2A52] hover:text-white border-l-4 border-transparent"
+                        : "text-[#94A3B8] hover:bg-[#1E293B]/30 hover:text-white"
                     )
                   }
                 >
@@ -118,7 +118,7 @@ export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
                       {item.badge && (
                         <span className={cn(
                           "text-[10px] font-black px-2 py-0.5 rounded-full",
-                          isActive ? "bg-white text-[#F97316]" : "bg-[#4F46E5] text-white"
+                          isActive ? "bg-white text-[#F97316]" : "bg-indigo-500/30 text-indigo-200 border border-indigo-500/20"
                         )}>
                           {item.badge}
                         </span>
@@ -133,7 +133,7 @@ export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
       </div>
 
       {/* Status Bar */}
-      <div className="px-6 py-4 mx-4 mb-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col gap-1">
+      <div className="px-6 py-4 mx-4 mb-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="text-emerald-500 text-[10px] font-bold uppercase tracking-wider">Online</span>
@@ -142,10 +142,10 @@ export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
       </div>
 
       {/* Logout */}
-      <div className="px-6 py-8 border-t border-[#1A2A52]/40">
+      <div className="px-6 py-8 border-t border-[#232B5E]/20">
         <button 
           onClick={signOut}
-          className="flex items-center gap-2 text-[#CBD5E1] hover:text-white transition-colors text-sm font-semibold tracking-wider w-full"
+          className="flex items-center gap-2 text-[#94A3B8] hover:text-white transition-colors text-sm font-semibold tracking-wider w-full"
         >
           <LogOut className="w-5 h-5" />
           Logout

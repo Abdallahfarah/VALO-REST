@@ -49,15 +49,15 @@ const CancellationDialog = ({ order, onConfirm, onClose, isPending }: Cancellati
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-[#070913]/95 border border-[#232B5E]/30 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="bg-red-50 border-b border-red-100 p-6 flex items-start justify-between gap-4">
+        <div className="bg-red-950/20 border-b border-[#232B5E]/10 p-6 flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-100 text-red-500 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center shrink-0">
               <AlertTriangle size={20} />
             </div>
             <div>
-              <h2 className="text-sm font-black text-[#0B1630] uppercase tracking-wider">Cancel Order</h2>
+              <h2 className="text-sm font-black text-white uppercase tracking-wider">Cancel Order</h2>
               <p className="text-[11px] text-[#94A3B8] font-medium mt-0.5">
                 #{order.id?.slice(0, 8).toUpperCase()} · Table {order.table?.number || 'N/A'}
               </p>
@@ -66,7 +66,7 @@ const CancellationDialog = ({ order, onConfirm, onClose, isPending }: Cancellati
           <button
             onClick={onClose}
             disabled={isPending}
-            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#0B1630] hover:bg-red-100 transition-all disabled:opacity-50"
+            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-red-500/10 transition-all disabled:opacity-50"
           >
             <X size={16} />
           </button>
@@ -74,25 +74,25 @@ const CancellationDialog = ({ order, onConfirm, onClose, isPending }: Cancellati
 
         {/* Body */}
         <div className="p-6 space-y-4">
-          <p className="text-xs font-bold text-[#64748B]">
+          <p className="text-xs font-bold text-[#94A3B8]">
             This action cannot be undone. The order will be permanently marked as cancelled and the waiter will be notified.
           </p>
 
           {/* Order summary */}
-          <div className="bg-slate-50 rounded-2xl p-4 space-y-1">
-            <div className="flex justify-between text-[11px] font-bold text-[#64748B]">
+          <div className="bg-[#131A38]/30 border border-[#232B5E]/20 rounded-2xl p-4 space-y-1">
+            <div className="flex justify-between text-[11px] font-bold text-[#94A3B8]">
               <span>Items</span>
-              <span className="text-[#0B1630]">{order.items?.length || 0}</span>
+              <span className="text-white">{order.items?.length || 0}</span>
             </div>
-            <div className="flex justify-between text-[11px] font-bold text-[#64748B]">
+            <div className="flex justify-between text-[11px] font-bold text-[#94A3B8]">
               <span>Total</span>
-              <span className="text-[#F97316]">${Number(order.totalAmount || 0).toFixed(2)}</span>
+              <span className="text-[#F97316] font-black">${Number(order.totalAmount || 0).toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-[11px] font-bold text-[#64748B]">
+            <div className="flex justify-between text-[11px] font-bold text-[#94A3B8]">
               <span>Current Status</span>
               <span className={cn(
                 "text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider",
-                order.status === 'PENDING' ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'
+                order.status === 'PENDING' ? 'bg-indigo-950/40 text-indigo-300 border border-indigo-500/20' : 'bg-orange-950/40 text-orange-300 border border-orange-500/20'
               )}>
                 {order.status}
               </span>
@@ -101,8 +101,8 @@ const CancellationDialog = ({ order, onConfirm, onClose, isPending }: Cancellati
 
           {/* Reason selector */}
           <div>
-            <p className="text-[10px] font-black text-[#0B1630] uppercase tracking-wider mb-2">
-              Cancellation Reason <span className="text-red-500">*</span>
+            <p className="text-[10px] font-black text-white uppercase tracking-wider mb-2">
+              Cancellation Reason <span className="text-red-400">*</span>
             </p>
             <div className="space-y-2">
               {CANCELLATION_REASONS.map((reason) => (
@@ -112,8 +112,8 @@ const CancellationDialog = ({ order, onConfirm, onClose, isPending }: Cancellati
                   className={cn(
                     "w-full text-left px-4 py-2.5 rounded-xl border text-xs font-bold transition-all",
                     selected === reason
-                      ? "border-red-300 bg-red-50 text-red-700"
-                      : "border-slate-100 bg-slate-50/50 text-[#64748B] hover:border-slate-200 hover:bg-slate-50"
+                      ? "border-red-500/40 bg-red-950/30 text-red-300"
+                      : "border-[#232B5E]/20 bg-[#131A38]/10 text-[#94A3B8] hover:border-[#232B5E]/40 hover:bg-[#131A38]/30"
                   )}
                 >
                   {reason}
@@ -129,7 +129,7 @@ const CancellationDialog = ({ order, onConfirm, onClose, isPending }: Cancellati
                 placeholder="Describe the reason..."
                 rows={2}
                 maxLength={200}
-                className="mt-3 w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 text-xs focus:outline-none focus:border-red-300 placeholder:text-[#94A3B8] resize-none"
+                className="mt-3 w-full px-4 py-3 rounded-xl border border-[#232B5E]/20 bg-[#131A38]/10 text-xs text-white focus:outline-none focus:border-red-500/40 placeholder:text-[#94A3B8] resize-none"
               />
             )}
           </div>
@@ -140,7 +140,7 @@ const CancellationDialog = ({ order, onConfirm, onClose, isPending }: Cancellati
           <button
             onClick={onClose}
             disabled={isPending}
-            className="flex-1 py-3 rounded-2xl border border-slate-200 text-[10px] font-black uppercase tracking-widest text-[#64748B] hover:bg-slate-50 transition-all disabled:opacity-50"
+            className="flex-1 py-3 rounded-2xl border border-[#232B5E]/20 text-[10px] font-black uppercase tracking-widest text-[#94A3B8] hover:bg-[#1E293B]/20 transition-all disabled:opacity-50"
           >
             Keep Order
           </button>
@@ -194,15 +194,15 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-[#070913]/95 border border-[#232B5E]/30 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="border-b border-slate-100 p-6 flex items-start justify-between gap-4 bg-slate-50/50">
+        <div className="border-b border-[#232B5E]/15 p-6 flex items-start justify-between gap-4 bg-[#131A38]/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center shrink-0">
               <FileText size={20} />
             </div>
             <div>
-              <h2 className="text-sm font-black text-[#0B1630] uppercase tracking-wider">Order Details ({activeStation})</h2>
+              <h2 className="text-sm font-black text-white uppercase tracking-wider">Order Details ({activeStation})</h2>
               <p className="text-[11px] text-[#94A3B8] font-medium mt-0.5">
                 #{order.id?.toUpperCase()}
               </p>
@@ -210,7 +210,7 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-100 transition-all"
+            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-slate-800/45 transition-all"
           >
             <X size={16} />
           </button>
@@ -220,14 +220,14 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
         <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
+            <div className="bg-[#131A38]/20 border border-[#232B5E]/10 p-4 rounded-2xl flex items-center gap-3">
               <User size={16} className="text-[#94A3B8]" />
               <div>
                 <p className="text-[9px] font-bold text-[#94A3B8] uppercase">Waiter</p>
-                <p className="text-xs font-bold text-[#0B1630]">{order.waiterName || 'Unassigned'}</p>
+                <p className="text-xs font-bold text-white">{order.waiterName || 'Unassigned'}</p>
               </div>
             </div>
-            <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
+            <div className="bg-[#131A38]/20 border border-[#232B5E]/10 p-4 rounded-2xl flex items-center gap-3">
               <DollarSign size={16} className="text-[#94A3B8]" />
               <div>
                 <p className="text-[9px] font-bold text-[#94A3B8] uppercase">Total Amount</p>
@@ -238,19 +238,19 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
 
           {/* Details list */}
           <div className="space-y-3">
-            <h3 className="text-[10px] font-black text-[#0B1630] uppercase tracking-wider">{activeStation} Station Items</h3>
+            <h3 className="text-[10px] font-black text-white uppercase tracking-wider">{activeStation} Station Items</h3>
             <div className="space-y-2">
               {stationItems?.map((item: any, idx: number) => (
-                <div key={idx} className="flex justify-between items-center bg-slate-50/50 border border-slate-100 px-4 py-3 rounded-xl">
+                <div key={idx} className="flex justify-between items-center bg-[#131A38]/10 border border-[#232B5E]/10 px-4 py-3 rounded-xl">
                   <div>
-                    <p className="text-xs font-bold text-[#0B1630]">{item.quantity}x {item.menuItem?.name}</p>
+                    <p className="text-xs font-bold text-white">{item.quantity}x {item.menuItem?.name}</p>
                     <p className="text-[9px] font-medium text-[#94A3B8]">Unit Price: ${item.unitPrice?.toFixed(2)}</p>
                   </div>
                   <span className={cn(
                     "text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider",
-                    item.status === 'PENDING' ? 'bg-indigo-50 text-indigo-600' :
-                    item.status === 'PREPARING' ? 'bg-orange-50 text-orange-600' :
-                    item.status === 'READY' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                    item.status === 'PENDING' ? 'bg-indigo-950/40 text-indigo-300 border border-indigo-500/20' :
+                    item.status === 'PREPARING' ? 'bg-orange-950/40 text-orange-300 border border-orange-500/20' :
+                    item.status === 'READY' ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/20' : 'bg-red-950/40 text-red-300 border border-red-500/20'
                   )}>
                     {item.status}
                   </span>
@@ -261,11 +261,11 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
 
           {/* Cancellation Info if cancelled */}
           {order.status === 'CANCELED' && (
-            <div className="bg-red-50 border border-red-100 p-4 rounded-2xl space-y-1">
-              <p className="text-[10px] font-black text-red-700 uppercase">Cancellation Details</p>
-              <p className="text-xs font-bold text-red-800">Reason: {order.cancellationReason || 'No reason specified'}</p>
+            <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl space-y-1">
+              <p className="text-[10px] font-black text-red-400 uppercase">Cancellation Details</p>
+              <p className="text-xs font-bold text-red-300">Reason: {order.cancellationReason || 'No reason specified'}</p>
               {order.cancelledAt && (
-                <p className="text-[10px] font-medium text-red-600">
+                <p className="text-[10px] font-medium text-red-400">
                   Time: {new Date(order.cancelledAt).toLocaleString()}
                 </p>
               )}
@@ -274,12 +274,12 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 bg-slate-50/20">
+        <div className="px-6 pb-6 pt-4 border-t border-[#232B5E]/15 flex items-center justify-between gap-3 bg-[#131A38]/5">
           <span className={cn(
             "text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest",
-            currentStationStatus === 'PENDING' ? 'bg-indigo-50 text-indigo-600' :
-            currentStationStatus === 'PREPARING' ? 'bg-orange-50 text-orange-600' :
-            currentStationStatus === 'READY' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+            currentStationStatus === 'PENDING' ? 'bg-indigo-950/40 text-indigo-300 border border-indigo-500/20' :
+            currentStationStatus === 'PREPARING' ? 'bg-orange-950/40 text-orange-300 border border-orange-500/20' :
+            currentStationStatus === 'READY' ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/20' : 'bg-red-950/40 text-red-300 border border-red-500/20'
           )}>
             Station: {currentStationStatus}
           </span>
@@ -288,7 +288,7 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
               <button
                 onClick={() => { onClose(); onCancel(order); }}
                 disabled={isUpdating}
-                className="px-4 py-2.5 rounded-2xl border border-red-200 text-red-500 hover:bg-red-50 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                className="px-4 py-2.5 rounded-2xl border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
               >
                 Cancel Order
               </button>
@@ -304,7 +304,7 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
             )}
             <button
               onClick={onClose}
-              className="px-4 py-2.5 rounded-2xl border border-slate-200 text-[#64748B] hover:bg-slate-50 text-[10px] font-black uppercase tracking-widest transition-all"
+              className="px-4 py-2.5 rounded-2xl border border-[#232B5E]/20 text-[#94A3B8] hover:bg-[#1E293B]/20 text-[10px] font-black uppercase tracking-widest transition-all"
             >
               Close
             </button>
@@ -361,16 +361,16 @@ const ViewAllOrdersDialog = ({
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-[#070913]/95 border border-[#232B5E]/30 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="border-b border-slate-100 p-6 flex items-start justify-between bg-slate-50/50">
+        <div className="border-b border-[#232B5E]/15 p-6 flex items-start justify-between bg-[#131A38]/10">
           <div>
-            <h2 className="text-sm font-black text-[#0B1630] uppercase tracking-wider">{title} ({filtered.length})</h2>
+            <h2 className="text-sm font-black text-white uppercase tracking-wider">{title} ({filtered.length})</h2>
             <p className="text-[11px] text-[#94A3B8] font-medium mt-0.5">Viewing {activeStation} status list</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-100 transition-all"
+            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-slate-800/45 transition-all"
           >
             <X size={16} />
           </button>
@@ -380,7 +380,7 @@ const ViewAllOrdersDialog = ({
         <div className="p-6 max-h-[60vh] overflow-y-auto space-y-3">
           {filtered.length === 0 ? (
             <div className="text-center py-12">
-              <Receipt size={40} className="mx-auto text-[#CBD5E1] mb-3" />
+              <Receipt size={40} className="mx-auto text-[#232B5E] mb-3" />
               <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest">No orders in this status</p>
             </div>
           ) : (
@@ -388,14 +388,14 @@ const ViewAllOrdersDialog = ({
               <div
                 key={order.id}
                 onClick={() => onSelectOrder(order)}
-                className="flex items-center justify-between p-4 border border-slate-100 rounded-2xl hover:border-orange-200 hover:bg-orange-50/10 transition-all cursor-pointer group"
+                className="flex items-center justify-between p-4 border border-[#232B5E]/10 bg-[#131A38]/10 rounded-2xl hover:border-orange-500/50 hover:bg-[#F97316]/5 transition-all cursor-pointer group"
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-black text-[#0B1630]">#{order.id.slice(0, 8).toUpperCase()}</span>
+                    <span className="text-xs font-black text-white">#{order.id.slice(0, 8).toUpperCase()}</span>
                     <span className="text-[9px] font-bold text-[#94A3B8]">Table {order.table?.number || 'N/A'}</span>
                   </div>
-                  <p className="text-[10px] text-[#64748B] font-medium">
+                  <p className="text-[10px] text-[#94A3B8] font-medium">
                     {order.stationItems?.length || 0} station items · ${Number(order.totalAmount).toFixed(2)}
                   </p>
                 </div>
@@ -404,7 +404,7 @@ const ViewAllOrdersDialog = ({
                     <button
                       onClick={() => onStatusUpdate(order.id, getStationOrderStatus(order))}
                       disabled={isUpdating}
-                      className="px-3 py-1.5 rounded-xl bg-orange-50 text-[#F97316] text-[9px] font-black uppercase tracking-wider hover:bg-orange-100 transition-all disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-xl bg-[#F97316]/10 border border-[#F97316]/30 text-[#F97316] text-[9px] font-black uppercase tracking-wider hover:bg-[#F97316] hover:text-white transition-all disabled:opacity-50"
                     >
                       {status === 'PENDING' ? 'Start Preparing' : 'Mark Ready'}
                     </button>
@@ -413,12 +413,12 @@ const ViewAllOrdersDialog = ({
                     <button
                       onClick={() => onCancel(order)}
                       disabled={isUpdating}
-                      className="p-1.5 rounded-xl border border-red-100 text-red-400 hover:bg-red-50 hover:text-red-600 transition-all disabled:opacity-50"
+                      className="p-1.5 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
                     >
                       <XCircle size={14} />
                     </button>
                   )}
-                  <ChevronRight size={16} className="text-[#94A3B8] group-hover:text-[#0B1630] transition-colors" />
+                  <ChevronRight size={16} className="text-[#94A3B8] group-hover:text-white transition-colors" />
                 </div>
               </div>
             ))
@@ -426,10 +426,10 @@ const ViewAllOrdersDialog = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-6 pt-4 border-t border-slate-100 bg-slate-50/20 flex justify-end">
+        <div className="px-6 pb-6 pt-4 border-t border-[#232B5E]/15 bg-[#131A38]/5 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-2xl bg-[#0B1630] text-white hover:bg-[#1E293B] text-[10px] font-black uppercase tracking-widest transition-all"
+            className="px-5 py-2.5 rounded-2xl bg-[#F97316] text-white hover:bg-[#ea580c] text-[10px] font-black uppercase tracking-widest transition-all"
           >
             Close
           </button>
@@ -635,8 +635,8 @@ export const OrdersMonitor = () => {
             </span>
             <div className="space-y-1">
               {activeItems.map((item: any, idx: number) => (
-                <div key={idx} className="flex justify-between items-center text-xs font-bold text-[#0B1630] lg:bg-orange-50/50 bg-orange-500/10 px-2.5 py-1 rounded-lg">
-                   <span className="lg:text-[#0B1630] text-orange-100">{item.quantity}x {item.menuItem?.name || 'Item'}</span>
+                <div key={idx} className="flex justify-between items-center text-xs font-bold bg-[#F97316]/15 border border-[#F97316]/20 px-2.5 py-1 rounded-lg">
+                   <span className="text-orange-100">{item.quantity}x {item.menuItem?.name || 'Item'}</span>
                    <span className="text-[8px] uppercase font-black text-[#F97316]">Active</span>
                 </div>
               ))}
@@ -650,8 +650,8 @@ export const OrdersMonitor = () => {
             </span>
             <div className="space-y-1">
               {historyItems.map((item: any, idx: number) => (
-                <div key={idx} className="flex justify-between items-center text-xs font-bold text-[#64748B] lg:bg-slate-50 bg-white/5 px-2.5 py-1 rounded-lg opacity-60">
-                   <span className="lg:text-[#64748B] text-slate-300">{item.quantity}x {item.menuItem?.name || 'Item'}</span>
+                <div key={idx} className="flex justify-between items-center text-xs font-bold bg-white/5 border border-white/5 px-2.5 py-1 rounded-lg opacity-60">
+                   <span className="text-slate-300">{item.quantity}x {item.menuItem?.name || 'Item'}</span>
                    <span className="text-[8px] uppercase font-black text-[#94A3B8]">{item.status}</span>
                 </div>
               ))}
@@ -666,7 +666,7 @@ export const OrdersMonitor = () => {
   const renderCancelledInfo = (order: any) => {
     if (!order.cancellationReason && !order.cancelledBy) return null;
     return (
-      <div className="mt-3 px-3 py-2 bg-red-50 rounded-xl border border-red-100 space-y-1">
+      <div className="mt-3 px-3 py-2 bg-red-500/10 rounded-xl border border-red-500/20 space-y-1">
         {order.cancellationReason && (
           <p className="text-[10px] font-bold text-red-700">
             <span className="text-[9px] uppercase tracking-wider text-red-400 font-black mr-1">Reason:</span>
@@ -702,18 +702,18 @@ export const OrdersMonitor = () => {
       {/* ── Page title & station switcher ── */}
       <div className="flex items-center justify-between shrink-0 flex-wrap gap-4">
         <div className="flex items-center gap-4">
-           <h1 className="text-3xl font-bold lg:text-[#0B1630] text-white">
+           <h1 className="text-3xl font-bold text-white">
              {activeStation} Dashboard
            </h1>
            <div className="flex items-center gap-2">
              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-             <span className="lg:text-emerald-600 text-emerald-400 text-xs font-bold uppercase tracking-wider">Live</span>
+             <span className="text-emerald-400 text-xs font-bold uppercase tracking-wider">Live</span>
           </div>
         </div>
 
         {/* Station switcher for ADMIN / SUPER_ADMIN */}
         {!isKdsUser && (
-          <div className="flex items-center gap-2 bg-slate-100 lg:bg-slate-100 bg-[#131A38]/50 p-1.5 rounded-2xl border border-[#232B5E]/30 lg:border-slate-200">
+          <div className="flex items-center gap-2 bg-[#131A38]/30 p-1.5 rounded-2xl border border-[#232B5E]/20">
             {['Chef', 'Barista', 'Kitchen Staff'].map((station) => (
               <button
                 key={station}
@@ -722,7 +722,7 @@ export const OrdersMonitor = () => {
                   "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
                   activeStation === station
                     ? "bg-[#F97316] text-white shadow-md shadow-orange-500/20"
-                    : "text-[#64748B] hover:text-[#0B1630] dark:hover:text-white"
+                    : "text-[#94A3B8] hover:text-white"
                 )}
               >
                 {station}
@@ -738,14 +738,14 @@ export const OrdersMonitor = () => {
         activeStation === 'Chef' ? "grid-cols-5" : "grid-cols-4"
       )}>
         {kpis.map((kpi, i) => (
-          <Card key={i} className="p-4 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex items-center gap-4">
-             <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm", kpi.bg, kpi.color)}>
+          <Card key={i} className="p-4 bg-[#0C0F24]/65 border border-[#232B5E]/20 shadow-[0_4px_20px_rgba(0,0,0,0.15)] flex items-center gap-4">
+             <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm", kpi.darkBg, kpi.darkColor)}>
                 <kpi.icon size={24} />
              </div>
              <div>
-               <h3 className="text-2xl font-black text-[#0B1630] leading-none mb-1">{kpi.value}</h3>
+               <h3 className="text-2xl font-black text-white leading-none mb-1">{kpi.value}</h3>
                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-[#0B1630] uppercase tracking-wider">{kpi.label}</span>
+                  <span className="text-[10px] font-bold text-white/95 uppercase tracking-wider">{kpi.label}</span>
                   <span className="text-[9px] text-[#94A3B8] font-medium leading-none">{kpi.sub}</span>
                </div>
              </div>
@@ -778,26 +778,26 @@ export const OrdersMonitor = () => {
       <div className="hidden lg:flex flex-1 overflow-x-auto overflow-y-hidden pb-4">
          <div className="flex gap-6 h-full min-w-[1200px]">
             {columns.map((col, i) => (
-               <div key={i} className="flex-1 min-w-[300px] flex flex-col bg-[#F1F5F9]/50 rounded-3xl overflow-hidden border border-slate-100">
-                  <div className={cn("p-4 border-b-4 flex items-center justify-between bg-white/80", col.color)}>
-                     <h3 className="text-[10px] font-black text-[#0B1630] tracking-widest uppercase">{col.title} ({col.count})</h3>
+               <div key={i} className="flex-1 min-w-[300px] flex flex-col bg-[#0C0F24]/50 rounded-3xl overflow-hidden border border-[#232B5E]/30">
+                  <div className={cn("p-4 border-b-4 flex items-center justify-between bg-[#131A38]/30", col.color)}>
+                     <h3 className="text-[10px] font-black text-white tracking-widest uppercase">{col.title} ({col.count})</h3>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
                      {col.orders.map((order: any) => (
                         <Card 
                           key={order.id} 
                           onClick={() => setSelectedOrder(order)}
-                          className="p-4 border-none shadow-[0_4px_12px_rgba(0,0,0,0.03)] group hover:shadow-md transition-all cursor-pointer"
+                          className="p-4 bg-[#141935]/65 border border-[#232B5E]/20 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:border-[#F97316]/50 hover:shadow-[0_4px_25px_rgba(249,115,22,0.1)] group transition-all duration-300 cursor-pointer"
                         >
                            <div className="flex items-center justify-between mb-4">
-                              <span className="text-xs font-black text-[#0B1630]">#{order.id.slice(0, 8)}</span>
+                              <span className="text-xs font-black text-white">#{order.id.slice(0, 8).toUpperCase()}</span>
                               <span className="text-[10px] text-[#94A3B8] font-bold">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                            </div>
-                           <div className="flex items-center justify-between text-[10px] font-bold text-[#64748B] mb-2">
+                           <div className="flex items-center justify-between text-[10px] font-bold text-[#94A3B8] mb-2">
                               <span>Table {order.table?.number || 'N/A'} • {order.stationItems?.length || 0} Items</span>
-                              <span className="text-[#F97316]">${Number(order.totalAmount).toFixed(2)}</span>
+                              <span className="text-[#F97316] font-black">${Number(order.totalAmount).toFixed(2)}</span>
                            </div>
-                           <div className="text-[10px] font-bold text-indigo-500 mb-4">
+                           <div className="text-[10px] font-bold text-indigo-400 mb-4">
                               🧑‍🍳 {order.waiterName || 'Unassigned'}
                            </div>
                             {/* Grouped Items List */}
@@ -808,18 +808,18 @@ export const OrdersMonitor = () => {
                            {/* Cancelled info */}
                            {col.title === 'CANCELED' && renderCancelledInfo(order)}
 
-                           <div className="flex items-center justify-between pt-4 border-t border-slate-50 gap-2" onClick={(e) => e.stopPropagation()}>
+                           <div className="flex items-center justify-between pt-4 border-t border-[#232B5E]/20 gap-2" onClick={(e) => e.stopPropagation()}>
                               {/* Progress action */}
                               {col.title !== 'READY' && col.title !== 'CANCELED' ? (
                                  <button 
                                    onClick={() => handleStatusUpdate(order.id, getStationOrderStatus(order))}
                                    disabled={updateStatusMutation.isPending}
-                                   className="flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-[#F97316] hover:bg-orange-50 transition-colors disabled:opacity-50"
+                                   className="flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/30 hover:bg-[#F97316] hover:text-white transition-colors disabled:opacity-50"
                                  >
                                     {col.title === 'NEW ORDERS' ? 'Start Preparing' : 'Mark as Ready'}
                                  </button>
                                ) : col.title === 'READY' ? (
-                                 <div className="flex items-center justify-center gap-1.5 flex-1 text-emerald-500 text-[10px] font-black uppercase tracking-widest">
+                                 <div className="flex items-center justify-center gap-1.5 flex-1 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
                                     <CheckCircle2 size={12} /> Ready to Serve
                                  </div>
                                ) : null}
@@ -829,7 +829,7 @@ export const OrdersMonitor = () => {
                                 <button
                                   onClick={() => setCancelling(order)}
                                   disabled={updateStatusMutation.isPending || cancelMutation.isPending}
-                                  className="py-1.5 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                  className="py-1.5 px-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest text-red-400 bg-red-500/5 border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
                                   title="Cancel order"
                                 >
                                   <XCircle size={14} />
@@ -838,7 +838,7 @@ export const OrdersMonitor = () => {
 
                               <button 
                                 onClick={() => setSelectedOrder(order)}
-                                className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-50 transition-all"
+                                className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#1E293B]/40 transition-all"
                               >
                                  <ChevronRight size={14} />
                               </button>
@@ -847,7 +847,7 @@ export const OrdersMonitor = () => {
                      ))}
                      <button 
                        onClick={() => setViewingAllStatus(col.status)}
-                       className="w-full py-2 flex items-center justify-center gap-2 text-[10px] font-black text-[#94A3B8] uppercase tracking-widest hover:text-[#0B1630] transition-colors"
+                       className="w-full py-2 flex items-center justify-center gap-2 text-[10px] font-black text-[#94A3B8] uppercase tracking-widest hover:text-white transition-colors"
                      >
                         View all orders <ChevronRight size={12} />
                      </button>
@@ -966,13 +966,13 @@ export const OrdersMonitor = () => {
       </div>
 
       {/* ── Tip Bar ── */}
-      <div className="lg:bg-white lg:border-t lg:border-slate-100 bg-[#131A38]/70 backdrop-blur-md border-t border-[#232B5E]/30 p-4 px-8 flex items-center justify-between shrink-0 rounded-2xl lg:rounded-none">
+      <div className="bg-[#0C0F24]/50 backdrop-blur-md border-t border-[#232B5E]/20 p-4 px-8 flex items-center justify-between shrink-0 rounded-2xl lg:rounded-none">
          <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-lg bg-orange-50 lg:bg-orange-50 bg-orange-500/10 text-orange-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center">
                <Lightbulb size={18} />
             </div>
-            <p className="text-xs font-medium lg:text-[#64748B] text-[#94A3B8]">
-               <span className="font-bold lg:text-[#0B1630] text-white uppercase text-[10px] mr-2">TIP</span>
+            <p className="text-xs font-medium text-[#94A3B8]">
+               <span className="font-bold text-white uppercase text-[10px] mr-2">TIP</span>
                Focus on orders by priority and preparation time to improve kitchen efficiency.
             </p>
          </div>
@@ -980,7 +980,7 @@ export const OrdersMonitor = () => {
             <div className="flex items-center gap-2">
              <Clock size={14} /> {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
              </div>
-             <div className="border-l border-[#232B5E]/30 lg:border-slate-200 pl-4 h-4" />
+             <div className="border-l border-[#232B5E]/20 pl-4 h-4" />
              <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
          </div>
       </div>
