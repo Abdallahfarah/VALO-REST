@@ -137,7 +137,8 @@ export const WaiterPOS = () => {
           seat: 1,
           sent: true,
           orderItemId: oi.id,
-          status: oi.status || 'PENDING'
+          status: oi.status || 'PENDING',
+          preparationStation: oi.menu_items?.preparation_station || 'Chef'
         }));
         setCart(mapped);
       } else {
@@ -275,11 +276,14 @@ export const WaiterPOS = () => {
     createOrderMutation.mutate({
       tenantId: tenant?.id,
       tableId: selectedTable,
+      tableNumber: tableObj?.number,
       waiterId: resolvedWaiterId,
       items: newItems.map(item => ({
         menuItemId: item.id,
         quantity: item.quantity,
-        price: item.price
+        price: item.price,
+        name: item.name,
+        preparationStation: item.preparationStation || 'Chef'
       })),
       totalAmount: newTotal,
       type: 'DINE_IN'

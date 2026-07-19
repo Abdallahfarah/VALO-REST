@@ -104,8 +104,15 @@ export const POS = () => {
     createOrderMutation.mutate({
       tenantId: tenant?.id,
       tableId: selectedTable,
+      tableNumber: tableObj?.number,
       waiterId: resolvedWaiterId,
-      items: cart.map((c) => ({ menuItemId: c.id, quantity: c.quantity, price: c.price })),
+      items: cart.map((c) => ({ 
+        menuItemId: c.id, 
+        quantity: c.quantity, 
+        price: c.price,
+        name: c.name,
+        preparationStation: c.preparationStation || 'Chef'
+      })),
       totalAmount: total,
       status: 'PENDING',
     });
@@ -248,7 +255,7 @@ export const POS = () => {
             disabled={cart.length === 0 || !selectedTable || createOrderMutation.isPending}
             className="w-full bg-[#F97316] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#ea580c] transition-colors shadow-lg shadow-[#F97316]/20 disabled:opacity-50 cursor-pointer"
           >
-            <Send size={16} /> PLACE ORDER
+            {createOrderMutation.isPending ? 'SENDING...' : <><Send size={16} /> PLACE ORDER</>}
           </button>
           <div className="text-center">
             <span className="text-xs font-semibold text-emerald-500 flex items-center justify-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Ready to Order</span>

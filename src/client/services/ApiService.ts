@@ -92,47 +92,62 @@ export const OrderService = {
   },
 
   async createOrder(payload: any) {
-    let waiterId = payload.waiterId;
-    if (!waiterId && payload.tableId) {
-      const { data: tableData } = await supabase
-        .from('tables')
-        .select('waiter_id')
-        .eq('id', payload.tableId)
-        .single();
-      if (tableData?.waiter_id) {
-        waiterId = tableData.waiter_id;
-      }
-    }
-
-    // Check if there is already an active order for this table
-    let activeOrder = null;
-    if (payload.tableId) {
-      const { data: activeOrders } = await supabase
+    // 1. Parallelize initial lookups for active order and waiter assignment (if waiterId is missing)
+    const [activeOrdersRes, waiterIdRes] = await Promise.all([
+      payload.tableId ? supabase
         .from('orders')
         .select('*')
         .eq('table_id', payload.tableId)
         .not('status', 'in', '("COMPLETED","CANCELED")')
-        .limit(1);
-      if (activeOrders && activeOrders.length > 0) {
-        activeOrder = activeOrders[0];
-      }
-    }
+        .limit(1) : Promise.resolve({ data: null, error: null }),
+      (!payload.waiterId && payload.tableId) ? supabase
+        .from('tables')
+        .select('waiter_id')
+        .eq('id', payload.tableId)
+        .maybeSingle() : Promise.resolve({ data: null, error: null })
+    ]);
+
+    if (activeOrdersRes.error) throw activeOrdersRes.error;
+    if (waiterIdRes.error) throw waiterIdRes.error;
+
+    const activeOrder = activeOrdersRes.data && activeOrdersRes.data.length > 0 ? activeOrdersRes.data[0] : null;
+    const waiterId = payload.waiterId || waiterIdRes.data?.waiter_id || null;
 
     let orderId = '';
+
     if (activeOrder) {
       orderId = activeOrder.id;
       const newTotal = Number(activeOrder.total_amount) + Number(payload.totalAmount);
-      const { error: orderError } = await supabase
-        .from('orders')
-        .update({
-          total_amount: newTotal,
-          status: 'PENDING',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', orderId);
-      if (orderError) throw orderError;
+
+      const orderItems = payload.items.map((item: any) => ({
+        order_id: orderId,
+        menu_item_id: item.menuItemId,
+        quantity: item.quantity,
+        unit_price: item.price,
+        price: item.price * item.quantity,
+        status: 'PENDING',
+      }));
+
+      // Update order total, insert new items, and make sure table is occupied ALL in parallel
+      const [orderUpdate, itemsInsert, tableUpdate] = await Promise.all([
+        supabase
+          .from('orders')
+          .update({
+            total_amount: newTotal,
+            status: 'PENDING',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId),
+        supabase.from('order_items').insert(orderItems),
+        payload.tableId ? supabase.from('tables').update({ status: 'OCCUPIED' }).eq('id', payload.tableId) : Promise.resolve({ error: null })
+      ]);
+
+      if (orderUpdate.error) throw orderUpdate.error;
+      if (itemsInsert.error) throw itemsInsert.error;
+      if (tableUpdate.error) throw tableUpdate.error;
+
     } else {
-      // Insert the order
+      // Insert new order first to obtain orderId
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -148,99 +163,72 @@ export const OrderService = {
 
       if (orderError) throw orderError;
       orderId = order.id;
+
+      const orderItems = payload.items.map((item: any) => ({
+        order_id: orderId,
+        menu_item_id: item.menuItemId,
+        quantity: item.quantity,
+        unit_price: item.price,
+        price: item.price * item.quantity,
+        status: 'PENDING',
+      }));
+
+      // Insert items and make table occupied in parallel
+      const [itemsInsert, tableUpdate] = await Promise.all([
+        supabase.from('order_items').insert(orderItems),
+        payload.tableId ? supabase.from('tables').update({ status: 'OCCUPIED' }).eq('id', payload.tableId) : Promise.resolve({ error: null })
+      ]);
+
+      if (itemsInsert.error) throw itemsInsert.error;
+      if (tableUpdate.error) throw tableUpdate.error;
     }
 
-    // 2. Insert order items
-    const orderItems = payload.items.map((item: any) => ({
-      order_id: orderId,
-      menu_item_id: item.menuItemId,
-      quantity: item.quantity,
-      unit_price: item.price,
-      price: item.price * item.quantity,
-      status: 'PENDING',
-    }));
+    // 2. Asynchronously run telemetry tasks (logs & KDS notifications) in the background
+    (async () => {
+      try {
+        const isNewOrder = !activeOrder;
+        const actionType = isNewOrder ? 'ORDER_CREATED' : 'ORDER_MODIFIED';
 
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
+        // Insert audit log
+        await supabase.from('activity_logs').insert({
+          user_id: waiterId || null,
+          action: actionType,
+          entity_type: 'order',
+          entity_id: orderId,
+          timestamp: new Date().toISOString(),
+        });
 
-    if (itemsError) throw itemsError;
-
-    // 3. Update table status to OCCUPIED
-    if (payload.tableId) {
-      await supabase
-        .from('tables')
-        .update({ status: 'OCCUPIED' })
-        .eq('id', payload.tableId);
-    }
-
-    // 3b. Smart Operations Telemetry (Notifications & Audit Logs)
-    try {
-      const isNewOrder = !activeOrder;
-      const actionType = isNewOrder ? 'ORDER_CREATED' : 'ORDER_MODIFIED';
-
-      // Insert audit log
-      await supabase.from('activity_logs').insert({
-        user_id: waiterId || null,
-        action: actionType,
-        entity_type: 'order',
-        entity_id: orderId,
-        timestamp: new Date().toISOString(),
-      });
-
-      // Group items by preparation station for notifications
-      const menuItemIds = payload.items.map((item: any) => item.menuItemId);
-      const { data: menuItems } = await supabase
-        .from('menu_items')
-        .select('id, name, preparation_station')
-        .in('id', menuItemIds);
-
-      const stationMap: Record<string, string[]> = {};
-      if (menuItems) {
-        menuItems.forEach((m: any) => {
-          const station = m.preparation_station || 'Chef';
+        // Group items by preparation station for notifications using metadata provided by frontend payload
+        const stationMap: Record<string, string[]> = {};
+        payload.items.forEach((item: any) => {
+          const station = item.preparationStation || 'Chef';
           if (!stationMap[station]) stationMap[station] = [];
-          stationMap[station].push(m.name);
+          stationMap[station].push(item.name || 'Item');
         });
-      }
 
-      // Fetch table number
-      let tableNumber = '?';
-      if (payload.tableId) {
-        const { data: tableData } = await supabase
-          .from('tables')
-          .select('number')
-          .eq('id', payload.tableId)
-          .single();
-        if (tableData) {
-          tableNumber = String(tableData.number);
+        const tableNumber = payload.tableNumber || '?';
+
+        // Send notifications to KDS preparation stations
+        for (const [station, names] of Object.entries(stationMap)) {
+          let title = 'New Kitchen Items';
+          if (station === 'Chef') title = 'New Chef Items';
+          else if (station === 'Barista') title = 'New Drinks';
+          else if (station === 'Kitchen Staff') title = 'New Side Items';
+
+          await supabase.from('notifications').insert({
+            tenant_id: payload.tenantId,
+            role: 'KITCHEN_STAFF',
+            title,
+            message: `${isNewOrder ? 'New order' : 'Additional items'} for Table ${tableNumber}: ${names.join(', ')}.`,
+            is_read: false
+          });
         }
+      } catch (e) {
+        console.warn('[createOrder] Background telemetry failed:', e);
       }
+    })();
 
-      // Send notification to each station KDS
-      for (const [station, names] of Object.entries(stationMap)) {
-        let title = 'New Kitchen Items';
-        if (station === 'Chef') {
-          title = 'New Chef Items';
-        } else if (station === 'Barista') {
-          title = 'New Drinks';
-        } else if (station === 'Kitchen Staff') {
-          title = 'New Side Items';
-        }
-
-        await supabase.from('notifications').insert({
-          tenant_id: payload.tenantId,
-          role: 'KITCHEN_STAFF',
-          title,
-          message: `${isNewOrder ? 'New order' : 'Additional items'} for Table ${tableNumber}: ${names.join(', ')}.`,
-          is_read: false
-        });
-      }
-    } catch (e) {
-      console.warn('[createOrder] Smart operations telemetry failed:', e);
-    }
-
-    // 4. Fetch and return the complete order
+    // 3. Fetch and return complete order in 1 final fast roundtrip
     const { data: fullOrder } = await supabase
       .from('orders')
       .select('*, tables(number), users(*), order_items(*, menu_items(name, preparation_station))')
