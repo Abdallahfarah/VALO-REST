@@ -453,7 +453,6 @@ export const OrdersMonitor = () => {
   const [viewingAllStatus, setViewingAllStatus] = useState<string | null>(null);
 
   // 1. Determine active station
-  const userStation = preparationStation || 'Chef';
   const isKdsUser = role === 'KITCHEN_STAFF';
   const [activeStation, setActiveStation] = useState<string>('Chef');
 
