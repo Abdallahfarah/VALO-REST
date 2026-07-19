@@ -15,7 +15,6 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false }
@@ -76,9 +75,19 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Role validation
+    if (!["ADMIN", "WAITER", "CASHIER", "KITCHEN_STAFF"].includes(role)) {
+      console.error("Invalid role requested:", role);
+      return new Response(JSON.stringify({ error: "Invalid role" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // Preparation station validation
     if (role === "KITCHEN_STAFF" && !preparationStation) {
       console.error("Missing preparationStation for KITCHEN_STAFF.");
-      return new Response(JSON.stringify({ error: "Preparation station is required for Kitchen Display Staff" }), {
+      return new Response(JSON.stringify({ error: "Invalid preparation station: Preparation station is required for Kitchen Display Staff" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
@@ -103,6 +112,29 @@ Deno.serve(async (req: Request) => {
     if (!email.includes("@")) {
       console.error("Invalid email address format.");
       return new Response(JSON.stringify({ error: "Invalid email address format" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // Tenant isolation and existence checks
+    if (!tenantId) {
+      console.error("Missing restaurant ID.");
+      return new Response(JSON.stringify({ error: "Missing restaurant ID" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const { data: tenantData, error: tenantError } = await supabaseClient
+      .from("tenants")
+      .select("id")
+      .eq("id", tenantId)
+      .maybeSingle();
+
+    if (tenantError || !tenantData) {
+      console.error("Restaurant/Tenant check failed:", tenantError?.message || "Tenant not found");
+      return new Response(JSON.stringify({ error: "Restaurant not found" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });

@@ -431,7 +431,15 @@ export const Staff = () => {
       setIsAddingStaff(false);
       setNewStaffForm({ fullName: '', email: '', password: '', role: 'WAITER', preparationStation: '' });
     } catch (err: any) {
-      toast.error('Provisioning Failed', err.message);
+      const msg = err.message || '';
+      const title = msg.includes('already exists') || msg.includes('exists') ? 'Email Already Exists'
+                  : msg.includes('weak') || msg.includes('password') ? 'Password Too Weak'
+                  : msg.includes('invalid email') || msg.includes('format') ? 'Invalid Email'
+                  : msg.includes('permission') || msg.includes('Unauthorized') ? 'Permission Denied'
+                  : msg.includes('station') ? 'Invalid Preparation Station'
+                  : msg.includes('Restaurant not found') || msg.includes('tenant') ? 'Restaurant Not Found'
+                  : 'Provisioning Failed';
+      toast.error(title, msg);
     } finally {
       setIsSaving(false);
     }
