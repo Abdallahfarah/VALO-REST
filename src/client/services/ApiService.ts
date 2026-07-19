@@ -274,7 +274,12 @@ export const OrderService = {
         payment_status: 'PAID',
         amount_received: Number(paymentData.amountReceived ?? totalAmount),
         change_amount: Number(paymentData.changeAmount ?? 0),
-        notes: paymentData.notes || null
+        notes: paymentData.notes || null,
+        currency: paymentData.currency || 'ETB',
+        currency_symbol: paymentData.currencySymbol || 'ETB',
+        exchange_rate: Number(paymentData.exchangeRate ?? 1.0),
+        original_amount: Number(paymentData.originalAmount ?? totalAmount),
+        base_amount: Number(paymentData.baseAmount ?? totalAmount)
       });
 
     if (receiptErr) throw receiptErr;

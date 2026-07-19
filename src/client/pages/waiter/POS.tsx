@@ -23,7 +23,7 @@ import { MenuService, OrderService, TableService, ActivityLogService, SettingSer
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../lib/toast-store';
-import { useCurrency } from '../../services/CurrencyService';
+import { useCurrency, CurrencyService } from '../../services/CurrencyService';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
 import { useSessionStore } from '../../lib/session-store';
@@ -58,6 +58,7 @@ export const WaiterPOS = () => {
   const [isBillModalOpen, setIsBillModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Cash');
+  const [selectedCurrency, setSelectedCurrency] = useState('ETB');
   const [amountReceived, setAmountReceived] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
   const [settledReceipt, setSettledReceipt] = useState<any | null>(null);
@@ -68,6 +69,12 @@ export const WaiterPOS = () => {
       setSelectedTable(tableId);
     }
   }, [tableId]);
+
+  useEffect(() => {
+    if (tenant?.currencyCode) {
+      setSelectedCurrency(tenant.currencyCode);
+    }
+  }, [tenant]);
 
   // Data Fetching
   const { data: categories = [] } = useQuery({
@@ -286,21 +293,51 @@ export const WaiterPOS = () => {
     });
   };
 
+  const USD_TO_ETB_RATE = 120.00;
+  const tenantBase = tenant?.currencyCode || 'ETB';
+
+  const totalInSelectedCurrency = (() => {
+    if (tenantBase === 'ETB') {
+      return selectedCurrency === 'USD' ? total / USD_TO_ETB_RATE : total;
+    } else {
+      return selectedCurrency === 'ETB' ? total * USD_TO_ETB_RATE : total;
+    }
+  })();
+
+  const selectedCurrencySymbol = selectedCurrency === 'USD' ? '$' : 'ETB';
+
+  const formatInSelectedCurrency = (amt: number) => {
+    return CurrencyService.format(amt, selectedCurrency);
+  };
+
+  const calculatedChange = selectedPaymentMethod === 'Cash' && Number(amountReceived) >= totalInSelectedCurrency
+    ? Number(amountReceived) - totalInSelectedCurrency
+    : 0;
+
   const handleSettlePayment = () => {
-    const amtReceived = selectedPaymentMethod === 'Cash' ? Number(amountReceived) : total;
-    if (selectedPaymentMethod === 'Cash' && amtReceived < total) {
+    const amtReceived = selectedPaymentMethod === 'Cash' ? Number(amountReceived) : totalInSelectedCurrency;
+    if (selectedPaymentMethod === 'Cash' && amtReceived < totalInSelectedCurrency) {
       toast.warning('Invalid Amount', 'Amount received cannot be less than total.');
       return;
     }
-    const change = selectedPaymentMethod === 'Cash' ? Math.max(0, amtReceived - total) : 0;
+    const change = selectedPaymentMethod === 'Cash' ? Math.max(0, amtReceived - totalInSelectedCurrency) : 0;
     
+    const rate = tenantBase === 'ETB' 
+      ? (selectedCurrency === 'USD' ? USD_TO_ETB_RATE : 1.0)
+      : (selectedCurrency === 'ETB' ? 1 / USD_TO_ETB_RATE : 1.0);
+
     settleOrderMutation.mutate({
       method: selectedPaymentMethod,
       tenantId: tenant?.id,
       cashierId: user?.id,
       amountReceived: amtReceived,
       changeAmount: change,
-      notes: paymentNotes
+      notes: paymentNotes,
+      currency: selectedCurrency,
+      currencySymbol: selectedCurrencySymbol,
+      exchangeRate: rate,
+      originalAmount: totalInSelectedCurrency,
+      baseAmount: total
     });
   };
 
@@ -316,6 +353,8 @@ export const WaiterPOS = () => {
 
   const handleDownloadReceipt = () => {
     if (!settledReceipt) return;
+    const formatReceiptVal = (amount: number) => CurrencyService.format(amount, settledReceipt.currency);
+
     const content = `
 =========================================
           ${tenant?.name || 'VALO BISTRO'}
@@ -323,18 +362,19 @@ export const WaiterPOS = () => {
 Receipt No:     ${settledReceipt.receipt_number}
 Date:           ${new Date(settledReceipt.created_at).toLocaleString()}
 Table:          Table ${tables.find((t: any) => t.id === activeOrder?.table_id)?.number || 'N/A'}
-    Waiter:         ${user?.email ? user.email.split('@')[0] : 'Waiter'}
+Waiter:         ${user?.email ? user.email.split('@')[0] : 'Waiter'}
 -----------------------------------------
 Items:
 ${cart.map(item => ` - ${item.quantity}x ${item.name} @ ${format(item.price)} = ${format(item.price * item.quantity)}`).join('\n')}
 -----------------------------------------
-Subtotal:       ${format(settledReceipt.subtotal)}
-Tax (15%):      ${format(settledReceipt.tax_amount)}
-Grand Total:    ${format(settledReceipt.total_amount)}
+Subtotal:       ${formatReceiptVal(Number(settledReceipt.subtotal))}
+Tax (15%):      ${formatReceiptVal(Number(settledReceipt.tax_amount))}
+Grand Total:    ${formatReceiptVal(Number(settledReceipt.total_amount))}
 -----------------------------------------
+Payment Currency: ${settledReceipt.currency}
 Payment Method: ${settledReceipt.payment_method}
-Amount Tendered:${format(settledReceipt.amount_received)}
-Change:         ${format(settledReceipt.change_amount)}
+Amount Tendered:${formatReceiptVal(Number(settledReceipt.amount_received))}
+Change:         ${formatReceiptVal(Number(settledReceipt.change_amount))}
 Notes:          ${settledReceipt.notes || 'None'}
 -----------------------------------------
       Thank you for dining with us!
@@ -354,9 +394,6 @@ Notes:          ${settledReceipt.notes || 'None'}
   const total = subtotal + tax;
 
   const newItems = cart.filter(item => !item.sent);
-  const calculatedChange = selectedPaymentMethod === 'Cash' && Number(amountReceived) >= total
-    ? Number(amountReceived) - total
-    : 0;
 
   return (
     <div className="h-auto lg:h-[calc(100vh-120px)] flex flex-col lg:flex-row gap-8">
@@ -672,6 +709,39 @@ Notes:          ${settledReceipt.notes || 'None'}
                 <p className="text-xs text-[#64748B] font-medium">Settle the table bill by entering transaction details</p>
              </div>
 
+             {/* Currency Switcher */}
+             <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-[#0B1630]">Payment Currency</label>
+                <div className="flex bg-slate-100 p-1 rounded-xl w-full">
+                   <button
+                     type="button"
+                     onClick={() => {
+                       setSelectedCurrency('ETB');
+                       setAmountReceived('');
+                     }}
+                     className={cn(
+                       "flex-1 py-2 rounded-lg text-xs font-black transition-all cursor-pointer",
+                       selectedCurrency === 'ETB' ? "bg-white text-[#0B1630] shadow-sm" : "text-[#64748B] hover:text-[#0B1630]"
+                     )}
+                   >
+                     ETB (Birr)
+                   </button>
+                   <button
+                     type="button"
+                     onClick={() => {
+                       setSelectedCurrency('USD');
+                       setAmountReceived('');
+                     }}
+                     className={cn(
+                       "flex-1 py-2 rounded-lg text-xs font-black transition-all cursor-pointer",
+                       selectedCurrency === 'USD' ? "bg-white text-[#0B1630] shadow-sm" : "text-[#64748B] hover:text-[#0B1630]"
+                     )}
+                   >
+                     USD ($)
+                   </button>
+                </div>
+             </div>
+
              <div className="grid grid-cols-3 gap-3">
                 {[
                   { id: 'Cash', icon: DollarSign },
@@ -706,25 +776,30 @@ Notes:          ${settledReceipt.notes || 'None'}
 
              <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 text-center">
                 <span className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">Total amount due</span>
-                <h2 className="text-3xl font-black text-indigo-900 mt-1">{format(total)}</h2>
+                <h2 className="text-3xl font-black text-indigo-900 mt-1">{formatInSelectedCurrency(totalInSelectedCurrency)}</h2>
+                {selectedCurrency === 'USD' && (
+                  <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest block mt-1">
+                     Rate: 1 USD = 120.00 ETB
+                  </span>
+                )}
              </div>
 
              {/* Dynamic Cash Payment fields */}
              {selectedPaymentMethod === 'Cash' && (
                 <div className="space-y-4">
                    <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase text-[#0B1630]">Amount Received</label>
+                      <label className="text-[10px] font-black uppercase text-[#0B1630]">Amount Received ({selectedCurrency})</label>
                       <div className="relative">
                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#94A3B8]">
-                            {format(0).replace(/[\d.,\s]+/g, '')}
+                            {selectedCurrencySymbol}
                          </div>
                          <input 
                             type="number"
                             required
                             value={amountReceived}
                             onChange={(e) => setAmountReceived(e.target.value)}
-                            className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-250 text-sm font-bold text-[#0B1630] focus:outline-none focus:border-[#F97316]"
-                            placeholder="e.g. 100"
+                            className="w-full h-11 pl-12 pr-4 rounded-xl border border-slate-250 text-sm font-bold text-[#0B1630] focus:outline-none focus:border-[#F97316]"
+                            placeholder="e.g. 10"
                          />
                       </div>
                    </div>
@@ -732,7 +807,7 @@ Notes:          ${settledReceipt.notes || 'None'}
                    {calculatedChange > 0 && (
                       <div className="flex justify-between items-center bg-emerald-50 text-emerald-700 px-4 py-3 rounded-xl border border-emerald-100 text-xs font-bold">
                          <span>Change Back</span>
-                         <span className="text-sm font-black">{format(calculatedChange)}</span>
+                         <span className="text-sm font-black">{formatInSelectedCurrency(calculatedChange)}</span>
                       </div>
                    )}
                 </div>
@@ -752,7 +827,7 @@ Notes:          ${settledReceipt.notes || 'None'}
              <div className="flex gap-4">
                 <button 
                   onClick={handleSettlePayment}
-                  disabled={settleOrderMutation.isPending || (selectedPaymentMethod === 'Cash' && Number(amountReceived) < total)}
+                  disabled={settleOrderMutation.isPending || (selectedPaymentMethod === 'Cash' && Number(amountReceived) < totalInSelectedCurrency)}
                   className="flex-1 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                 >
                    {settleOrderMutation.isPending ? 'Settle...' : 'Confirm Paid'}
@@ -786,8 +861,12 @@ Notes:          ${settledReceipt.notes || 'None'}
                    <span>Table {tables.find((t: any) => t.id === activeOrder?.table_id)?.number || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
-                    <span>Waiter: {user?.email ? user.email.split('@')[0] : 'Waiter'}</span>
+                   <span>Waiter: {user?.email ? user.email.split('@')[0] : 'Waiter'}</span>
                    <span>{new Date(settledReceipt.created_at).toLocaleTimeString()}</span>
+                </div>
+                <div className="flex justify-between bg-indigo-50/50 px-2.5 py-1 rounded text-indigo-700 font-bold text-[10px] uppercase tracking-wide">
+                   <span>Currency</span>
+                   <span>{settledReceipt.currency} ({settledReceipt.currency_symbol})</span>
                 </div>
                 
                 <div className="divide-y divide-slate-100 border-t border-b border-slate-100 py-2">
@@ -800,15 +879,15 @@ Notes:          ${settledReceipt.notes || 'None'}
                 </div>
 
                 <div className="space-y-2 pt-2">
-                   <div className="flex justify-between"><span>Subtotal</span><span className="text-[#0B1630]">{format(Number(settledReceipt.subtotal))}</span></div>
-                   <div className="flex justify-between"><span>Tax (15%)</span><span className="text-[#0B1630]">{format(Number(settledReceipt.tax_amount))}</span></div>
-                   <div className="flex justify-between text-base font-black text-[#0B1630] pt-2 border-t border-dashed border-slate-200"><span>Grand Total</span><span>{format(Number(settledReceipt.total_amount))}</span></div>
+                   <div className="flex justify-between"><span>Subtotal</span><span className="text-[#0B1630]">{CurrencyService.format(Number(settledReceipt.subtotal), settledReceipt.currency)}</span></div>
+                   <div className="flex justify-between"><span>Tax (15%)</span><span className="text-[#0B1630]">{CurrencyService.format(Number(settledReceipt.tax_amount), settledReceipt.currency)}</span></div>
+                   <div className="flex justify-between text-base font-black text-[#0B1630] pt-2 border-t border-dashed border-slate-200"><span>Grand Total</span><span>{CurrencyService.format(Number(settledReceipt.total_amount), settledReceipt.currency)}</span></div>
                 </div>
 
                 <div className="bg-slate-50 p-4 rounded-xl space-y-2 border border-slate-100 text-[11px]">
                    <div className="flex justify-between"><span>Payment Method</span><span className="text-[#0B1630] font-bold">{settledReceipt.payment_method}</span></div>
-                   <div className="flex justify-between"><span>Amount Received</span><span className="text-[#0B1630] font-bold">{format(Number(settledReceipt.amount_received))}</span></div>
-                   <div className="flex justify-between"><span>Change Given</span><span className="text-[#0B1630] font-bold">{format(Number(settledReceipt.change_amount))}</span></div>
+                   <div className="flex justify-between"><span>Amount Received</span><span className="text-[#0B1630] font-bold">{CurrencyService.format(Number(settledReceipt.amount_received), settledReceipt.currency)}</span></div>
+                   <div className="flex justify-between"><span>Change Given</span><span className="text-[#0B1630] font-bold">{CurrencyService.format(Number(settledReceipt.change_amount), settledReceipt.currency)}</span></div>
                    {settledReceipt.notes && (
                       <div className="pt-2 border-t border-slate-200/50 mt-1">
                          <span className="block text-[#94A3B8] font-bold uppercase text-[9px]">Notes</span>

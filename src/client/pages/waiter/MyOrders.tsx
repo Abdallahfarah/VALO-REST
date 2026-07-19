@@ -20,7 +20,7 @@ import { supabase } from '../../../lib/supabase';
 import { OrderService } from '../../services/ApiService';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
-import { useCurrency } from '../../services/CurrencyService';
+import { useCurrency, CurrencyService } from '../../services/CurrencyService';
 
 export const MyOrders = () => {
   const { tenant } = useTenant();
@@ -105,6 +105,8 @@ export const MyOrders = () => {
 
   const handleDownloadReceipt = () => {
     if (!selectedOrder || !orderReceipt) return;
+    const formatReceiptVal = (amount: number) => CurrencyService.format(amount, orderReceipt.currency);
+
     const content = `
 =========================================
           ${tenant?.name || 'VALO BISTRO'}
@@ -117,13 +119,14 @@ Waiter:         ${selectedOrder.waiterName || user?.email?.split('@')[0]}
 Items:
 ${(selectedOrder.items || []).map((item: any) => ` - ${item.quantity}x ${item.menuItem?.name} @ ${format(item.unitPrice)} = ${format(item.price)}`).join('\n')}
 -----------------------------------------
-Subtotal:       ${format(Number(orderReceipt.subtotal))}
-Tax (15%):      ${format(Number(orderReceipt.tax_amount))}
-Grand Total:    ${format(Number(orderReceipt.total_amount))}
+Subtotal:       ${formatReceiptVal(Number(orderReceipt.subtotal))}
+Tax (15%):      ${formatReceiptVal(Number(orderReceipt.tax_amount))}
+Grand Total:    ${formatReceiptVal(Number(orderReceipt.total_amount))}
 -----------------------------------------
+Payment Currency: ${orderReceipt.currency}
 Payment Method: ${orderReceipt.payment_method}
-Amount Tendered:${format(Number(orderReceipt.amount_received ?? orderReceipt.total_amount))}
-Change:         ${format(Number(orderReceipt.change_amount ?? 0))}
+Amount Tendered:${formatReceiptVal(Number(orderReceipt.amount_received ?? orderReceipt.total_amount))}
+Change:         ${formatReceiptVal(Number(orderReceipt.change_amount ?? 0))}
 Notes:          ${orderReceipt.notes || 'None'}
 -----------------------------------------
       Thank you for dining with us!
@@ -352,8 +355,9 @@ Notes:          ${orderReceipt.notes || 'None'}
                    <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 space-y-2 text-xs font-semibold text-[#64748B]">
                       <div className="flex justify-between"><span>Receipt Number</span><span className="text-[#0B1630] font-bold">{orderReceipt.receipt_number}</span></div>
                       <div className="flex justify-between"><span>Payment Method</span><span className="text-[#0B1630] font-bold">{orderReceipt.payment_method}</span></div>
-                      <div className="flex justify-between"><span>Amount Tendered</span><span className="text-[#0B1630] font-bold">{format(Number(orderReceipt.amount_received ?? orderReceipt.total_amount))}</span></div>
-                      <div className="flex justify-between"><span>Change Returned</span><span className="text-[#0B1630] font-bold">{format(Number(orderReceipt.change_amount ?? 0))}</span></div>
+                      <div className="flex justify-between"><span>Currency</span><span className="text-[#0B1630] font-bold">{orderReceipt.currency} ({orderReceipt.currency_symbol})</span></div>
+                      <div className="flex justify-between"><span>Amount Tendered</span><span className="text-[#0B1630] font-bold">{CurrencyService.format(Number(orderReceipt.amount_received ?? orderReceipt.total_amount), orderReceipt.currency)}</span></div>
+                      <div className="flex justify-between"><span>Change Returned</span><span className="text-[#0B1630] font-bold">{CurrencyService.format(Number(orderReceipt.change_amount ?? 0), orderReceipt.currency)}</span></div>
                       {orderReceipt.notes && (
                          <div className="pt-2 border-t border-emerald-100 mt-1">
                             <span className="block text-[#94A3B8] font-bold uppercase text-[9px]">Notes</span>
