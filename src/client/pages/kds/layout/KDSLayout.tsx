@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { KDSSidebar } from './KDSSidebar';
 import { KDSHeader } from './KDSHeader';
 import { ValoSaaSBackground } from '../../../components/layout/ValoSaaSBackground';
@@ -10,11 +10,12 @@ const bottomNavItems = [
   { name: 'My Orders', path: '/kds', icon: Receipt },
   { name: 'Reports',   path: '/kds/reports', icon: BarChart2 },
   { name: 'Messages',  path: '/kds/messages', icon: MessageSquare },
-  { name: 'More',      path: '/kds', icon: MoreHorizontal },
+  { name: 'More',      path: '/kds/more', icon: MoreHorizontal },
 ];
 
 export const KDSLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
 
   return (
     <div className="min-h-screen lg:bg-[#F8FAFC] bg-[#090D1F] text-[#64748B] lg:text-[#0B1630] font-sans relative overflow-x-hidden">
@@ -65,28 +66,35 @@ export const KDSLayout = () => {
 
       {/* ── RESPONSIVE BOTTOM NAVIGATION (Tablet Portrait & Mobile) ── */}
       <nav className="fixed bottom-0 left-0 right-0 h-16 bg-[#090D1F]/90 backdrop-blur-md border-t border-[#232B5E]/30 flex items-center justify-around px-4 z-40 lg:hidden shadow-lg shadow-black/20">
-        {bottomNavItems.map((item) => (
-          <NavLink
-            key={item.name}
-            to={item.path}
-            end={item.path === '/kds'}
-            className={({ isActive }) =>
-              cn(
-                "flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 py-1 px-3 rounded-xl",
-                isActive
-                  ? "text-[#F97316]"
-                  : "text-[#94A3B8] hover:text-white"
-              )
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
-                <span>{item.name}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
+        {bottomNavItems.map((item) => {
+          const isActive = item.name === 'My Orders' 
+            ? (location.pathname === '/kds' || location.pathname === '/kds/')
+            : location.pathname.startsWith(item.path);
+
+          return (
+            <NavLink
+              key={item.name}
+              to={item.path}
+              onClick={(e) => {
+                if (item.name === 'More') {
+                  e.preventDefault();
+                  setIsSidebarOpen(true);
+                }
+              }}
+              className={
+                cn(
+                  "flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 py-1 px-3 rounded-xl",
+                  isActive
+                    ? "text-[#F97316]"
+                    : "text-[#94A3B8] hover:text-white"
+                )
+              }
+            >
+              <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
+              <span>{item.name}</span>
+            </NavLink>
+          );
+        })}
       </nav>
     </div>
   );
