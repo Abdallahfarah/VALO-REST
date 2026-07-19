@@ -17,10 +17,10 @@ import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
 
 const kpis = [
-  { label: 'Total Orders (KDS Finished)', value: '124', trend: '+ 12.5%', icon: Receipt, color: 'text-indigo-500', bg: 'bg-indigo-50', comparison: 'vs Jun 13 - Jun 19, 2026' },
-  { label: 'Completed Orders', value: '118', trend: '+ 10.8%', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50', comparison: 'vs Jun 13 - Jun 19, 2026' },
-  { label: 'Cancelled Orders', value: '6', trend: '↑ 4.3%', icon: XCircle, color: 'text-red-500', bg: 'bg-red-50', comparison: 'vs Jun 13 - Jun 19, 2026' },
-  { label: 'Avg. Preparation Time', value: '18m 24s', trend: '↓ 6.2%', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', comparison: 'vs Jun 13 - Jun 19, 2026' },
+  { label: 'Total Orders (KDS Finished)', value: '124', trend: '+ 12.5%', icon: Receipt, color: 'text-indigo-500', bg: 'bg-indigo-50', darkBg: 'bg-indigo-500/10', darkColor: 'text-indigo-400', comparison: 'vs Jun 13 - Jun 19, 2026' },
+  { label: 'Completed Orders', value: '118', trend: '+ 10.8%', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50', darkBg: 'bg-emerald-500/10', darkColor: 'text-emerald-400', comparison: 'vs Jun 13 - Jun 19, 2026' },
+  { label: 'Cancelled Orders', value: '6', trend: '↑ 4.3%', icon: XCircle, color: 'text-red-500', bg: 'bg-red-50', darkBg: 'bg-red-500/10', darkColor: 'text-red-400', comparison: 'vs Jun 13 - Jun 19, 2026' },
+  { label: 'Avg. Preparation Time', value: '18m 24s', trend: '↓ 6.2%', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', darkBg: 'bg-orange-500/10', darkColor: 'text-orange-400', comparison: 'vs Jun 13 - Jun 19, 2026' },
 ];
 
 const finishedOrders = [
@@ -36,40 +36,77 @@ const finishedOrders = [
 
 export const KDSReports = () => {
   return (
-    <div className="space-y-8 max-w-[1600px]">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 max-w-[1600px] relative">
+
+      {/* ── Responsive restaurant-themed background artwork (mobile/tablet only) ── */}
+      <div className="lg:hidden fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Rolling pin top-right */}
+        <svg className="absolute top-16 -right-8 w-56 h-56 opacity-[0.035] text-white rotate-45" viewBox="0 0 80 80" fill="currentColor">
+          <rect x="30" y="5" width="20" height="70" rx="10"/>
+          <rect x="20" y="12" width="40" height="8" rx="4"/>
+          <rect x="20" y="60" width="40" height="8" rx="4"/>
+          <rect x="35" y="0" width="10" height="14" rx="5"/>
+          <rect x="35" y="66" width="10" height="14" rx="5"/>
+        </svg>
+        {/* Chef hat bottom-right */}
+        <svg className="absolute bottom-32 -right-12 w-72 h-72 opacity-[0.03] text-white" viewBox="0 0 100 100" fill="currentColor">
+          <ellipse cx="50" cy="72" rx="30" ry="10"/>
+          <path d="M20 72 Q20 40 50 35 Q80 40 80 72 Z"/>
+          <ellipse cx="50" cy="36" rx="18" ry="14"/>
+          <circle cx="30" cy="32" r="12"/>
+          <circle cx="70" cy="32" r="12"/>
+        </svg>
+        {/* Plate rings top-left */}
+        <svg className="absolute -top-8 -left-14 w-52 h-52 opacity-[0.025] text-white" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="50" cy="50" r="45"/>
+          <circle cx="50" cy="50" r="35"/>
+          <circle cx="50" cy="50" r="20"/>
+        </svg>
+        {/* Spoon centre-left */}
+        <svg className="absolute top-1/2 -left-6 w-32 h-56 opacity-[0.04] text-white -rotate-12" viewBox="0 0 40 100" fill="currentColor">
+          <ellipse cx="20" cy="15" rx="12" ry="14"/>
+          <rect x="18" y="28" width="4" height="72" rx="2"/>
+        </svg>
+      </div>
+
+      {/* ── Page Header ── */}
+      <div className="relative z-10 flex items-center justify-between">
         <div>
-           <h1 className="text-3xl font-bold text-[#0B1630]">Reports</h1>
+           <h1 className="text-3xl font-bold lg:text-[#0B1630] text-white">Reports</h1>
            <div className="flex items-center gap-2 mt-1">
              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-             <span className="text-emerald-600 text-xs font-bold uppercase tracking-wider">Live</span>
+             <span className="lg:text-emerald-600 text-emerald-400 text-xs font-bold uppercase tracking-wider">Live</span>
           </div>
         </div>
-        <button className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black tracking-widest text-[#0B1630] hover:bg-slate-50 transition-all uppercase shadow-sm">
+        {/* Export button — white on desktop, dark glass on mobile */}
+        <button className="flex items-center gap-2 px-4 lg:px-6 py-2.5 lg:py-3 lg:bg-white bg-[#131A38]/70 lg:border lg:border-slate-200 border border-[#232B5E]/50 backdrop-blur-md lg:backdrop-blur-none rounded-2xl text-[10px] font-black tracking-widest lg:text-[#0B1630] text-white hover:bg-slate-50 lg:hover:bg-slate-50 transition-all uppercase lg:shadow-sm">
            <Download size={14} /> Export Report
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-         <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50">
-            <Calendar size={16} className="text-[#94A3B8]" />
-            <span className="text-xs font-bold text-[#0B1630]">Jun 20, 2026 - Jun 26, 2026</span>
-            <ChevronDown size={14} className="text-[#94A3B8]" />
+      {/* ── Filters ── */}
+      <div className="relative z-10 flex flex-wrap items-center gap-3 lg:gap-4">
+         {/* Date range */}
+         <div className="flex items-center gap-2 lg:gap-3 lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none px-3 lg:px-4 py-2 lg:py-2.5 rounded-2xl lg:border lg:border-slate-200 border border-[#232B5E]/50 lg:shadow-sm cursor-pointer">
+            <Calendar size={14} className="lg:text-[#94A3B8] text-[#94A3B8]" />
+            <span className="text-[11px] lg:text-xs font-bold lg:text-[#0B1630] text-white">Jun 20, 2026 - Jun 26, 2026</span>
+            <ChevronDown size={13} className="text-[#94A3B8]" />
          </div>
-         <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50">
-            <span className="text-xs font-medium text-[#94A3B8]">Compare to:</span>
-            <span className="text-xs font-bold text-[#0B1630]">Jun 13, 2026 - Jun 19, 2026</span>
-            <ChevronDown size={14} className="text-[#94A3B8]" />
+         {/* Compare to — hidden on small mobile, visible from sm+ */}
+         <div className="hidden sm:flex items-center gap-2 lg:gap-3 lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none px-3 lg:px-4 py-2 lg:py-2.5 rounded-2xl lg:border lg:border-slate-200 border border-[#232B5E]/50 lg:shadow-sm cursor-pointer">
+            <span className="text-[11px] lg:text-xs font-medium lg:text-[#94A3B8] text-[#94A3B8]">Compare to:</span>
+            <span className="text-[11px] lg:text-xs font-bold lg:text-[#0B1630] text-white">Jun 13 - Jun 19, 2026</span>
+            <ChevronDown size={13} className="text-[#94A3B8]" />
          </div>
-         <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50">
-            <span className="text-xs font-bold text-[#0B1630]">All Tables</span>
-            <ChevronDown size={14} className="text-[#94A3B8]" />
+         {/* All Tables */}
+         <div className="flex items-center gap-2 lg:gap-3 lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none px-3 lg:px-4 py-2 lg:py-2.5 rounded-2xl lg:border lg:border-slate-200 border border-[#232B5E]/50 lg:shadow-sm cursor-pointer">
+            <span className="text-[11px] lg:text-xs font-bold lg:text-[#0B1630] text-white">All Tables</span>
+            <ChevronDown size={13} className="text-[#94A3B8]" />
          </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* ── KPI Cards — Desktop (lg+): original grid layout ── */}
+      <div className="hidden lg:grid grid-cols-4 gap-6 relative z-10">
         {kpis.map((kpi, i) => (
           <Card key={i} className="p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex flex-col gap-6">
              <div className="flex items-start justify-between">
@@ -91,80 +128,165 @@ export const KDSReports = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-         {/* Finished Orders Table */}
-         <Card className="xl:col-span-8 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-0 overflow-hidden flex flex-col">
-            <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-white">
-               <div>
-                  <h3 className="text-sm font-black text-[#0B1630] uppercase tracking-wider">KDS Finished Orders</h3>
-                  <p className="text-[11px] text-[#94A3B8] font-medium mt-1">Orders that are finished in kitchen and marked as ready.</p>
-               </div>
-               <div className="flex items-center gap-4">
-                  <div className="relative">
-                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                     <input className="w-56 h-10 pl-10 pr-4 rounded-xl border border-slate-100 bg-slate-50/50 text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]" placeholder="Search order ID..." />
-                  </div>
-                  <button className="p-2.5 rounded-xl border border-slate-100 text-[#94A3B8] hover:bg-slate-50"><Filter size={16} /></button>
-               </div>
+      {/* ── KPI Cards — Mobile/Tablet (below lg): dark glassmorphic 2-col grid ── */}
+      <div className="lg:hidden grid grid-cols-2 gap-3 relative z-10">
+        {kpis.map((kpi, i) => (
+          <div key={i} className="bg-[#131A38]/70 backdrop-blur-md border border-[#232B5E]/50 rounded-2xl p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", kpi.darkBg, kpi.darkColor)}>
+                <kpi.icon size={18} />
+              </div>
+              <div className={cn("flex items-center gap-1 font-bold text-[10px]", kpi.darkColor)}>
+                <TrendingUp size={10} /> {kpi.trend}
+              </div>
             </div>
-            <div className="overflow-x-auto flex-1">
-               <table className="w-full text-left border-collapse">
-                  <thead>
-                     <tr className="bg-slate-50/30">
-                        <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Order ID</th>
-                        <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Table</th>
-                        <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Waiter</th>
-                        <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider text-center">Items</th>
-                        <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">KDS Finished At</th>
-                        <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Prep Time</th>
-                        <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Total</th>
-                        <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider text-right">Action</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                     {finishedOrders.map((order) => (
-                        <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
-                           <td className="px-8 py-4 text-xs font-black text-[#4F46E5] hover:underline cursor-pointer">#{order.id}</td>
-                           <td className="px-8 py-4 text-xs font-bold text-[#0B1630]">{order.table}</td>
-                           <td className="px-8 py-4 text-xs font-medium text-[#64748B]">{order.waiter}</td>
-                           <td className="px-8 py-4 text-xs font-bold text-[#0B1630] text-center">{order.items}</td>
-                           <td className="px-8 py-4 text-xs font-medium text-[#64748B]">{order.finishedAt}</td>
-                           <td className="px-8 py-4 text-xs font-bold text-[#0B1630]">{order.prepTime}</td>
-                           <td className="px-8 py-4">
-                              <span className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">Done</span>
-                           </td>
-                           <td className="px-8 py-4 text-xs font-black text-[#0B1630]">{order.total}</td>
-                           <td className="px-8 py-4 text-right">
-                              <button className="p-2 rounded-lg text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-50 transition-all"><Eye size={14} /></button>
-                           </td>
-                        </tr>
-                     ))}
-                  </tbody>
-               </table>
+            <div>
+              <p className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1 leading-tight">{kpi.label}</p>
+              <h3 className={cn("text-xl font-black leading-none mb-1", kpi.darkColor)}>{kpi.value}</h3>
+              <p className="text-[9px] font-medium text-[#94A3B8]">{kpi.comparison}</p>
             </div>
-            <div className="p-6 border-t border-slate-50 flex items-center justify-between bg-white text-xs font-medium text-[#94A3B8]">
-               <span>Showing 1 to 8 of 124 orders</span>
-               <div className="flex items-center gap-2">
-                  <button className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all"><ChevronLeft size={16} /></button>
-                  <div className="flex items-center gap-1">
-                     <button className="w-8 h-8 rounded-xl bg-[#0B1630] text-white font-bold">1</button>
-                     <button className="w-8 h-8 rounded-xl hover:bg-slate-50">2</button>
-                     <button className="w-8 h-8 rounded-xl hover:bg-slate-50">3</button>
-                     <span className="px-1">...</span>
-                     <button className="w-8 h-8 rounded-xl hover:bg-slate-50">16</button>
-                  </div>
-                  <button className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all"><ChevronRight size={16} /></button>
-               </div>
-            </div>
-         </Card>
+          </div>
+        ))}
+      </div>
 
-         {/* Sidebar: Status Overview and Prep Stats */}
-         <div className="xl:col-span-4 space-y-8">
-            <Card className="p-8 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+      {/* ── Main Content Grid ── */}
+      <div className="relative z-10 grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
+
+         {/* ── KDS Finished Orders Table ── */}
+         {/* Desktop: white card. Mobile: dark glass card */}
+         <div className="xl:col-span-8">
+           {/* Desktop table wrapper */}
+           <Card className="hidden lg:flex border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-0 overflow-hidden flex-col">
+              <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-white">
+                 <div>
+                    <h3 className="text-sm font-black text-[#0B1630] uppercase tracking-wider">KDS Finished Orders</h3>
+                    <p className="text-[11px] text-[#94A3B8] font-medium mt-1">Orders that are finished in kitchen and marked as ready.</p>
+                 </div>
+                 <div className="flex items-center gap-4">
+                    <div className="relative">
+                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                       <input className="w-56 h-10 pl-10 pr-4 rounded-xl border border-slate-100 bg-slate-50/50 text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]" placeholder="Search order ID..." />
+                    </div>
+                    <button className="p-2.5 rounded-xl border border-slate-100 text-[#94A3B8] hover:bg-slate-50"><Filter size={16} /></button>
+                 </div>
+              </div>
+              <div className="overflow-x-auto flex-1">
+                 <table className="w-full text-left border-collapse">
+                    <thead>
+                       <tr className="bg-slate-50/30">
+                          <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Order ID</th>
+                          <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Table</th>
+                          <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Waiter</th>
+                          <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider text-center">Items</th>
+                          <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">KDS Finished At</th>
+                          <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Prep Time</th>
+                          <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Status</th>
+                          <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Total</th>
+                          <th className="px-8 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider text-right">Action</th>
+                       </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                       {finishedOrders.map((order) => (
+                          <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
+                             <td className="px-8 py-4 text-xs font-black text-[#4F46E5] hover:underline cursor-pointer">#{order.id}</td>
+                             <td className="px-8 py-4 text-xs font-bold text-[#0B1630]">{order.table}</td>
+                             <td className="px-8 py-4 text-xs font-medium text-[#64748B]">{order.waiter}</td>
+                             <td className="px-8 py-4 text-xs font-bold text-[#0B1630] text-center">{order.items}</td>
+                             <td className="px-8 py-4 text-xs font-medium text-[#64748B]">{order.finishedAt}</td>
+                             <td className="px-8 py-4 text-xs font-bold text-[#0B1630]">{order.prepTime}</td>
+                             <td className="px-8 py-4">
+                                <span className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">Done</span>
+                             </td>
+                             <td className="px-8 py-4 text-xs font-black text-[#0B1630]">{order.total}</td>
+                             <td className="px-8 py-4 text-right">
+                                <button className="p-2 rounded-lg text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-50 transition-all"><Eye size={14} /></button>
+                             </td>
+                          </tr>
+                       ))}
+                    </tbody>
+                 </table>
+              </div>
+              <div className="p-6 border-t border-slate-50 flex items-center justify-between bg-white text-xs font-medium text-[#94A3B8]">
+                 <span>Showing 1 to 8 of 124 orders</span>
+                 <div className="flex items-center gap-2">
+                    <button className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all"><ChevronLeft size={16} /></button>
+                    <div className="flex items-center gap-1">
+                       <button className="w-8 h-8 rounded-xl bg-[#0B1630] text-white font-bold">1</button>
+                       <button className="w-8 h-8 rounded-xl hover:bg-slate-50">2</button>
+                       <button className="w-8 h-8 rounded-xl hover:bg-slate-50">3</button>
+                       <span className="px-1">...</span>
+                       <button className="w-8 h-8 rounded-xl hover:bg-slate-50">16</button>
+                    </div>
+                    <button className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all"><ChevronRight size={16} /></button>
+                 </div>
+              </div>
+           </Card>
+
+           {/* Mobile table wrapper — dark glassmorphic, horizontally scrollable */}
+           <div className="lg:hidden bg-[#131A38]/70 backdrop-blur-md border border-[#232B5E]/50 rounded-2xl overflow-hidden shadow-xl shadow-black/10">
+              {/* Mobile table header */}
+              <div className="p-4 border-b border-[#232B5E]/40 flex items-center justify-between">
+                 <div>
+                    <h3 className="text-xs font-black text-white uppercase tracking-wider">KDS Finished Orders</h3>
+                    <p className="text-[10px] text-[#94A3B8] font-medium mt-0.5">Marked as ready in kitchen</p>
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <div className="relative">
+                       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94A3B8]" />
+                       <input className="w-32 h-8 pl-8 pr-3 rounded-xl border border-[#232B5E]/50 bg-[#0E1537]/60 text-[10px] focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8] text-white" placeholder="Search..." />
+                    </div>
+                    <button className="p-2 rounded-xl border border-[#232B5E]/50 text-[#94A3B8] hover:bg-[#131A38]/50"><Filter size={14} /></button>
+                 </div>
+              </div>
+              {/* Scrollable order list cards */}
+              <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
+                 {finishedOrders.map((order) => (
+                    <div key={order.id} className="bg-[#0E1537]/80 border border-[#232B5E]/40 rounded-xl p-3 flex items-center justify-between gap-3">
+                       <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                             <span className="text-[10px] font-black text-indigo-400">#{order.id}</span>
+                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Done</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[9px] font-bold text-[#94A3B8]">
+                             <span>Table {order.table}</span>
+                             <span>•</span>
+                             <span>{order.waiter}</span>
+                             <span>•</span>
+                             <span>{order.items} items</span>
+                          </div>
+                          <div className="flex items-center gap-3 mt-1 text-[9px] font-medium text-[#94A3B8]">
+                             <span>⏱ {order.prepTime}</span>
+                             <span className="text-[#F97316] font-black">{order.total}</span>
+                          </div>
+                       </div>
+                       <button className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#131A38]/50 shrink-0">
+                          <Eye size={13} />
+                       </button>
+                    </div>
+                 ))}
+              </div>
+              {/* Mobile pagination */}
+              <div className="p-3 border-t border-[#232B5E]/40 flex items-center justify-between text-[10px] font-medium text-[#94A3B8]">
+                 <span>Showing 1–8 of 124</span>
+                 <div className="flex items-center gap-1">
+                    <button className="p-1.5 rounded-lg border border-[#232B5E]/50 hover:bg-[#131A38]/50"><ChevronLeft size={13} /></button>
+                    <button className="w-7 h-7 rounded-lg bg-[#F97316] text-white font-black text-[10px]">1</button>
+                    <button className="w-7 h-7 rounded-lg hover:bg-[#131A38]/50 text-[#94A3B8]">2</button>
+                    <button className="w-7 h-7 rounded-lg hover:bg-[#131A38]/50 text-[#94A3B8]">3</button>
+                    <button className="p-1.5 rounded-lg border border-[#232B5E]/50 hover:bg-[#131A38]/50"><ChevronRight size={13} /></button>
+                 </div>
+              </div>
+           </div>
+         </div>
+
+         {/* ── Sidebar: Status Overview + Prep Stats + Peak Hours ── */}
+         <div className="xl:col-span-4 space-y-6 lg:space-y-8">
+
+            {/* Status Overview */}
+            {/* Desktop */}
+            <Card className="hidden lg:block p-8 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                <h3 className="text-sm font-black text-[#0B1630] uppercase tracking-wider mb-8">Order Status Overview</h3>
                <div className="flex items-center justify-center relative py-6">
-                  {/* Mock Donut Chart */}
                   <svg className="w-48 h-48 -rotate-90">
                      <circle cx="96" cy="96" r="80" fill="transparent" stroke="#E5E7EB" strokeWidth="16" />
                      <circle cx="96" cy="96" r="80" fill="transparent" stroke="#22C55E" strokeWidth="16" strokeDasharray="502" strokeDashoffset="25" />
@@ -193,7 +315,44 @@ export const KDSReports = () => {
                </div>
             </Card>
 
-            <Card className="p-8 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+            {/* Mobile — Status Overview */}
+            <div className="lg:hidden bg-[#131A38]/70 backdrop-blur-md border border-[#232B5E]/50 rounded-2xl p-4 shadow-xl shadow-black/10">
+               <h3 className="text-xs font-black text-white uppercase tracking-wider mb-4">Order Status Overview</h3>
+               <div className="flex items-center gap-4">
+                  {/* Compact donut */}
+                  <div className="relative shrink-0">
+                     <svg className="w-24 h-24 -rotate-90">
+                        <circle cx="48" cy="48" r="38" fill="transparent" stroke="#1e2a4a" strokeWidth="10" />
+                        <circle cx="48" cy="48" r="38" fill="transparent" stroke="#22C55E" strokeWidth="10" strokeDasharray="239" strokeDashoffset="12" />
+                        <circle cx="48" cy="48" r="38" fill="transparent" stroke="#F97316" strokeWidth="10" strokeDasharray="239" strokeDashoffset="228" />
+                        <circle cx="48" cy="48" r="38" fill="transparent" stroke="#EF4444" strokeWidth="10" strokeDasharray="239" strokeDashoffset="236" />
+                     </svg>
+                     <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-lg font-black text-white">124</span>
+                        <span className="text-[8px] font-bold text-[#94A3B8] uppercase">Total</span>
+                     </div>
+                  </div>
+                  <div className="flex-1 space-y-2.5">
+                     {[
+                       { label: 'Completed', value: '118 (95.2%)', color: 'bg-emerald-500' },
+                       { label: 'Preparing', value: '4 (3.2%)', color: 'bg-orange-500' },
+                       { label: 'Cancelled', value: '2 (1.6%)', color: 'bg-red-500' },
+                     ].map((item, i) => (
+                       <div key={i} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                             <div className={cn("w-1.5 h-1.5 rounded-full", item.color)} />
+                             <span className="text-[10px] font-medium text-[#94A3B8]">{item.label}</span>
+                          </div>
+                          <span className="text-[10px] font-black text-white">{item.value}</span>
+                       </div>
+                     ))}
+                  </div>
+               </div>
+            </div>
+
+            {/* Preparation Time Summary */}
+            {/* Desktop */}
+            <Card className="hidden lg:block p-8 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                <h3 className="text-sm font-black text-[#0B1630] uppercase tracking-wider mb-8">Preparation Time Summary</h3>
                <div className="space-y-6">
                   <div className="flex items-center justify-between">
@@ -211,7 +370,28 @@ export const KDSReports = () => {
                </div>
             </Card>
 
-            <Card className="p-8 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+            {/* Mobile — Prep Time Summary */}
+            <div className="lg:hidden bg-[#131A38]/70 backdrop-blur-md border border-[#232B5E]/50 rounded-2xl p-4 shadow-xl shadow-black/10">
+               <h3 className="text-xs font-black text-white uppercase tracking-wider mb-3">Preparation Time</h3>
+               <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                     <span className="text-[10px] font-bold text-[#94A3B8]">Average Time</span>
+                     <span className="text-xs font-black text-orange-400">18m 24s</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                     <span className="text-[10px] font-bold text-[#94A3B8]">Fastest Order</span>
+                     <span className="text-xs font-black text-emerald-400">7m 30s</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                     <span className="text-[10px] font-bold text-[#94A3B8]">Slowest Order</span>
+                     <span className="text-xs font-black text-red-400">42m 10s</span>
+                  </div>
+               </div>
+            </div>
+
+            {/* Peak Hours */}
+            {/* Desktop */}
+            <Card className="hidden lg:block p-8 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
                <h3 className="text-sm font-black text-[#0B1630] uppercase tracking-wider mb-8">Peak Hours (Completed Orders)</h3>
                <div className="h-48 flex items-baseline justify-between gap-1">
                   {[20, 35, 15, 10, 45, 60, 85, 95, 82, 78, 65, 56, 40, 32, 18, 8, 3].map((val, i) => (
@@ -231,6 +411,29 @@ export const KDSReports = () => {
                   <span>8 PM</span>
                </div>
             </Card>
+
+            {/* Mobile — Peak Hours */}
+            <div className="lg:hidden bg-[#131A38]/70 backdrop-blur-md border border-[#232B5E]/50 rounded-2xl p-4 overflow-hidden shadow-xl shadow-black/10">
+               <h3 className="text-xs font-black text-white uppercase tracking-wider mb-3">Peak Hours</h3>
+               <div className="h-32 flex items-baseline justify-between gap-0.5">
+                  {[20, 35, 15, 10, 45, 60, 85, 95, 82, 78, 65, 56, 40, 32, 18, 8, 3].map((val, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/40 rounded-t-sm transition-colors cursor-pointer"
+                      style={{ height: `${val}%` }}
+                    />
+                  ))}
+               </div>
+               <div className="flex justify-between mt-2 text-[7px] font-black text-[#94A3B8] uppercase tracking-widest">
+                  <span>12A</span>
+                  <span>4A</span>
+                  <span>8A</span>
+                  <span>12P</span>
+                  <span>4P</span>
+                  <span>8P</span>
+               </div>
+            </div>
+
          </div>
       </div>
     </div>

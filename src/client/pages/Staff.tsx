@@ -13,7 +13,9 @@ import {
   KeyRound,
   PauseCircle,
   PlayCircle,
-  Trash2
+  Trash2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
@@ -379,7 +381,8 @@ export const Staff = () => {
   const [editStaff, setEditStaff] = useState<any>(null);
   const [suspendStaff, setSuspendStaff] = useState<any>(null);
   const [deleteStaff, setDeleteStaff] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ fullName: '', role: 'WAITER' });
+  const [editForm, setEditForm] = useState({ fullName: '', role: 'WAITER', newPassword: '' });
+  const [showEditPassword, setShowEditPassword] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -444,7 +447,8 @@ export const Staff = () => {
       setProfileStaff(staff);
     } else if (action === 'edit') {
       setEditStaff(staff);
-      setEditForm({ fullName: staff.name, role: staff.role });
+      setEditForm({ fullName: staff.name, role: staff.role, newPassword: '' });
+      setShowEditPassword(false);
     } else if (action === 'reset-password') {
       handleResetPassword(staff.email);
     } else if (action === 'toggle-active') {
@@ -502,6 +506,13 @@ export const Staff = () => {
   const handleEditStaffSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editStaff) return;
+
+    // Validate new password length if provided
+    if (editForm.newPassword && editForm.newPassword.length < 6) {
+      toast.error('Password Too Short', 'Password must be at least 6 characters.');
+      return;
+    }
+
     setIsSaving(true);
     try {
       const first = editForm.fullName.split(' ')[0] || '';
@@ -516,6 +527,11 @@ export const Staff = () => {
         .eq('id', editStaff.id);
 
       if (error) throw error;
+
+      // Only update password if the admin entered a new one
+      if (editForm.newPassword.trim()) {
+        await SuperAdminService.updateStaffPassword(editStaff.id, editForm.newPassword, tenant?.id || '');
+      }
 
       toast.success('Staff Updated', `${editForm.fullName} has been updated successfully.`);
       queryClient.invalidateQueries({ queryKey: ['staff', tenant?.id] });
@@ -894,6 +910,30 @@ export const Staff = () => {
                   <option value="KITCHEN_STAFF">Kitchen Staff</option>
                   <option value="ADMIN">Manager (Admin)</option>
                 </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-[#0B1630]">New Password</label>
+                <div className="relative">
+                  <input 
+                    value={editForm.newPassword}
+                    onChange={e => setEditForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                    type={showEditPassword ? 'text' : 'password'}
+                    placeholder="Leave blank to keep current password"
+                    autoComplete="new-password"
+                    className="w-full h-10 px-3 pr-10 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-[#F97316]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditPassword(prev => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0B1630] transition-colors cursor-pointer"
+                    tabIndex={-1}
+                    aria-label={showEditPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showEditPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#94A3B8] font-medium pt-0.5">Leave blank to keep the current password unchanged.</p>
               </div>
 
               <div className="flex gap-3 mt-6">

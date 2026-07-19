@@ -16,7 +16,6 @@ import { useQuery } from '@tanstack/react-query';
 import { ReceiptService } from '../../services/ApiService';
 import { useTenant } from '../../context/TenantContext';
 import { useCurrency } from '../../services/CurrencyService';
-import { UpgradePlaceholder } from '../../components/UpgradeDialog';
 
 export const Receipts = () => {
   const { tenant } = useTenant();

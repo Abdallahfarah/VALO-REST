@@ -851,6 +851,26 @@ export const SuperAdminService = {
     return true;
   },
 
+  async updateStaffPassword(targetUserId: string, newPassword: string, tenantId: string) {
+    const { data, error } = await supabase.functions.invoke('update-staff-password', {
+      body: { targetUserId, newPassword, tenantId }
+    });
+
+    if (error) {
+      let msg = error.message || 'Failed to update password.';
+      if (error.context && typeof error.context.clone === 'function') {
+        try {
+          const body = await error.context.clone().json();
+          if (body && body.error) msg = body.error;
+        } catch (_) {}
+      }
+      throw new Error(msg);
+    }
+
+    if (data && data.error) throw new Error(data.error);
+    return true;
+  },
+
   async updateSubscription(tenantId: string, planName: string, currentPeriodEnd: string) {
     const { data: plan, error: planErr } = await supabase
       .from('plans')

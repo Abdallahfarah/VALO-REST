@@ -14,7 +14,6 @@ import { MessagingService } from '../../services/ApiService';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../../lib/supabase';
-import { UpgradePlaceholder } from '../../components/UpgradeDialog';
 
 export const CashierMessages = () => {
   const { tenant } = useTenant();

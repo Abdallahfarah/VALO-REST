@@ -21,7 +21,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../services/CurrencyService';
 import { supabase } from '../../../lib/supabase';
 import { toast } from '../../lib/toast-store';
-import { UpgradePlaceholder } from '../../components/UpgradeDialog';
 
 export const Payments = () => {
   const { tenant } = useTenant();
