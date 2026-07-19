@@ -387,7 +387,7 @@ export const OrderService = {
 
         if (updatedOrder) {
           const waiterId = updatedOrder.waiter_id;
-          const tableNumber = updatedOrder.tables?.number || '?';
+          const tableNumber = (updatedOrder as any).tables?.number || '?';
           const tenantId = updatedOrder.tenant_id || '';
 
           if (tenantId) {
