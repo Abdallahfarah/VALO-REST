@@ -453,6 +453,7 @@ export const OrdersMonitor = () => {
   const [viewingAllStatus, setViewingAllStatus] = useState<string | null>(null);
 
   // 1. Determine active station
+  const userStation = preparationStation || 'Chef';
   const isKdsUser = role === 'KITCHEN_STAFF';
   const [activeStation, setActiveStation] = useState<string>('Chef');
 
@@ -556,7 +557,7 @@ export const OrdersMonitor = () => {
         const diff = new Date(o.updatedAt).getTime() - new Date(o.createdAt).getTime();
         return acc + (diff / 60000);
       }, 0) / readyOrders.length)
-    : 12; // default fallback if no orders prepared yet
+    : 0; // default fallback if no orders prepared yet
 
   const kpis = [
     { label: 'New Orders', value: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'PENDING').length.toString(), sub: 'Start', icon: Receipt, color: 'text-indigo-500', bg: 'bg-indigo-50', darkBg: 'bg-indigo-500/10', darkColor: 'text-indigo-400' },
@@ -782,77 +783,68 @@ export const OrdersMonitor = () => {
                      <h3 className="text-[10px] font-black text-white tracking-widest uppercase">{col.title} ({col.count})</h3>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                     {col.orders.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 text-[#232B5E]/60">
-                           <Receipt size={36} className="opacity-40 mb-2" />
-                           <p className="text-center text-[10px] text-[#94A3B8] font-black uppercase tracking-widest">
-                              No orders
-                           </p>
-                        </div>
-                     ) : (
-                        col.orders.map((order: any) => (
-                           <Card 
-                             key={order.id} 
-                             onClick={() => setSelectedOrder(order)}
-                             className="p-4 bg-[#141935]/65 border border-[#232B5E]/20 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:border-[#F97316]/50 hover:shadow-[0_4px_25px_rgba(249,115,22,0.1)] group transition-all duration-300 cursor-pointer"
-                           >
-                              <div className="flex items-center justify-between mb-4">
-                                 <span className="text-xs font-black text-white">#{order.id.slice(0, 8).toUpperCase()}</span>
-                                 <span className="text-[10px] text-[#94A3B8] font-bold">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                              </div>
-                              <div className="flex items-center justify-between text-[10px] font-bold text-[#94A3B8] mb-2">
-                                 <span>Table {order.table?.number || 'N/A'} • {order.stationItems?.length || 0} Items</span>
-                                 <span className="text-[#F97316] font-black">${Number(order.totalAmount).toFixed(2)}</span>
-                              </div>
-                              <div className="text-[10px] font-bold text-indigo-400 mb-4">
-                                 🧑‍🍳 {order.waiterName || 'Unassigned'}
-                              </div>
-                               {/* Grouped Items List */}
-                               <div className="space-y-3 mb-4">
-                                 {renderOrderItems(order, col)}
-                               </div>
+                     {col.orders.map((order: any) => (
+                        <Card 
+                          key={order.id} 
+                          onClick={() => setSelectedOrder(order)}
+                          className="p-4 bg-[#141935]/65 border border-[#232B5E]/20 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:border-[#F97316]/50 hover:shadow-[0_4px_25px_rgba(249,115,22,0.1)] group transition-all duration-300 cursor-pointer"
+                        >
+                           <div className="flex items-center justify-between mb-4">
+                              <span className="text-xs font-black text-white">#{order.id.slice(0, 8).toUpperCase()}</span>
+                              <span className="text-[10px] text-[#94A3B8] font-bold">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                           </div>
+                           <div className="flex items-center justify-between text-[10px] font-bold text-[#94A3B8] mb-2">
+                              <span>Table {order.table?.number || 'N/A'} • {order.stationItems?.length || 0} Items</span>
+                              <span className="text-[#F97316] font-black">${Number(order.totalAmount).toFixed(2)}</span>
+                           </div>
+                           <div className="text-[10px] font-bold text-indigo-400 mb-4">
+                              🧑‍🍳 {order.waiterName || 'Unassigned'}
+                           </div>
+                            {/* Grouped Items List */}
+                            <div className="space-y-3 mb-4">
+                              {renderOrderItems(order, col)}
+                            </div>
 
-                              {/* Cancelled info */}
-                              {col.title === 'CANCELED' && renderCancelledInfo(order)}
+                           {/* Cancelled info */}
+                           {col.title === 'CANCELED' && renderCancelledInfo(order)}
 
-                              <div className="flex items-center justify-between pt-4 border-t border-[#232B5E]/20 gap-2" onClick={(e) => e.stopPropagation()}>
-                                 {/* Progress action */}
-                                 {col.title !== 'READY' && col.title !== 'CANCELED' ? (
-                                    <button 
-                                      onClick={() => handleStatusUpdate(order.id, getStationOrderStatus(order))}
-                                      disabled={updateStatusMutation.isPending}
-                                      className="flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/30 hover:bg-[#F97316] hover:text-white transition-colors disabled:opacity-50"
-                                    >
-                                       {col.title === 'NEW ORDERS' ? 'Start Preparing' : 'Mark as Ready'}
-                                    </button>
-                                  ) : col.title === 'READY' ? (
-                                    <div className="flex items-center justify-center gap-1.5 flex-1 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
-                                       <CheckCircle2 size={12} /> Ready to Serve
-                                    </div>
-                                  ) : null}
-
-                                 {/* Cancel button — only for PENDING / PREPARING */}
-                                 {isCancellable(getStationOrderStatus(order)) && (
-                                   <button
-                                     onClick={() => setCancelling(order)}
-                                     disabled={updateStatusMutation.isPending || cancelMutation.isPending}
-                                     className="py-1.5 px-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest text-red-400 bg-red-500/5 border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
-                                     title="Cancel order"
-                                   >
-                                     <XCircle size={14} />
-                                   </button>
-                                 )}
-
+                           <div className="flex items-center justify-between pt-4 border-t border-[#232B5E]/20 gap-2" onClick={(e) => e.stopPropagation()}>
+                              {/* Progress action */}
+                              {col.title !== 'READY' && col.title !== 'CANCELED' ? (
                                  <button 
-                                   onClick={() => setSelectedOrder(order)}
-                                   className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#1E293B]/40 transition-all"
+                                   onClick={() => handleStatusUpdate(order.id, getStationOrderStatus(order))}
+                                   disabled={updateStatusMutation.isPending}
+                                   className="flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/30 hover:bg-[#F97316] hover:text-white transition-colors disabled:opacity-50"
                                  >
-                                    <ChevronRight size={14} />
+                                    {col.title === 'NEW ORDERS' ? 'Start Preparing' : 'Mark as Ready'}
                                  </button>
-                              </div>
-                           </Card>
-                        ))
-                     )}
+                               ) : col.title === 'READY' ? (
+                                 <div className="flex items-center justify-center gap-1.5 flex-1 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+                                    <CheckCircle2 size={12} /> Ready to Serve
+                                 </div>
+                               ) : null}
+
+                              {/* Cancel button — only for PENDING / PREPARING */}
+                              {isCancellable(getStationOrderStatus(order)) && (
+                                <button
+                                  onClick={() => setCancelling(order)}
+                                  disabled={updateStatusMutation.isPending || cancelMutation.isPending}
+                                  className="py-1.5 px-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest text-red-400 bg-red-500/5 border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
+                                  title="Cancel order"
+                                >
+                                  <XCircle size={14} />
+                                </button>
+                              )}
+
+                              <button 
+                                onClick={() => setSelectedOrder(order)}
+                                className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#1E293B]/40 transition-all"
+                              >
+                                 <ChevronRight size={14} />
+                              </button>
+                           </div>
+                        </Card>
+                     ))}
                      <button 
                        onClick={() => setViewingAllStatus(col.status)}
                        className="w-full py-2 flex items-center justify-center gap-2 text-[10px] font-black text-[#94A3B8] uppercase tracking-widest hover:text-white transition-colors"

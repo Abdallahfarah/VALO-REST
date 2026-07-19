@@ -15,26 +15,112 @@ import {
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
-
-const kpis = [
-  { label: 'Total Orders (KDS Finished)', value: '124', trend: '+ 12.5%', icon: Receipt, color: 'text-indigo-500', bg: 'bg-indigo-50', darkBg: 'bg-indigo-500/10', darkColor: 'text-indigo-400', comparison: 'vs Jun 13 - Jun 19, 2026' },
-  { label: 'Completed Orders', value: '118', trend: '+ 10.8%', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50', darkBg: 'bg-emerald-500/10', darkColor: 'text-emerald-400', comparison: 'vs Jun 13 - Jun 19, 2026' },
-  { label: 'Cancelled Orders', value: '6', trend: '↑ 4.3%', icon: XCircle, color: 'text-red-500', bg: 'bg-red-50', darkBg: 'bg-red-500/10', darkColor: 'text-red-400', comparison: 'vs Jun 13 - Jun 19, 2026' },
-  { label: 'Avg. Preparation Time', value: '18m 24s', trend: '↓ 6.2%', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', darkBg: 'bg-orange-500/10', darkColor: 'text-orange-400', comparison: 'vs Jun 13 - Jun 19, 2026' },
-];
-
-const finishedOrders = [
-  { id: 'LOG-000029', table: 'T5', waiter: 'Ahmed', items: 2, finishedAt: 'Jun 26, 2026 12:45 PM', prepTime: '14m 32s', status: 'Done', total: 'ETB 1,250' },
-  { id: 'LOG-000028', table: 'T3', waiter: 'Sara', items: 3, finishedAt: 'Jun 26, 2026 12:30 PM', prepTime: '18m 10s', status: 'Done', total: 'ETB 980' },
-  { id: 'LOG-000027', table: 'T8', waiter: 'Mohamed', items: 4, finishedAt: 'Jun 26, 2026 12:20 PM', prepTime: '21m 45s', status: 'Done', total: 'ETB 670' },
-  { id: 'LOG-000026', table: 'T2', waiter: 'Ahmed', items: 2, finishedAt: 'Jun 26, 2026 11:58 AM', prepTime: '12m 05s', status: 'Done', total: 'ETB 1,150' },
-  { id: 'LOG-000025', table: 'T1', waiter: 'Sara', items: 3, finishedAt: 'Jun 26, 2026 11:45 AM', prepTime: '16m 25s', status: 'Done', total: 'ETB 860' },
-  { id: 'LOG-000024', table: 'T6', waiter: 'Mohamed', items: 2, finishedAt: 'Jun 26, 2026 11:20 AM', prepTime: '10m 15s', status: 'Done', total: 'ETB 450' },
-  { id: 'LOG-000023', table: 'T4', waiter: 'Ahmed', items: 3, finishedAt: 'Jun 26, 2026 11:10 AM', prepTime: '23m 40s', status: 'Done', total: 'ETB 1,320' },
-  { id: 'LOG-000022', table: 'T7', waiter: 'Sara', items: 2, finishedAt: 'Jun 26, 2026 10:55 AM', prepTime: '11m 30s', status: 'Done', total: 'ETB 930' },
-];
+import { useQuery } from '@tanstack/react-query';
+import { useTenant } from '../../context/TenantContext';
+import { OrderService } from '../../services/ApiService';
 
 export const KDSReports = () => {
+  const { tenant } = useTenant();
+  const { data: orders = [] } = useQuery({
+    queryKey: ['orders', tenant?.id],
+    queryFn: () => OrderService.getOrders(tenant?.id || ''),
+    enabled: !!tenant?.id,
+  });
+
+  const totalOrders = orders.length;
+  const preparingCount = orders.filter((o: any) => o.status === 'PREPARING').length;
+  const completedCount = orders.filter((o: any) => o.status === 'COMPLETED').length;
+  const cancelledCount = orders.filter((o: any) => o.status === 'CANCELED').length;
+  const readyCount = orders.filter((o: any) => o.status === 'READY').length;
+
+  const totalFinished = readyCount + completedCount;
+
+  const completedPct = totalOrders > 0 ? ((completedCount / totalOrders) * 100).toFixed(1) : '0.0';
+  const preparingPct = totalOrders > 0 ? ((preparingCount / totalOrders) * 100).toFixed(1) : '0.0';
+  const cancelledPct = totalOrders > 0 ? ((cancelledCount / totalOrders) * 100).toFixed(1) : '0.0';
+
+  const finishedOrders = orders
+    .filter((o: any) => o.status === 'READY' || o.status === 'COMPLETED')
+    .map((o: any) => {
+      let prepMinutes = 0;
+      if (o.createdAt) {
+        const created = new Date(o.createdAt).getTime();
+        const completed = o.updatedAt ? new Date(o.updatedAt).getTime() : new Date().getTime();
+        prepMinutes = Math.round(Math.max(0, (completed - created) / 60000));
+      }
+      return {
+        id: o.id?.slice(0, 8).toUpperCase(),
+        table: o.table?.number || 'N/A',
+        waiter: o.waiterName || 'Unassigned',
+        items: o.items?.length || 0,
+        finishedAt: o.createdAt ? new Date(o.createdAt).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A',
+        prepTime: `${prepMinutes}m`,
+        status: 'Done',
+        total: `$${Number(o.totalAmount || 0).toFixed(2)}`,
+        raw: o
+      };
+    });
+
+  const avgPrepDuration = finishedOrders.length > 0
+    ? Math.round(finishedOrders.reduce((acc, o) => acc + parseInt(o.prepTime), 0) / finishedOrders.length)
+    : 0;
+
+  const kpis = [
+    { label: 'Total Orders (KDS Finished)', value: totalFinished.toString(), trend: '0%', icon: Receipt, color: 'text-indigo-500', bg: 'bg-indigo-50', darkBg: 'bg-indigo-500/10', darkColor: 'text-indigo-400', comparison: 'vs previous period' },
+    { label: 'Completed Orders', value: completedCount.toString(), trend: '0%', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50', darkBg: 'bg-emerald-500/10', darkColor: 'text-emerald-400', comparison: 'vs previous period' },
+    { label: 'Cancelled Orders', value: cancelledCount.toString(), trend: '0%', icon: XCircle, color: 'text-red-500', bg: 'bg-red-50', darkBg: 'bg-red-500/10', darkColor: 'text-red-400', comparison: 'vs previous period' },
+    { label: 'Avg. Preparation Time', value: `${avgPrepDuration}m`, trend: '0%', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', darkBg: 'bg-orange-500/10', darkColor: 'text-orange-400', comparison: 'vs previous period' },
+  ];
+
+  const getStrokeOffset = (count: number) => {
+    if (totalOrders === 0) return 502;
+    return 502 - (502 * count) / totalOrders;
+  };
+
+  const getMobileStrokeOffset = (count: number) => {
+    if (totalOrders === 0) return 239;
+    return 239 - (239 * count) / totalOrders;
+  };
+
+  // 17 hourly slots for Peak Hours chart: 6 AM to 10 PM
+  const hourlySlots = Array(17).fill(0);
+  orders.filter((o: any) => o.status === 'COMPLETED' || o.status === 'READY').forEach((o: any) => {
+     const hour = new Date(o.createdAt).getHours();
+     if (hour >= 6 && hour <= 22) {
+        hourlySlots[hour - 6]++;
+     }
+  });
+
+  const maxHourCount = Math.max(...hourlySlots, 1);
+  const peakHoursData = hourlySlots.map((count) => ({
+     count,
+     percentage: (count / maxHourCount) * 100
+  }));
+
+  const completedOrders = orders.filter((o: any) => (o.status === 'COMPLETED' || o.status === 'READY') && o.createdAt);
+  let avgPrepTimeStr = '0m 00s';
+  let fastestPrepTimeStr = '0m 00s';
+  let slowestPrepTimeStr = '0m 00s';
+  if (completedOrders.length > 0) {
+     const times = completedOrders.map((o: any) => {
+        const created = new Date(o.createdAt).getTime();
+        const completed = o.updatedAt ? new Date(o.updatedAt).getTime() : new Date().getTime();
+        return Math.max(0, (completed - created) / 1000);
+     });
+     const avgSeconds = times.reduce((a, b) => a + b, 0) / times.length;
+     const minSeconds = Math.min(...times);
+     const maxSeconds = Math.max(...times);
+     
+     const formatDuration = (sec: number) => {
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return `${m}m ${s}s`;
+     };
+     
+     avgPrepTimeStr = formatDuration(avgSeconds);
+     fastestPrepTimeStr = formatDuration(minSeconds);
+     slowestPrepTimeStr = formatDuration(maxSeconds);
+   }
   return (
     <div className="space-y-8 max-w-[1600px] relative">
 
@@ -288,20 +374,20 @@ export const KDSReports = () => {
                 <div className="flex items-center justify-center relative py-6">
                    <svg className="w-48 h-48 -rotate-90">
                       <circle cx="96" cy="96" r="80" fill="transparent" stroke="#131A38" strokeWidth="16" />
-                      <circle cx="96" cy="96" r="80" fill="transparent" stroke="#22C55E" strokeWidth="16" strokeDasharray="502" strokeDashoffset="25" />
-                      <circle cx="96" cy="96" r="80" fill="transparent" stroke="#F97316" strokeWidth="16" strokeDasharray="502" strokeDashoffset="480" />
-                      <circle cx="96" cy="96" r="80" fill="transparent" stroke="#EF4444" strokeWidth="16" strokeDasharray="502" strokeDashoffset="495" />
+                      <circle cx="96" cy="96" r="80" fill="transparent" stroke="#22C55E" strokeWidth="16" strokeDasharray="502" strokeDashoffset={getStrokeOffset(completedCount)} />
+                      <circle cx="96" cy="96" r="80" fill="transparent" stroke="#F97316" strokeWidth="16" strokeDasharray="502" strokeDashoffset={getStrokeOffset(preparingCount)} />
+                      <circle cx="96" cy="96" r="80" fill="transparent" stroke="#EF4444" strokeWidth="16" strokeDasharray="502" strokeDashoffset={getStrokeOffset(cancelledCount)} />
                    </svg>
                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-4xl font-black text-white">124</span>
+                      <span className="text-4xl font-black text-white">{totalOrders}</span>
                       <span className="text-[10px] font-bold text-[#94A3B8] uppercase">Total Orders</span>
                    </div>
                 </div>
                 <div className="mt-8 space-y-3">
                    {[
-                     { label: 'Completed (KDS Finished)', value: '118 (95.2%)', color: 'bg-emerald-500' },
-                     { label: 'Preparing', value: '4 (3.2%)', color: 'bg-orange-500' },
-                     { label: 'Cancelled', value: '2 (1.6%)', color: 'bg-red-500' },
+                     { label: 'Completed (KDS Finished)', value: `${completedCount} (${completedPct}%)`, color: 'bg-emerald-500' },
+                     { label: 'Preparing', value: `${preparingCount} (${preparingPct}%)`, color: 'bg-orange-500' },
+                     { label: 'Cancelled', value: `${cancelledCount} (${cancelledPct}%)`, color: 'bg-red-500' },
                    ].map((item, i) => (
                      <div key={i} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -315,27 +401,27 @@ export const KDSReports = () => {
              </Card>
 
             {/* Mobile — Status Overview */}
-            <div className="lg:hidden bg-[#131A38]/70 backdrop-blur-md border border-[#232B5E]/50 rounded-2xl p-4 shadow-xl shadow-black/10">
+            <div className="lg:hidden bg-[#131A38]/30 border border-[#232B5E]/20 rounded-2xl p-4 shadow-xl shadow-black/10">
                <h3 className="text-xs font-black text-white uppercase tracking-wider mb-4">Order Status Overview</h3>
                <div className="flex items-center gap-4">
                   {/* Compact donut */}
                   <div className="relative shrink-0">
                      <svg className="w-24 h-24 -rotate-90">
                         <circle cx="48" cy="48" r="38" fill="transparent" stroke="#1e2a4a" strokeWidth="10" />
-                        <circle cx="48" cy="48" r="38" fill="transparent" stroke="#22C55E" strokeWidth="10" strokeDasharray="239" strokeDashoffset="12" />
-                        <circle cx="48" cy="48" r="38" fill="transparent" stroke="#F97316" strokeWidth="10" strokeDasharray="239" strokeDashoffset="228" />
-                        <circle cx="48" cy="48" r="38" fill="transparent" stroke="#EF4444" strokeWidth="10" strokeDasharray="239" strokeDashoffset="236" />
+                        <circle cx="48" cy="48" r="38" fill="transparent" stroke="#22C55E" strokeWidth="10" strokeDasharray="239" strokeDashoffset={getMobileStrokeOffset(completedCount)} />
+                        <circle cx="48" cy="48" r="38" fill="transparent" stroke="#F97316" strokeWidth="10" strokeDasharray="239" strokeDashoffset={getMobileStrokeOffset(preparingCount)} />
+                        <circle cx="48" cy="48" r="38" fill="transparent" stroke="#EF4444" strokeWidth="10" strokeDasharray="239" strokeDashoffset={getMobileStrokeOffset(cancelledCount)} />
                      </svg>
                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-lg font-black text-white">124</span>
+                        <span className="text-lg font-black text-white">{totalOrders}</span>
                         <span className="text-[8px] font-bold text-[#94A3B8] uppercase">Total</span>
                      </div>
                   </div>
                   <div className="flex-1 space-y-2.5">
                      {[
-                       { label: 'Completed', value: '118 (95.2%)', color: 'bg-emerald-500' },
-                       { label: 'Preparing', value: '4 (3.2%)', color: 'bg-orange-500' },
-                       { label: 'Cancelled', value: '2 (1.6%)', color: 'bg-red-500' },
+                       { label: 'Completed', value: `${completedCount} (${completedPct}%)`, color: 'bg-emerald-500' },
+                       { label: 'Preparing', value: `${preparingCount} (${preparingPct}%)`, color: 'bg-orange-500' },
+                       { label: 'Cancelled', value: `${cancelledCount} (${cancelledPct}%)`, color: 'bg-red-500' },
                      ].map((item, i) => (
                        <div key={i} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -356,15 +442,15 @@ export const KDSReports = () => {
                 <div className="space-y-6">
                    <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-[#94A3B8]">Average Time</span>
-                      <span className="text-sm font-black text-orange-400">18m 24s</span>
+                      <span className="text-sm font-black text-orange-400">{avgPrepTimeStr}</span>
                    </div>
                    <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-[#94A3B8]">Fastest Order</span>
-                      <span className="text-sm font-black text-emerald-400">7m 30s</span>
+                      <span className="text-sm font-black text-emerald-400">{fastestPrepTimeStr}</span>
                    </div>
                    <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-[#94A3B8]">Slowest Order</span>
-                      <span className="text-sm font-black text-red-400">42m 10s</span>
+                      <span className="text-sm font-black text-red-400">{slowestPrepTimeStr}</span>
                    </div>
                 </div>
              </Card>
@@ -375,15 +461,15 @@ export const KDSReports = () => {
                 <div className="space-y-3">
                    <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold text-[#94A3B8]">Average Time</span>
-                      <span className="text-xs font-black text-orange-400">18m 24s</span>
+                      <span className="text-xs font-black text-orange-400">{avgPrepTimeStr}</span>
                    </div>
                    <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold text-[#94A3B8]">Fastest Order</span>
-                      <span className="text-xs font-black text-emerald-400">7m 30s</span>
+                      <span className="text-xs font-black text-emerald-400">{fastestPrepTimeStr}</span>
                    </div>
                    <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold text-[#94A3B8]">Slowest Order</span>
-                      <span className="text-xs font-black text-red-400">42m 10s</span>
+                      <span className="text-xs font-black text-red-400">{slowestPrepTimeStr}</span>
                    </div>
                 </div>
              </div>
@@ -393,10 +479,10 @@ export const KDSReports = () => {
              <Card className="hidden lg:block p-8 bg-[#0C0F24]/50 border border-[#232B5E]/20 overflow-hidden">
                 <h3 className="text-sm font-black text-white uppercase tracking-wider mb-8">Peak Hours (Completed Orders)</h3>
                 <div className="h-48 flex items-baseline justify-between gap-1">
-                   {[20, 35, 15, 10, 45, 60, 85, 95, 82, 78, 65, 56, 40, 32, 18, 8, 3].map((val, i) => (
-                     <div key={i} className="flex-1 bg-indigo-500/15 rounded-t-sm group relative cursor-pointer hover:bg-[#F97316]/30 transition-colors" style={{ height: `${val}%` }}>
+                   {peakHoursData.map((val, i) => (
+                     <div key={i} className="flex-1 bg-indigo-500/15 rounded-t-sm group relative cursor-pointer hover:bg-[#F97316]/30 transition-colors" style={{ height: `${val.percentage}%` }}>
                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#F97316] text-white text-[8px] font-black px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap overflow-hidden shadow-md shadow-orange-500/20">
-                           {val} orders
+                           {val.count} orders
                         </div>
                      </div>
                    ))}
@@ -415,11 +501,11 @@ export const KDSReports = () => {
              <div className="lg:hidden bg-[#131A38]/30 border border-[#232B5E]/20 rounded-2xl p-4 overflow-hidden shadow-xl shadow-black/10">
                 <h3 className="text-xs font-black text-white uppercase tracking-wider mb-3">Peak Hours</h3>
                 <div className="h-32 flex items-baseline justify-between gap-0.5">
-                   {[20, 35, 15, 10, 45, 60, 85, 95, 82, 78, 65, 56, 40, 32, 18, 8, 3].map((val, i) => (
+                   {peakHoursData.map((val, i) => (
                      <div
                        key={i}
                        className="flex-1 bg-indigo-500/20 hover:bg-[#F97316]/30 rounded-t-sm transition-colors cursor-pointer"
-                       style={{ height: `${val}%` }}
+                       style={{ height: `${val.percentage}%` }}
                      />
                    ))}
                 </div>
