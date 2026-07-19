@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   MonitorSmartphone, 
@@ -13,8 +14,9 @@ import { NavLink } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTenant } from '../../../context/TenantContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MessagingService } from '../../../services/ApiService';
+import { supabase } from '../../../../lib/supabase';
 
 interface NavItem {
   name: string;
@@ -41,8 +43,8 @@ const navSections: NavSection[] = [
   {
     title: 'COMMUNICATION',
     items: [
-      { name: 'Messages', path: '/waiter/messages', icon: MessageSquare, badge: 2 },
-      { name: 'Notifications', path: '/waiter/notifications', icon: Bell, badge: 3 },
+      { name: 'Messages', path: '/waiter/messages', icon: MessageSquare },
+      { name: 'Notifications', path: '/waiter/notifications', icon: Bell },
     ],
   }
 ];
@@ -55,6 +57,7 @@ export interface WaiterSidebarProps {
 export const WaiterSidebar = ({ isOpen, onClose }: WaiterSidebarProps) => {
   const { signOut, user } = useAuth();
   const { tenant } = useTenant();
+  const queryClient = useQueryClient();
 
   const { data: conversations = [] } = useQuery({
     queryKey: ['conversations', tenant?.id, user?.id],
@@ -62,7 +65,57 @@ export const WaiterSidebar = ({ isOpen, onClose }: WaiterSidebarProps) => {
     enabled: !!tenant?.id && !!user?.id,
   });
 
+  const { data: unreadNotifications = [] } = useQuery({
+    queryKey: ['unread-notifications-count', tenant?.id, user?.id],
+    queryFn: async () => {
+      if (!tenant?.id) return [];
+      let q = supabase
+        .from('notifications')
+        .select('id, user_id, is_read')
+        .eq('tenant_id', tenant.id)
+        .eq('is_read', false);
+      if (user?.id) {
+        q = q.or(`user_id.eq.${user.id},user_id.is.null`);
+      }
+      const { data } = await q;
+      return data || [];
+    },
+    enabled: !!tenant?.id,
+  });
+
   const totalUnreadMessages = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
+
+  // Real-time subscription in WaiterSidebar
+  useEffect(() => {
+    if (!tenant?.id) return;
+
+    const nChannel = supabase
+      .channel('notifications-realtime-waiter-sidebar')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `tenant_id=eq.${tenant.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['unread-notifications-count'] });
+        }
+      )
+      .subscribe();
+
+    const mChannel = supabase
+      .channel('messages-realtime-waiter-sidebar')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenant.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(nChannel);
+      supabase.removeChannel(mChannel);
+    };
+  }, [tenant?.id, queryClient]);
   return (
     <>
       {/* Mobile Sidebar Backdrop overlay */}
@@ -128,6 +181,12 @@ export const WaiterSidebar = ({ isOpen, onClose }: WaiterSidebarProps) => {
                         totalUnreadMessages > 0 ? (
                           <span className="bg-[#4F46E5] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                             {totalUnreadMessages}
+                          </span>
+                        ) : null
+                      ) : item.name === 'Notifications' ? (
+                        unreadNotifications.length > 0 ? (
+                          <span className="bg-[#4F46E5] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                            {unreadNotifications.length}
                           </span>
                         ) : null
                       ) : item.badge ? (

@@ -63,6 +63,17 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
     }
   });
 
+  // Automatically mark all notifications as read when opening notifications drawer
+  useEffect(() => {
+    const unread = notifications.filter((n: any) => !n.isRead);
+    if (unread.length > 0) {
+      NotificationService.markAllAsRead(tenantId, userId).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['notifications', tenantId, userId] });
+        queryClient.invalidateQueries({ queryKey: ['unread-notifications-count'] });
+      });
+    }
+  }, [notifications, tenantId, userId, queryClient]);
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase

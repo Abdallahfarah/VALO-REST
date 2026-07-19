@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { 
   Calendar, 
   ChevronDown, 
@@ -21,6 +22,9 @@ import { OrderService } from '../../services/ApiService';
 
 export const KDSReports = () => {
   const { tenant } = useTenant();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
   const { data: orders = [] } = useQuery({
     queryKey: ['orders', tenant?.id],
     queryFn: () => OrderService.getOrders(tenant?.id || ''),
@@ -61,6 +65,43 @@ export const KDSReports = () => {
       };
     });
 
+  // Dynamic date range calculation
+  const getDynamicDateRange = () => {
+    if (orders.length === 0) {
+      const start = new Date();
+      start.setDate(start.getDate() - 6);
+      return `${start.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date().toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    }
+    const dates = orders.map((o: any) => new Date(o.createdAt).getTime());
+    const minDate = new Date(Math.min(...dates));
+    const maxDate = new Date(Math.max(...dates));
+    return `${minDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} - ${maxDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  };
+
+  const getCompareDateRange = () => {
+    if (orders.length === 0) {
+      const start = new Date();
+      start.setDate(start.getDate() - 13);
+      const end = new Date();
+      end.setDate(end.getDate() - 7);
+      return `${start.toLocaleDateString([], { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    }
+    const dates = orders.map((o: any) => new Date(o.createdAt).getTime());
+    const minDate = new Date(Math.min(...dates));
+    const maxDate = new Date(Math.max(...dates));
+    const diff = maxDate.getTime() - minDate.getTime();
+    const compStart = new Date(minDate.getTime() - diff - 24 * 60 * 60 * 1000);
+    const compEnd = new Date(minDate.getTime() - 24 * 60 * 60 * 1000);
+    return `${compStart.toLocaleDateString([], { month: 'short', day: 'numeric' })} - ${compEnd.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  };
+
+  // Pagination helper calculations
+  const totalItems = finishedOrders.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+  const paginatedOrders = finishedOrders.slice(startIndex, endIndex);
+
   const avgPrepDuration = finishedOrders.length > 0
     ? Math.round(finishedOrders.reduce((acc, o) => acc + parseInt(o.prepTime), 0) / finishedOrders.length)
     : 0;
@@ -82,12 +123,14 @@ export const KDSReports = () => {
     return 239 - (239 * count) / totalOrders;
   };
 
-  // 17 hourly slots for Peak Hours chart: 6 AM to 10 PM
-  const hourlySlots = Array(17).fill(0);
+  // 24 hourly slots for Peak Hours chart: 12 AM to 11 PM
+  const hourlySlots = Array(24).fill(0);
   orders.filter((o: any) => o.status === 'COMPLETED' || o.status === 'READY').forEach((o: any) => {
-     const hour = new Date(o.createdAt).getHours();
-     if (hour >= 6 && hour <= 22) {
-        hourlySlots[hour - 6]++;
+     if (o.createdAt) {
+        const hour = new Date(o.createdAt).getHours();
+        if (hour >= 0 && hour < 24) {
+           hourlySlots[hour]++;
+        }
      }
   });
 
@@ -120,7 +163,7 @@ export const KDSReports = () => {
      avgPrepTimeStr = formatDuration(avgSeconds);
      fastestPrepTimeStr = formatDuration(minSeconds);
      slowestPrepTimeStr = formatDuration(maxSeconds);
-   }
+  }
   return (
     <div className="space-y-8 max-w-[1600px] relative">
 
@@ -175,13 +218,13 @@ export const KDSReports = () => {
          {/* Date range */}
          <div className="flex items-center gap-2 lg:gap-3 bg-[#131A38]/30 backdrop-blur-md px-3 lg:px-4 py-2 lg:py-2.5 rounded-2xl border border-[#232B5E]/20 cursor-pointer hover:bg-[#1E293B]/40 transition-all">
             <Calendar size={14} className="text-[#94A3B8]" />
-            <span className="text-[11px] lg:text-xs font-bold text-white">Jun 20, 2026 - Jun 26, 2026</span>
+            <span className="text-[11px] lg:text-xs font-bold text-white">{getDynamicDateRange()}</span>
             <ChevronDown size={13} className="text-[#94A3B8]" />
          </div>
          {/* Compare to — hidden on small mobile, visible from sm+ */}
          <div className="hidden sm:flex items-center gap-2 lg:gap-3 bg-[#131A38]/30 backdrop-blur-md px-3 lg:px-4 py-2 lg:py-2.5 rounded-2xl border border-[#232B5E]/20 cursor-pointer hover:bg-[#1E293B]/40 transition-all">
             <span className="text-[11px] lg:text-xs font-medium text-[#94A3B8]">Compare to:</span>
-            <span className="text-[11px] lg:text-xs font-bold text-white">Jun 13 - Jun 19, 2026</span>
+            <span className="text-[11px] lg:text-xs font-bold text-white">{getCompareDateRange()}</span>
             <ChevronDown size={13} className="text-[#94A3B8]" />
          </div>
          {/* All Tables */}
@@ -271,41 +314,62 @@ export const KDSReports = () => {
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-[#232B5E]/10 bg-[#070913]/30">
-                        {finishedOrders.map((order) => (
-                           <tr key={order.id} className="hover:bg-[#131A38]/15 transition-colors group">
-                              <td className="px-8 py-4 text-xs font-black text-indigo-400 hover:underline cursor-pointer">#{order.id}</td>
-                              <td className="px-8 py-4 text-xs font-bold text-white">{order.table}</td>
-                              <td className="px-8 py-4 text-xs font-medium text-[#94A3B8]">{order.waiter}</td>
-                              <td className="px-8 py-4 text-xs font-bold text-white text-center">{order.items}</td>
-                              <td className="px-8 py-4 text-xs font-medium text-[#94A3B8]">{order.finishedAt}</td>
-                              <td className="px-8 py-4 text-xs font-bold text-white">{order.prepTime}</td>
-                              <td className="px-8 py-4">
-                                 <span className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Done</span>
-                              </td>
-                              <td className="px-8 py-4 text-xs font-black text-[#F97316]">{order.total}</td>
-                              <td className="px-8 py-4 text-right">
-                                 <button className="p-2 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#1E293B]/45 transition-all"><Eye size={14} /></button>
-                              </td>
-                           </tr>
-                        ))}
-                     </tbody>
-                  </table>
-               </div>
-               <div className="p-6 border-t border-[#232B5E]/15 flex items-center justify-between bg-[#131A38]/10 text-xs font-medium text-[#94A3B8]">
-                  <span>Showing 1 to 8 of 124 orders</span>
-                  <div className="flex items-center gap-2">
-                     <button className="p-2 rounded-xl border border-[#232B5E]/20 hover:bg-[#1E293B]/40 transition-all"><ChevronLeft size={16} /></button>
-                     <div className="flex items-center gap-1">
-                        <button className="w-8 h-8 rounded-xl bg-[#F97316] text-white font-bold shadow-md shadow-orange-500/20">1</button>
-                        <button className="w-8 h-8 rounded-xl hover:bg-[#1E293B]/40">2</button>
-                        <button className="w-8 h-8 rounded-xl hover:bg-[#1E293B]/40">3</button>
-                        <span className="px-1">...</span>
-                        <button className="w-8 h-8 rounded-xl hover:bg-[#1E293B]/40">16</button>
-                     </div>
-                     <button className="p-2 rounded-xl border border-[#232B5E]/20 hover:bg-[#1E293B]/40 transition-all"><ChevronRight size={16} /></button>
-                  </div>
-               </div>
-            </Card>
+                         {paginatedOrders.map((order) => (
+                            <tr key={order.id} className="hover:bg-[#131A38]/15 transition-colors group">
+                               <td className="px-8 py-4 text-xs font-black text-indigo-400 hover:underline cursor-pointer">#{order.id}</td>
+                               <td className="px-8 py-4 text-xs font-bold text-white">{order.table}</td>
+                               <td className="px-8 py-4 text-xs font-medium text-[#94A3B8]">{order.waiter}</td>
+                               <td className="px-8 py-4 text-xs font-bold text-white text-center">{order.items}</td>
+                               <td className="px-8 py-4 text-xs font-medium text-[#94A3B8]">{order.finishedAt}</td>
+                               <td className="px-8 py-4 text-xs font-bold text-white">{order.prepTime}</td>
+                               <td className="px-8 py-4">
+                                  <span className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Done</span>
+                               </td>
+                               <td className="px-8 py-4 text-xs font-black text-[#F97316]">{order.total}</td>
+                               <td className="px-8 py-4 text-right">
+                                  <button className="p-2 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#1E293B]/45 transition-all"><Eye size={14} /></button>
+                               </td>
+                            </tr>
+                         ))}
+                      </tbody>
+                   </table>
+                </div>
+                <div className="p-6 border-t border-[#232B5E]/15 flex items-center justify-between bg-[#131A38]/10 text-xs font-medium text-[#94A3B8]">
+                   <span>Showing {totalItems > 0 ? startIndex + 1 : 0} to {endIndex} of {totalItems} orders</span>
+                   <div className="flex items-center gap-2">
+                      <button 
+                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                         disabled={currentPage === 1}
+                         className="p-2 rounded-xl border border-[#232B5E]/20 hover:bg-[#1E293B]/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                         <ChevronLeft size={16} />
+                      </button>
+                      <div className="flex items-center gap-1">
+                         {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                            <button 
+                               key={p} 
+                               onClick={() => setCurrentPage(p)}
+                               className={cn(
+                                 "w-8 h-8 rounded-xl font-bold transition-all",
+                                 currentPage === p 
+                                   ? "bg-[#F97316] text-white shadow-md shadow-orange-500/20" 
+                                   : "hover:bg-[#1E293B]/40 text-[#94A3B8]"
+                               )}
+                            >
+                               {p}
+                            </button>
+                         ))}
+                      </div>
+                      <button 
+                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                         disabled={currentPage === totalPages}
+                         className="p-2 rounded-xl border border-[#232B5E]/20 hover:bg-[#1E293B]/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                         <ChevronRight size={16} />
+                      </button>
+                   </div>
+                </div>
+             </Card>
 
            {/* Mobile table wrapper — dark glassmorphic, horizontally scrollable */}
            <div className="lg:hidden bg-[#131A38]/70 backdrop-blur-md border border-[#232B5E]/50 rounded-2xl overflow-hidden shadow-xl shadow-black/10">
@@ -325,7 +389,7 @@ export const KDSReports = () => {
               </div>
               {/* Scrollable order list cards */}
               <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
-                 {finishedOrders.map((order) => (
+                 {paginatedOrders.map((order) => (
                     <div key={order.id} className="bg-[#0E1537]/80 border border-[#232B5E]/40 rounded-xl p-3 flex items-center justify-between gap-3">
                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -352,13 +416,34 @@ export const KDSReports = () => {
               </div>
               {/* Mobile pagination */}
               <div className="p-3 border-t border-[#232B5E]/40 flex items-center justify-between text-[10px] font-medium text-[#94A3B8]">
-                 <span>Showing 1–8 of 124</span>
+                 <span>Showing {totalItems > 0 ? startIndex + 1 : 0}–{endIndex} of {totalItems}</span>
                  <div className="flex items-center gap-1">
-                    <button className="p-1.5 rounded-lg border border-[#232B5E]/50 hover:bg-[#131A38]/50"><ChevronLeft size={13} /></button>
-                    <button className="w-7 h-7 rounded-lg bg-[#F97316] text-white font-black text-[10px]">1</button>
-                    <button className="w-7 h-7 rounded-lg hover:bg-[#131A38]/50 text-[#94A3B8]">2</button>
-                    <button className="w-7 h-7 rounded-lg hover:bg-[#131A38]/50 text-[#94A3B8]">3</button>
-                    <button className="p-1.5 rounded-lg border border-[#232B5E]/50 hover:bg-[#131A38]/50"><ChevronRight size={13} /></button>
+                    <button 
+                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                       disabled={currentPage === 1}
+                       className="p-1.5 rounded-lg border border-[#232B5E]/50 hover:bg-[#131A38]/50 disabled:opacity-50"
+                    >
+                       <ChevronLeft size={13} />
+                    </button>
+                    {Array.from({ length: Math.min(3, totalPages) }, (_, i) => i + 1).map((p) => (
+                       <button 
+                          key={p} 
+                          onClick={() => setCurrentPage(p)}
+                          className={cn(
+                            "w-7 h-7 rounded-lg font-black text-[10px]",
+                            currentPage === p ? "bg-[#F97316] text-white" : "hover:bg-[#131A38]/50 text-[#94A3B8]"
+                          )}
+                       >
+                          {p}
+                       </button>
+                    ))}
+                    <button 
+                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                       disabled={currentPage === totalPages}
+                       className="p-1.5 rounded-lg border border-[#232B5E]/50 hover:bg-[#131A38]/50 disabled:opacity-50"
+                    >
+                       <ChevronRight size={13} />
+                    </button>
                  </div>
               </div>
            </div>

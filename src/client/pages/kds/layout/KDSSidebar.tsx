@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { 
   Receipt, 
   BarChart2, 
@@ -10,6 +11,9 @@ import { NavLink } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTenant } from '../../../context/TenantContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { MessagingService } from '../../../services/ApiService';
+import { supabase } from '../../../../lib/supabase';
 
 interface NavItem {
   name: string;
@@ -33,13 +37,13 @@ const navSections: NavSection[] = [
   {
     title: 'ANALYTICS',
     items: [
-      { name: 'Reports', path: '/kds/reports', icon: BarChart2, badge: 2 },
+      { name: 'Reports', path: '/kds/reports', icon: BarChart2 },
     ],
   },
   {
     title: 'COMMUNICATION',
     items: [
-      { name: 'Messages', path: '/kds/messages', icon: MessageSquare, badge: 3 },
+      { name: 'Messages', path: '/kds/messages', icon: MessageSquare },
     ],
   }
 ];
@@ -50,8 +54,36 @@ export interface KDSSidebarProps {
 }
 
 export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
-  const { signOut, preparationStation } = useAuth();
+  const { signOut, preparationStation, user } = useAuth();
   const { tenant } = useTenant();
+  const queryClient = useQueryClient();
+
+  const { data: conversations = [] } = useQuery({
+    queryKey: ['conversations', tenant?.id, user?.id],
+    queryFn: () => MessagingService.getConversations(tenant?.id || '', user?.id || ''),
+    enabled: !!tenant?.id && !!user?.id,
+  });
+
+  const totalUnreadMessages = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
+
+  useEffect(() => {
+    if (!tenant?.id) return;
+
+    const mChannel = supabase
+      .channel('messages-realtime-kds-sidebar')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenant.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(mChannel);
+    };
+  }, [tenant?.id, queryClient]);
   return (
     <>
       {/* Mobile Sidebar Backdrop overlay */}
@@ -115,14 +147,23 @@ export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
                         />
                         <span className="font-bold tracking-wide">{item.name}</span>
                       </div>
-                      {item.badge && (
+                      {item.name === 'Messages' ? (
+                        totalUnreadMessages > 0 ? (
+                          <span className={cn(
+                            "text-[10px] font-black px-2 py-0.5 rounded-full",
+                            isActive ? "bg-white text-[#F97316]" : "bg-indigo-500/30 text-indigo-200 border border-indigo-500/20"
+                          )}>
+                            {totalUnreadMessages}
+                          </span>
+                        ) : null
+                      ) : item.badge ? (
                         <span className={cn(
                           "text-[10px] font-black px-2 py-0.5 rounded-full",
                           isActive ? "bg-white text-[#F97316]" : "bg-indigo-500/30 text-indigo-200 border border-indigo-500/20"
                         )}>
                           {item.badge}
                         </span>
-                      )}
+                      ) : null}
                     </>
                   )}
                 </NavLink>

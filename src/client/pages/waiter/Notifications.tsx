@@ -50,9 +50,10 @@ export const Notifications = () => {
       .channel('notifications-channel')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `tenant_id=eq.${tenant.id}` },
+        { event: '*', schema: 'public', table: 'notifications', filter: `tenant_id=eq.${tenant.id}` },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['notifications', tenant.id] });
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          queryClient.invalidateQueries({ queryKey: ['unread-notifications-count'] });
         }
       )
       .subscribe();
@@ -65,16 +66,26 @@ export const Notifications = () => {
   const markReadMutation = useMutation({
     mutationFn: (id: string) => NotificationService.markAsRead(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications', tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-notifications-count'] });
     }
   });
 
   const markAllReadMutation = useMutation({
     mutationFn: () => NotificationService.markAllAsRead(tenant?.id || '', user?.id || ''),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications', tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-notifications-count'] });
     }
   });
+
+  // Automatically mark all notifications as read when opening notifications page
+  useEffect(() => {
+    const unread = notifications.filter((n: any) => !n.isRead);
+    if (unread.length > 0) {
+      markAllReadMutation.mutate();
+    }
+  }, [notifications, markAllReadMutation]);
 
   const getTimeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
