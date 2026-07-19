@@ -1,18 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { 
   CreditCard, 
-  Receipt, 
   Search, 
-  Filter, 
   ChevronRight, 
-  Users, 
-  Clock, 
   DollarSign, 
   Smartphone,
   Printer,
   CheckCircle2,
   Calendar,
-  X,
   Download
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
@@ -84,7 +79,7 @@ export const Payments = () => {
     enabled: !!tenant?.id,
   });
 
-  const { data: receipts = [], isLoading: isReceiptsLoading } = useQuery({
+  const { data: receipts = [] } = useQuery({
     queryKey: ['receipts', tenant?.id],
     queryFn: async () => {
       if (!tenant?.id) return [];
@@ -140,7 +135,6 @@ export const Payments = () => {
   });
 
   const pendingOrders = orders.filter((o: any) => o.status === 'READY' || o.status === 'SERVED' || o.status === 'AWAITING_PAYMENT');
-  const completedOrders = orders.filter((o: any) => o.status === 'COMPLETED');
   const selectedOrder = orders.find((o: any) => o.id === selectedOrderId);
 
   // Conversion calculations
@@ -159,6 +153,10 @@ export const Payments = () => {
   }, [selectedOrder, selectedCurrency, orderTotal, tenantBase]);
 
   const selectedCurrencySymbol = selectedCurrency === 'USD' ? '$' : 'ETB';
+
+  const formatInSelectedCurrency = (amt: number) => {
+    return CurrencyService.format(amt, selectedCurrency);
+  };
 
   const calculatedChange = selectedMethod === 'Cash' && Number(amountReceived) >= totalInSelectedCurrency
     ? Number(amountReceived) - totalInSelectedCurrency

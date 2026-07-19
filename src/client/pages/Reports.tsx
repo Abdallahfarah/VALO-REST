@@ -1,17 +1,14 @@
 import { 
   TrendingUp, 
   FileText, 
-  ChevronRight,
-  Users,
-  DollarSign,
-  ShoppingCart,
-  LayoutGrid,
-  Calendar,
-  ChevronDown,
-  ShieldAlert,
-  Coins,
-  CreditCard,
-  Smartphone,
+  Users, 
+  DollarSign, 
+  ShoppingCart, 
+  Calendar, 
+  ChevronDown, 
+  Coins, 
+  CreditCard, 
+  Smartphone, 
   ShieldCheck
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
@@ -27,7 +24,7 @@ import { toast } from '../lib/toast-store';
 
 export const Reports = () => {
   const { tenant } = useTenant();
-  const { currency, format } = useCurrency();
+  const { format } = useCurrency();
   const [upgradeModalFeature, setUpgradeModalFeature] = useState<string | null>(null);
   
   // Currency filter state
@@ -46,12 +43,13 @@ export const Reports = () => {
     enabled: !!tenant?.id,
   });
 
-  const { data: receipts = [], isLoading: isReceiptsLoading } = useQuery({
+  const { data: receiptsData = [], isLoading: isReceiptsLoading } = useQuery({
     queryKey: ['receipts', tenant?.id],
     queryFn: () => ReceiptService.getReceipts(tenant?.id || ''),
     enabled: !!tenant?.id,
   });
 
+  const receipts = receiptsData as any[];
   const isReportsLoading = isOrdersLoading || isStaffLoading || isReceiptsLoading;
 
   // ─── KPIs Calculations ───
@@ -105,60 +103,6 @@ export const Reports = () => {
     { label: 'Average Order Value', value: formatMultiValue(revenueTodayMetrics.avgEtb, revenueTodayMetrics.avgUsd), sub: 'Per transaction average', icon: TrendingUp, color: 'text-orange-500', bg: 'bg-orange-50' },
     { label: 'Active Staff', value: staff.length.toString(), sub: 'On shift now', icon: Users, color: 'text-purple-500', bg: 'bg-purple-50' },
   ];
-
-  // ─── Top Selling Items Calculations ───
-  const topItems = useMemo(() => {
-    const itemMap: Record<string, { name: string, qty: number, revenueETB: number, revenueUSD: number }> = {};
-    completedToday.forEach((order: any) => {
-      const receipt = receipts.find((r: any) => r.order_id === order.id);
-      const isUSD = receipt && receipt.currency === 'USD';
-
-      order.items?.forEach((item: any) => {
-        const name = item.menuItem?.name || 'Unknown';
-        if (!itemMap[name]) itemMap[name] = { name, qty: 0, revenueETB: 0, revenueUSD: 0 };
-        itemMap[name].qty += item.quantity;
-        if (isUSD) {
-          // Convert using 120.00 ETB rate for display logic in USD
-          itemMap[name].revenueUSD += (item.quantity * Number(item.price)) / 120.0;
-        } else {
-          itemMap[name].revenueETB += item.quantity * Number(item.price);
-        }
-      });
-    });
-    return Object.values(itemMap)
-      .sort((a, b) => (b.revenueETB + b.revenueUSD * 120) - (a.revenueETB + a.revenueUSD * 120))
-      .slice(0, 5);
-  }, [completedToday, receipts]);
-
-  // ─── Category Performance Calculations ───
-  const categoryStats = useMemo(() => {
-    const catMap: Record<string, { name: string, orders: number, revenueETB: number, revenueUSD: number }> = {};
-    completedToday.forEach((order: any) => {
-      const receipt = receipts.find((r: any) => r.order_id === order.id);
-      const isUSD = receipt && receipt.currency === 'USD';
-
-      order.items?.forEach((item: any) => {
-        const catName = item.menuItem?.category?.name || 'General';
-        if (!catMap[catName]) catMap[catName] = { name: catName, orders: 0, revenueETB: 0, revenueUSD: 0 };
-        catMap[catName].orders += 1;
-        if (isUSD) {
-          catMap[catName].revenueUSD += (item.quantity * Number(item.price)) / 120.0;
-        } else {
-          catMap[catName].revenueETB += item.quantity * Number(item.price);
-        }
-      });
-    });
-    
-    const baseTotal = revenueTodayMetrics.etbRevenue + (revenueTodayMetrics.usdRevenue * 120.0);
-
-    return Object.values(catMap).map(cat => {
-      const catBaseTotal = cat.revenueETB + (cat.revenueUSD * 120.0);
-      return {
-        ...cat,
-        pct: baseTotal > 0 ? Math.round((catBaseTotal / baseTotal) * 100) : 0
-      };
-    });
-  }, [completedToday, receipts, revenueTodayMetrics]);
 
   // Waitstaff & Cashier Collections
   const employeePerformance = useMemo(() => {
