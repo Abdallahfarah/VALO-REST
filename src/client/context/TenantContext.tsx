@@ -84,21 +84,30 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        // Setup query promises with timeout to prevent infinite loading screens
-        const tenantPromise = supabase
-          .from('tenants')
-          .select('*')
-          .eq('id', tenantId)
-          .single();
-
+        // Fetch tenant + subscription in parallel with a shared timeout
         const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Workspace loading timed out. Please try again.')), 8000)
         );
 
-        const { data: tenantData, error: tenantErr } = await Promise.race([
-          tenantPromise,
-          timeoutPromise
+        const tenantQuery = supabase
+          .from('tenants')
+          .select('id, name, slug, logo, phone, email, address, currency_code, currency_symbol')
+          .eq('id', tenantId)
+          .single();
+
+        const subscriptionQuery = supabase
+          .from('subscriptions')
+          .select('status, plans(name)')
+          .eq('tenant_id', tenantId)
+          .maybeSingle();
+
+        const [tenantResult, subResult] = await Promise.race([
+          Promise.all([tenantQuery, subscriptionQuery]),
+          timeoutPromise,
         ]);
+
+        const { data: tenantData, error: tenantErr } = tenantResult;
+        const { data: subData } = subResult;
 
         if (tenantErr) {
           throw new Error('Failed to retrieve restaurant workspace data: ' + tenantErr.message);
@@ -107,18 +116,6 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
         if (!tenantData) {
           throw new Error('Restaurant workspace not found.');
         }
-
-        // Fetch subscription data with a timeout fallback
-        const subscriptionPromise = supabase
-          .from('subscriptions')
-          .select('*, plans(*)')
-          .eq('tenant_id', tenantId)
-          .maybeSingle();
-
-        const { data: subData } = await Promise.race([
-          subscriptionPromise,
-          timeoutPromise
-        ]);
 
         const activePlan = (subData?.plans?.name || 'PRO') as 'PRO';
         const subStatus = subData?.status || 'ACTIVE';

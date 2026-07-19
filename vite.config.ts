@@ -34,6 +34,15 @@ export default defineConfig({
             if (id.includes('lucide-react')) {
               return 'icons-vendor';
             }
+            if (id.includes('react-router') || id.includes('react-router-dom')) {
+              return 'router-vendor';
+            }
+            if (id.includes('recharts') || id.includes('d3-') || id.includes('victory')) {
+              return 'charts-vendor';
+            }
+            if (id.includes('date-fns') || id.includes('dayjs') || id.includes('moment')) {
+              return 'date-vendor';
+            }
             return 'vendor';
           }
         }
