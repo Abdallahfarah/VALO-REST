@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 @theme {
   --color-brand: #F97316;
@@ -25,4 +25,91 @@ body {
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Restaurant Admin Portal — Responsive Illustration Background System
+   Smart focal-point cropping per breakpoint.
+   Image is never distorted, stretched, or repeated.
+   Optimized image sizes are loaded based on viewport width (preventing unnecessary bandwidth).
+───────────────────────────────────────────────────────────────────────────── */
+
+/* Base: Mobile Portrait (up to 599px) — POS terminal + left interior */
+.restaurant-illustration-bg {
+  background-image: url('/restaurant-bg-mobile.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  background-position: 22% 45%;
+  transform: translateZ(0); /* GPU compositing — smooth 60fps scrolling */
+  backface-visibility: hidden;
+}
+
+/* Mobile Landscape */
+@media (max-width: 767px) and (orientation: landscape) {
+  .restaurant-illustration-bg {
+    background-image: url('/restaurant-bg-mobile.jpg');
+    background-position: 20% 50%;
+  }
+}
+
+/* Tablet Portrait 600–767px */
+@media (min-width: 600px) {
+  .restaurant-illustration-bg {
+    background-image: url('/restaurant-bg-tablet.jpg');
+    background-position: 28% 50%;
+  }
+}
+
+/* Tablet Landscape 768–1023px */
+@media (min-width: 768px) {
+  .restaurant-illustration-bg {
+    background-image: url('/restaurant-bg-tablet.jpg');
+    background-position: 38% 50%;
+  }
+}
+
+/* Laptop 1024–1439px */
+@media (min-width: 1024px) {
+  .restaurant-illustration-bg {
+    background-image: url('/restaurant-bg.jpg');
+    background-position: 50% 50%;
+  }
+}
+
+/* Desktop 1440px+ — Full composition */
+@media (min-width: 1440px) {
+  .restaurant-illustration-bg {
+    background-image: url('/restaurant-bg.jpg');
+    background-position: center 50%;
+  }
+}
+
+/* ── Overlay: responsive opacity ──────────────────────────────────────────── */
+.restaurant-illustration-overlay {
+  background-color: rgba(248, 250, 252, 0.93);
+}
+
+@media (min-width: 600px) {
+  .restaurant-illustration-overlay {
+    background-color: rgba(248, 250, 252, 0.90);
+  }
+}
+
+@media (min-width: 768px) {
+  .restaurant-illustration-overlay {
+    background-color: rgba(248, 250, 252, 0.86);
+  }
+}
+
+@media (min-width: 1024px) {
+  .restaurant-illustration-overlay {
+    background-color: rgba(248, 250, 252, 0.81);
+  }
+}
+
+@media (min-width: 1440px) {
+  .restaurant-illustration-overlay {
+    background-color: rgba(248, 250, 252, 0.75);
+  }
 }

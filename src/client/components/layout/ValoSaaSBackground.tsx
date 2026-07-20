@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { cn } from '../../lib/utils';
 
 interface ValoSaaSBackgroundProps {
@@ -5,7 +6,31 @@ interface ValoSaaSBackgroundProps {
   className?: string;
 }
 
+// Global cache for loaded status of the responsive background illustration
+let globalImageLoaded = false;
+
 export const ValoSaaSBackground = ({ type = 'default', className }: ValoSaaSBackgroundProps) => {
+  const [isLoaded, setIsLoaded] = useState(globalImageLoaded);
+
+  useEffect(() => {
+    if (globalImageLoaded) return;
+
+    // Load optimized image size based on viewport width
+    let src = '/restaurant-bg.jpg';
+    const width = window.innerWidth;
+    if (width < 600) {
+      src = '/restaurant-bg-mobile.jpg';
+    } else if (width < 1024) {
+      src = '/restaurant-bg-tablet.jpg';
+    }
+
+    const img = new Image();
+    img.src = src;
+    img.onload = () => {
+      globalImageLoaded = true;
+      setIsLoaded(true);
+    };
+  }, []);
   // Renders role-specific lightweight SVG outline illustrations
   const renderIllustrations = () => {
     switch (type) {
@@ -182,28 +207,42 @@ export const ValoSaaSBackground = ({ type = 'default', className }: ValoSaaSBack
 
   return (
     <div className={cn("absolute inset-0 overflow-hidden select-none pointer-events-none z-0", className)}>
-      {/* 1. Soft mesh gradients (blurred large circles) */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/5 blur-[120px] transition-all duration-500" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-orange-500/4 blur-[120px] transition-all duration-500" />
+      {/* 1. Responsive background image layer (fades in elegantly once loaded) */}
+      <div 
+        className={cn(
+          "restaurant-illustration-bg absolute inset-0 transition-opacity duration-1000 ease-in-out z-0",
+          isLoaded ? "opacity-100" : "opacity-0"
+        )}
+      />
 
-      {/* 2. Abstract flowing SVG wave lines (Top Section) */}
-      <svg viewBox="0 0 1440 200" fill="none" className="absolute top-0 left-0 w-full opacity-[0.03] text-[#64748B] pointer-events-none">
-        <path d="M 0 60 C 320 180, 720 20, 1080 120 C 1260 170, 1380 90, 1440 60 L 1440 0 L 0 0 Z" fill="currentColor" />
-        <path d="M 0 90 C 380 40, 680 180, 1020 90 C 1200 45, 1350 140, 1440 120" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
+      {/* 2. Responsive overlay layer for maintaining UI readability */}
+      <div className="restaurant-illustration-overlay absolute inset-0 z-1" />
 
-      {/* 3. Dot grid pattern (Top Right) */}
-      <svg className="absolute top-0 right-0 w-[400px] h-[400px] opacity-[0.03] text-[#64748B] pointer-events-none" fill="currentColor">
-        <defs>
-          <pattern id="bg-dot-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1.5" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#bg-dot-pattern)" />
-      </svg>
+      {/* 3. Original vector SVG assets and portal-specific outlines on top (z-2) */}
+      <div className="absolute inset-0 z-2 opacity-80">
+        {/* Soft mesh gradients (blurred large circles) */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/5 blur-[120px] transition-all duration-500" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-orange-500/4 blur-[120px] transition-all duration-500" />
 
-      {/* 4. Large Outline Illustrations */}
-      {renderIllustrations()}
+        {/* Abstract flowing SVG wave lines (Top Section) */}
+        <svg viewBox="0 0 1440 200" fill="none" className="absolute top-0 left-0 w-full opacity-[0.03] text-[#64748B] pointer-events-none">
+          <path d="M 0 60 C 320 180, 720 20, 1080 120 C 1260 170, 1380 90, 1440 60 L 1440 0 L 0 0 Z" fill="currentColor" />
+          <path d="M 0 90 C 380 40, 680 180, 1020 90 C 1200 45, 1350 140, 1440 120" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+
+        {/* Dot grid pattern (Top Right) */}
+        <svg className="absolute top-0 right-0 w-[400px] h-[400px] opacity-[0.03] text-[#64748B] pointer-events-none" fill="currentColor">
+          <defs>
+            <pattern id="bg-dot-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="1.5" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#bg-dot-pattern)" />
+        </svg>
+
+        {/* Large Outline Illustrations */}
+        {renderIllustrations()}
+      </div>
     </div>
   );
 };
