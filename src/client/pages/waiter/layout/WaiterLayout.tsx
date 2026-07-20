@@ -17,7 +17,7 @@ export const WaiterLayout = () => {
   ];
 
   return (
-    <div className="min-h-screen lg:bg-[#F8FAFC] bg-[#090D1F] text-[#64748B] lg:text-[#0B1630] font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#070913] text-[#F8FAFC] font-sans relative overflow-x-hidden restaurant-portal">
       <WaiterSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="lg:pl-[260px] pl-0 flex flex-col min-h-screen">
         <WaiterHeader onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />

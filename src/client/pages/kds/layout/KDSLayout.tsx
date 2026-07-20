@@ -18,7 +18,7 @@ export const KDSLayout = () => {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-[#070913] text-[#94A3B8] font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#070913] text-[#94A3B8] font-sans relative overflow-x-hidden restaurant-portal">
       <KDSSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="lg:pl-[260px] pl-0 flex flex-col min-h-screen">
         <KDSHeader onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />

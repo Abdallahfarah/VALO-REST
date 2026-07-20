@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @theme {
   --color-brand: #F97316;
@@ -85,31 +85,174 @@ body {
   }
 }
 
-/* ── Overlay: responsive opacity ──────────────────────────────────────────── */
+/* ── Overlay: responsive dark navy/black gradient ───────────────────────── */
 .restaurant-illustration-overlay {
-  background-color: rgba(248, 250, 252, 0.93);
+  background: linear-gradient(
+    to bottom,
+    rgba(7, 9, 19, 0.90) 0%,
+    rgba(7, 9, 19, 0.98) 100%
+  ) !important;
 }
 
 @media (min-width: 600px) {
   .restaurant-illustration-overlay {
-    background-color: rgba(248, 250, 252, 0.90);
+    background: linear-gradient(
+      to bottom,
+      rgba(7, 9, 19, 0.88) 0%,
+      rgba(7, 9, 19, 0.96) 100%
+    ) !important;
   }
 }
 
 @media (min-width: 768px) {
   .restaurant-illustration-overlay {
-    background-color: rgba(248, 250, 252, 0.86);
+    background: linear-gradient(
+      to bottom,
+      rgba(7, 9, 19, 0.85) 0%,
+      rgba(7, 9, 19, 0.94) 100%
+    ) !important;
   }
 }
 
 @media (min-width: 1024px) {
   .restaurant-illustration-overlay {
-    background-color: rgba(248, 250, 252, 0.81);
+    background: linear-gradient(
+      to bottom,
+      rgba(7, 9, 19, 0.82) 0%,
+      rgba(7, 9, 19, 0.92) 100%
+    ) !important;
   }
 }
 
 @media (min-width: 1440px) {
   .restaurant-illustration-overlay {
-    background-color: rgba(248, 250, 252, 0.75);
+    background: linear-gradient(
+      to bottom,
+      rgba(7, 9, 19, 0.75) 0%,
+      rgba(7, 9, 19, 0.88) 100%
+    ) !important;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Premium Dark Glassmorphic Theme Overrides (Restaurant Portal only)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.restaurant-portal {
+  background-color: #070913 !important;
+  color: #F8FAFC !important;
+}
+
+/* Dark Glassmorphic Card Surface */
+.restaurant-portal .bg-white,
+.restaurant-portal .card,
+.restaurant-portal .bg-white.rounded-3xl,
+.restaurant-portal .bg-white.rounded-2xl {
+  background-color: rgba(14, 18, 40, 0.72) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+  color: #F8FAFC !important;
+}
+
+/* Light background surfaces -> semi-transparent dark surfaces */
+.restaurant-portal .bg-slate-50,
+.restaurant-portal .bg-gray-50,
+.restaurant-portal .bg-slate-100,
+.restaurant-portal .bg-gray-100,
+.restaurant-portal .bg-orange-50 {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  color: #F8FAFC !important;
+}
+
+.restaurant-portal .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  color: #34D399 !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+.restaurant-portal .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.12) !important;
+  color: #60A5FA !important;
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.restaurant-portal .bg-indigo-50 {
+  background-color: rgba(99, 102, 241, 0.12) !important;
+  color: #818CF8 !important;
+  border-color: rgba(99, 102, 241, 0.2) !important;
+}
+
+.restaurant-portal .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.12) !important;
+  color: #FCA5A5 !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Borders -> thin translucent borders */
+.restaurant-portal .border-slate-200,
+.restaurant-portal .border-gray-200,
+.restaurant-portal .border-slate-100,
+.restaurant-portal .border-\[\#E5E7EB\],
+.restaurant-portal .border-t,
+.restaurant-portal .border-b,
+.restaurant-portal .border-l,
+.restaurant-portal .border-r {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Dark text colors -> Light text colors for readability */
+.restaurant-portal .text-\[\#0B1630\],
+.restaurant-portal .text-slate-900,
+.restaurant-portal .text-gray-900,
+.restaurant-portal .text-slate-800,
+.restaurant-portal .text-gray-800,
+.restaurant-portal .text-slate-700 {
+  color: #F8FAFC !important;
+}
+
+.restaurant-portal .text-slate-600,
+.restaurant-portal .text-gray-600 {
+  color: #94A3B8 !important;
+}
+
+.restaurant-portal .text-slate-500,
+.restaurant-portal .text-gray-500 {
+  color: #64748B !important;
+}
+
+/* Interactive inputs, select boxes and options */
+.restaurant-portal input,
+.restaurant-portal select,
+.restaurant-portal textarea {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #F8FAFC !important;
+}
+
+.restaurant-portal select option {
+  background-color: #0c0f24 !important;
+  color: #F8FAFC !important;
+}
+
+/* Headers and Sidebars Integration */
+.restaurant-portal header {
+  background-color: rgba(7, 9, 19, 0.75) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.restaurant-portal aside {
+  background-color: rgba(11, 22, 48, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* Hover effects for cards */
+.restaurant-portal .hover\:shadow-md:hover {
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+

@@ -19,7 +19,7 @@ export const CashierLayout = () => {
   ];
 
   return (
-    <div className="min-h-screen lg:bg-[#F8FAFC] bg-[#090D1F] text-[#64748B] lg:text-[#0B1630] font-sans relative overflow-x-hidden flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-[#070913] text-[#F8FAFC] font-sans relative overflow-x-hidden flex flex-col lg:flex-row restaurant-portal">
       <CashierSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="lg:pl-[260px] pl-0 flex-1 flex flex-col min-h-screen relative overflow-hidden">
         <CashierHeader onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
