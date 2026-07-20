@@ -37,6 +37,8 @@ describe('RBAC Routing Protection', () => {
       signOut: vi.fn(),
       impersonatedTenantId: null,
       setImpersonatedTenantId: vi.fn(),
+      preparationStation: null,
+      userTenantId: null,
     });
 
     render(
@@ -67,6 +69,8 @@ describe('RBAC Routing Protection', () => {
       signOut: vi.fn(),
       impersonatedTenantId: null,
       setImpersonatedTenantId: vi.fn(),
+      preparationStation: null,
+      userTenantId: null,
     });
 
     render(
@@ -96,6 +100,8 @@ describe('RBAC Routing Protection', () => {
       signOut: vi.fn(),
       impersonatedTenantId: null,
       setImpersonatedTenantId: vi.fn(),
+      preparationStation: null,
+      userTenantId: null,
     });
 
     render(
