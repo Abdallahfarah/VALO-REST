@@ -117,7 +117,7 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
           throw new Error('Restaurant workspace not found.');
         }
 
-        const activePlan = (subData?.plans?.name || 'PRO') as 'PRO';
+        const activePlan = ((subData?.plans as any)?.name || 'PRO') as 'PRO';
         const subStatus = subData?.status || 'ACTIVE';
 
         const currencyCode = tenantData.currency_code || 'ETB';

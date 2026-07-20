@@ -12,8 +12,7 @@ import {
   Users,
   UserCheck,
   ChevronDown,
-  Receipt,
-  Eye
+  Receipt
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
@@ -140,18 +139,7 @@ const TableRow = memo(({ table, waiters, onEdit, onDelete, onAssignWaiter, onUpd
   );
 });
 
-// ─── KPI Card ───
-const KpiCard = memo(({ icon: Icon, label, value, color }: any) => (
-  <Card className="p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex items-center gap-4">
-    <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center", `bg-${color}-50 text-${color}-600`)}>
-      <Icon size={24} />
-    </div>
-    <div>
-      <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-0.5">{label}</p>
-      <h3 className="text-2xl font-black text-[#0B1630]">{value}</h3>
-    </div>
-  </Card>
-));
+
 
 
 export const Tables = () => {
