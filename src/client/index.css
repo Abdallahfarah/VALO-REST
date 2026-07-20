@@ -143,17 +143,30 @@ body {
   color: #F8FAFC !important;
 }
 
-/* Dark Glassmorphic Card Surface */
+/* Dark Glassmorphic Card Surface with Accent Neon Border & Glow */
 .restaurant-portal .bg-white,
 .restaurant-portal .card,
 .restaurant-portal .bg-white.rounded-3xl,
-.restaurant-portal .bg-white.rounded-2xl {
-  background-color: rgba(14, 18, 40, 0.72) !important;
+.restaurant-portal .bg-white.rounded-2xl,
+.restaurant-portal .rounded-3xl.border,
+.restaurant-portal .rounded-2xl.border {
+  background-color: rgba(10, 14, 30, 0.72) !important;
   backdrop-filter: blur(18px) !important;
   -webkit-backdrop-filter: blur(18px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(249, 115, 22, 0.28) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45), 0 0 10px 0 rgba(249, 115, 22, 0.08) !important;
   color: #F8FAFC !important;
+  transition: all 0.3s ease-in-out !important;
+}
+
+/* Subtle card hover animation */
+.restaurant-portal .bg-white.rounded-3xl:hover,
+.restaurant-portal .bg-white.rounded-2xl:hover,
+.restaurant-portal .card:hover,
+.restaurant-portal .hover\:shadow-md:hover {
+  border-color: rgba(249, 115, 22, 0.5) !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.55), 0 0 16px 0 rgba(249, 115, 22, 0.18) !important;
+  transform: translateY(-1px) !important;
 }
 
 /* Light background surfaces -> semi-transparent dark surfaces */
@@ -226,9 +239,18 @@ body {
 .restaurant-portal input,
 .restaurant-portal select,
 .restaurant-portal textarea {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: rgba(10, 14, 30, 0.6) !important;
+  border: 1px solid rgba(249, 115, 22, 0.22) !important;
   color: #F8FAFC !important;
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2) !important;
+}
+
+.restaurant-portal input:focus,
+.restaurant-portal select:focus,
+.restaurant-portal textarea:focus {
+  border-color: #F97316 !important;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2), inset 0 2px 4px 0 rgba(0, 0, 0, 0.2) !important;
+  outline: none !important;
 }
 
 .restaurant-portal select option {
@@ -245,14 +267,79 @@ body {
 }
 
 .restaurant-portal aside {
-  background-color: rgba(11, 22, 48, 0.85) !important;
+  background-color: rgba(10, 14, 30, 0.85) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Hover effects for cards */
-.restaurant-portal .hover\:shadow-md:hover {
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+/* Active navigation state */
+.restaurant-portal aside a.bg-\[\#1A2A52\]\/60,
+.restaurant-portal aside a.active,
+.restaurant-portal aside a.bg-orange-500 {
+  background: linear-gradient(135deg, #F97316 0%, #ea580c 100%) !important;
+  border-left: none !important;
+  box-shadow: 0 4px 14px 0 rgba(249, 115, 22, 0.4) !important;
+  color: #FFFFFF !important;
+}
+
+/* Hover navigation state */
+.restaurant-portal aside a:hover:not(.active) {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  color: #FFFFFF !important;
+}
+
+/* Interactive tables */
+.restaurant-portal table {
+  background-color: transparent !important;
+}
+.restaurant-portal th {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  color: #94A3B8 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+.restaurant-portal td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+.restaurant-portal tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Primary Button Styling */
+.restaurant-portal button.bg-\[\#F97316\],
+.restaurant-portal button.bg-orange-500,
+.restaurant-portal .bg-\[\#F97316\],
+.restaurant-portal .bg-orange-500 {
+  background-color: #F97316 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 12px 0 rgba(249, 115, 22, 0.25), 0 0 8px 0 rgba(249, 115, 22, 0.1) !important;
+  color: #FFFFFF !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.restaurant-portal button.bg-\[\#F97316\]:hover,
+.restaurant-portal button.bg-orange-500:hover,
+.restaurant-portal .bg-\[\#F97316\]:hover,
+.restaurant-portal .bg-orange-500:hover {
+  background-color: #ea580c !important;
+  box-shadow: 0 6px 16px 0 rgba(249, 115, 22, 0.4), 0 0 12px 0 rgba(249, 115, 22, 0.2) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Custom scrollbars inside dark panel */
+.restaurant-portal *::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.restaurant-portal *::-webkit-scrollbar-track {
+  background: transparent;
+}
+.restaurant-portal *::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+}
+.restaurant-portal *::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 22, 0.3);
 }
 
