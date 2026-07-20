@@ -170,7 +170,7 @@ const CancellationDialog = ({ order, onConfirm, onClose, isPending }: Cancellati
 interface OrderDetailsDialogProps {
   order: any;
   onClose: () => void;
-  onStatusUpdate: (orderId: string, currentStatus: string) => void;
+  onStatusUpdate: (orderId: string, currentStatus: string, order?: any) => void;
   onCancel: (order: any) => void;
   isUpdating: boolean;
   activeStation: string;
@@ -295,7 +295,7 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
             )}
             {currentStationStatus !== 'READY' && currentStationStatus !== 'CANCELED' && (
               <button
-                onClick={() => { onClose(); onStatusUpdate(order.id, currentStationStatus); }}
+                onClick={() => { onClose(); onStatusUpdate(order.id, currentStationStatus, order); }}
                 disabled={isUpdating}
                 className="px-4 py-2.5 rounded-2xl bg-[#F97316] text-white hover:bg-[#ea580c] text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
               >
@@ -322,7 +322,7 @@ interface ViewAllOrdersDialogProps {
   orders: any[];
   onClose: () => void;
   onSelectOrder: (order: any) => void;
-  onStatusUpdate: (orderId: string, currentStatus: string) => void;
+  onStatusUpdate: (orderId: string, currentStatus: string, order?: any) => void;
   onCancel: (order: any) => void;
   isUpdating: boolean;
   activeStation: string;
@@ -402,7 +402,7 @@ const ViewAllOrdersDialog = ({
                 <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                   {status !== 'READY' && status !== 'CANCELED' && (
                     <button
-                      onClick={() => onStatusUpdate(order.id, getStationOrderStatus(order))}
+                      onClick={() => onStatusUpdate(order.id, getStationOrderStatus(order), order)}
                       disabled={isUpdating}
                       className="px-3 py-1.5 rounded-xl bg-[#F97316]/10 border border-[#F97316]/30 text-[#F97316] text-[9px] font-black uppercase tracking-wider hover:bg-[#F97316] hover:text-white transition-all disabled:opacity-50"
                     >
@@ -455,6 +455,8 @@ export const OrdersMonitor = () => {
   // 1. Determine active station
   const isKdsUser = role === 'KITCHEN_STAFF';
   const [activeStation, setActiveStation] = useState<string>('Chef');
+  // Per-order loading state: only the clicked order shows a spinner
+  const [pendingOrderIds, setPendingOrderIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (isKdsUser && preparationStation) {
@@ -488,12 +490,87 @@ export const OrdersMonitor = () => {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ orderId, status }: { orderId: string, status: string }) => 
-      OrderService.updateStationItemsStatus(orderId, activeStation, status),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      toast.success('Order updated', `Status → ${variables.status}`);
-    }
+    mutationFn: ({
+      orderId,
+      status,
+      clientData,
+    }: {
+      orderId: string;
+      status: string;
+      clientData?: { targetItemIds: string[]; projectedOrderStatus: string };
+    }) =>
+      OrderService.updateStationItemsStatus(orderId, activeStation, status, clientData),
+
+    onMutate: async ({ orderId, status }) => {
+      // Mark this order as pending (show spinner on its button only)
+      setPendingOrderIds((prev) => new Set(prev).add(orderId));
+
+      // Cancel any in-flight refetches to prevent them overwriting our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['orders', tenant?.id] });
+
+      // Snapshot the previous value for rollback
+      const previousOrders = queryClient.getQueryData<any[]>(['orders', tenant?.id]);
+
+      // Optimistically update the cache: mutate only the affected order's items
+      queryClient.setQueryData<any[]>(['orders', tenant?.id], (old = []) =>
+        old.map((order) => {
+          if (order.id !== orderId) return order;
+
+          const sourceStatus = status === 'PREPARING' ? 'PENDING' : 'PREPARING';
+          const updatedItems = (order.items || []).map((item: any) => {
+            const itemStation = item.menuItem?.preparationStation || 'Chef';
+            if (itemStation === activeStation && item.status === sourceStatus) {
+              return { ...item, status };
+            }
+            return item;
+          });
+
+          // Recompute order-level status from updated items
+          const allDone = updatedItems.every(
+            (i: any) => i.status === 'READY' || i.status === 'CANCELED'
+          );
+          const anyPreparing = updatedItems.some((i: any) => i.status === 'PREPARING');
+          const newOrderStatus =
+            allDone && updatedItems.length > 0
+              ? 'READY'
+              : anyPreparing
+              ? 'PREPARING'
+              : 'PENDING';
+
+          return { ...order, status: newOrderStatus, items: updatedItems };
+        })
+      );
+
+      return { previousOrders };
+    },
+
+    onError: (_err, { orderId }, context) => {
+      // Rollback to previous cache on failure
+      if (context?.previousOrders) {
+        queryClient.setQueryData(['orders', tenant?.id], context.previousOrders);
+      }
+      setPendingOrderIds((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+      toast.error('Update failed', 'Could not update order status. Please try again.');
+    },
+
+    onSuccess: (_data, { orderId, status }) => {
+      setPendingOrderIds((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+      toast.success('Order updated', `Status → ${status}`);
+    },
+
+    onSettled: () => {
+      // Background sync — keeps other clients consistent via realtime,
+      // but doesn't block or re-render for the user who clicked.
+      queryClient.invalidateQueries({ queryKey: ['orders', tenant?.id] });
+    },
   });
 
   const cancelMutation = useMutation({
@@ -537,14 +614,43 @@ export const OrdersMonitor = () => {
     return 'PENDING';
   };
 
-  const handleStatusUpdate = (orderId: string, currentStatus: string) => {
+  const handleStatusUpdate = (orderId: string, currentStatus: string, order?: any) => {
     let nextStatus = '';
     if (currentStatus === 'PENDING') nextStatus = 'PREPARING';
     else if (currentStatus === 'PREPARING') nextStatus = 'READY';
-    
-    if (nextStatus) {
-      updateStatusMutation.mutate({ orderId, status: nextStatus });
+
+    if (!nextStatus) return;
+
+    // Compute clientData from what we already have in the cache
+    // This lets the service skip its upfront SELECT query entirely
+    let clientData: { targetItemIds: string[]; projectedOrderStatus: string } | undefined;
+    if (order) {
+      const sourceStatus = nextStatus === 'PREPARING' ? 'PENDING' : 'PREPARING';
+      const allItems: any[] = order.items || [];
+      const targetItemIds = allItems
+        .filter(
+          (item: any) =>
+            (item.menuItem?.preparationStation || 'Chef') === activeStation &&
+            item.status === sourceStatus
+        )
+        .map((item: any) => item.id);
+
+      const projected = allItems.map((item: any) => ({
+        status: targetItemIds.includes(item.id) ? nextStatus : item.status,
+      }));
+      const allDone = projected.every(
+        (i) => i.status === 'READY' || i.status === 'CANCELED'
+      );
+      const anyPreparing = projected.some((i) => i.status === 'PREPARING');
+      const projectedOrderStatus =
+        allDone && projected.length > 0 ? 'READY' : anyPreparing ? 'PREPARING' : 'PENDING';
+
+      if (targetItemIds.length > 0) {
+        clientData = { targetItemIds, projectedOrderStatus };
+      }
     }
+
+    updateStatusMutation.mutate({ orderId, status: nextStatus, clientData });
   };
 
   const isCancellable = (status: string) => status === 'PENDING' || status === 'PREPARING';
@@ -811,8 +917,8 @@ export const OrdersMonitor = () => {
                               {/* Progress action */}
                               {col.title !== 'READY' && col.title !== 'CANCELED' ? (
                                  <button 
-                                   onClick={() => handleStatusUpdate(order.id, getStationOrderStatus(order))}
-                                   disabled={updateStatusMutation.isPending}
+                                   onClick={() => handleStatusUpdate(order.id, getStationOrderStatus(order), order)}
+                                   disabled={pendingOrderIds.has(order.id)}
                                    className="flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/30 hover:bg-[#F97316] hover:text-white transition-colors disabled:opacity-50"
                                  >
                                     {col.title === 'NEW ORDERS' ? 'Start Preparing' : 'Mark as Ready'}
@@ -827,7 +933,7 @@ export const OrdersMonitor = () => {
                               {isCancellable(getStationOrderStatus(order)) && (
                                 <button
                                   onClick={() => setCancelling(order)}
-                                  disabled={updateStatusMutation.isPending || cancelMutation.isPending}
+                                  disabled={pendingOrderIds.has(order.id) || cancelMutation.isPending}
                                   className="py-1.5 px-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest text-red-400 bg-red-500/5 border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
                                   title="Cancel order"
                                 >
@@ -922,8 +1028,8 @@ export const OrdersMonitor = () => {
                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           {col.title !== 'READY' && col.title !== 'CANCELED' ? (
                             <button
-                              onClick={() => handleStatusUpdate(order.id, getStationOrderStatus(order))}
-                              disabled={updateStatusMutation.isPending}
+                              onClick={() => handleStatusUpdate(order.id, getStationOrderStatus(order), order)}
+                              disabled={pendingOrderIds.has(order.id)}
                               className="flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#F97316] border border-[#F97316]/30 hover:bg-[#F97316]/10 transition-colors disabled:opacity-50 flex items-center justify-between px-4"
                             >
                               <span>{col.title === 'NEW ORDERS' ? 'Start Preparing' : 'Mark as Ready'}</span>
@@ -939,7 +1045,7 @@ export const OrdersMonitor = () => {
                           {isCancellable(getStationOrderStatus(order)) && (
                             <button
                               onClick={() => setCancelling(order)}
-                              disabled={updateStatusMutation.isPending || cancelMutation.isPending}
+                              disabled={pendingOrderIds.has(order.id) || cancelMutation.isPending}
                               className="p-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
                               title="Cancel order"
                             >

@@ -292,119 +292,103 @@ export const OrderService = {
     return data ? mapOrder(data) : null;
   },
 
-  async updateStationItemsStatus(orderId: string, station: string, nextStatus: string) {
+  async updateStationItemsStatus(
+    orderId: string,
+    station: string,
+    nextStatus: string,
+    clientData?: {
+      targetItemIds: string[];
+      projectedOrderStatus: string;
+    }
+  ) {
     const now = new Date().toISOString();
-    
-    // 1. Get all items for this order with their menu item preparation station
-    const { data: items, error: fetchErr } = await supabase
-      .from('order_items')
-      .select('*, menu_items(preparation_station)')
-      .eq('order_id', orderId);
-      
-    if (fetchErr) throw fetchErr;
 
-    // 2. Filter items belonging to this station
-    const stationItems = items.filter((item: any) => {
-      const itemStation = item.menu_items?.preparation_station || 'Chef';
-      return itemStation === station;
-    });
+    let targetItemIds: string[];
+    let projectedOrderStatus: string;
 
-    if (stationItems.length === 0) return null;
-
-    // 3. Determine source status to update
-    const sourceStatus = nextStatus === 'PREPARING' ? 'PENDING' : 'PREPARING';
-    const targetItemIds = stationItems
-      .filter((item: any) => item.status === sourceStatus)
-      .map((item: any) => item.id);
-
-    if (targetItemIds.length > 0) {
-      const { error: updateErr } = await supabase
+    if (clientData && clientData.targetItemIds.length > 0) {
+      targetItemIds = clientData.targetItemIds;
+      projectedOrderStatus = clientData.projectedOrderStatus;
+    } else {
+      const { data: items, error: fetchErr } = await supabase
         .from('order_items')
-        .update({ status: nextStatus })
-        .in('id', targetItemIds);
-        
-      if (updateErr) throw updateErr;
+        .select('id, status, menu_items(preparation_station)')
+        .eq('order_id', orderId);
+      if (fetchErr) throw fetchErr;
+
+      const sourceStatus = nextStatus === 'PREPARING' ? 'PENDING' : 'PREPARING';
+      const stationItems = (items || []).filter((item: any) => {
+        const itemStation = item.menu_items?.preparation_station || 'Chef';
+        return itemStation === station;
+      });
+      targetItemIds = stationItems
+        .filter((item: any) => item.status === sourceStatus)
+        .map((item: any) => item.id);
+
+      const projected = (items || []).map((item: any) => ({
+        status: targetItemIds.includes(item.id) ? nextStatus : item.status,
+      }));
+      const allDone = projected.every(
+        (i: any) => i.status === 'READY' || i.status === 'CANCELED'
+      );
+      const anyPreparing = projected.some((i: any) => i.status === 'PREPARING');
+      projectedOrderStatus =
+        allDone && projected.length > 0 ? 'READY' : anyPreparing ? 'PREPARING' : 'PENDING';
     }
 
-    // 4. Fetch the updated state of all items for the order
-    const { data: allItems } = await supabase
+    if (targetItemIds.length === 0) return null;
+
+    // CRITICAL PATH: only this one call blocks the caller
+    const { error: updateErr } = await supabase
       .from('order_items')
-      .select('*, menu_items(preparation_station)')
-      .eq('order_id', orderId);
+      .update({ status: nextStatus })
+      .in('id', targetItemIds);
 
-    const activeItems = allItems || [];
+    if (updateErr) throw updateErr;
 
-    // 5. Update overall order status
-    // If all items are READY or CANCELED, order becomes READY (unless cancelled/completed already)
-    const allReadyOrCanceled = activeItems.every((item: any) => item.status === 'READY' || item.status === 'CANCELED');
-    const hasAnyPreparing = activeItems.some((item: any) => item.status === 'PREPARING');
-    
-    let orderStatus = 'PENDING';
-    if (allReadyOrCanceled && activeItems.length > 0) {
-      orderStatus = 'READY';
-    } else if (hasAnyPreparing) {
-      orderStatus = 'PREPARING';
-    }
-
-    // Update order
-    const { data: orderData } = await supabase
-      .from('orders')
-      .select('status, table_id')
-      .eq('id', orderId)
-      .single();
-
-    if (orderData && orderData.status !== 'COMPLETED' && orderData.status !== 'CANCELED') {
-      await supabase
-        .from('orders')
-        .update({ status: orderStatus, updated_at: now })
-        .eq('id', orderId);
-
-      // Keep table status in sync
-      if (orderData.table_id) {
-        let tableStatus = 'AVAILABLE';
-        if (orderStatus === 'PREPARING') {
-          tableStatus = 'PREPARING';
-        } else if (orderStatus === 'READY') {
-          tableStatus = 'READY';
-        } else if (orderStatus === 'COMPLETED') {
-          tableStatus = 'AVAILABLE';
-        }
-        await supabase
-          .from('tables')
-          .update({ status: tableStatus })
-          .eq('id', orderData.table_id);
-      }
-    }
-
-    // 7. Send "Items Ready" notification to Waiter if all station's items are now READY
-    if (nextStatus === 'READY' && targetItemIds.length > 0) {
+    // BACKGROUND: fire-and-forget order/table/notification updates
+    void (async () => {
       try {
-        const { data: updatedOrder } = await supabase
+        let tableStatus = 'OCCUPIED';
+        if (projectedOrderStatus === 'PREPARING') tableStatus = 'PREPARING';
+        else if (projectedOrderStatus === 'READY') tableStatus = 'READY';
+
+        const { data: orderData } = await supabase
           .from('orders')
-          .select('waiter_id, tenant_id, tables(number)')
+          .select('status, table_id, waiter_id, tenant_id, tables(number)')
           .eq('id', orderId)
           .single();
 
-        if (updatedOrder) {
-          const waiterId = updatedOrder.waiter_id;
-          const tableNumber = (updatedOrder as any).tables?.number || '?';
-          const tenantId = updatedOrder.tenant_id || '';
+        if (!orderData || orderData.status === 'COMPLETED' || orderData.status === 'CANCELED') return;
 
-          if (tenantId) {
-            await supabase.from('notifications').insert({
-              tenant_id: tenantId,
-              user_id: waiterId || null,
-              role: 'WAITER',
-              title: 'Items Ready',
-              message: `${station} items are ready for Table ${tableNumber}.`,
-              is_read: false
-            });
-          }
+        await Promise.all([
+          supabase
+            .from('orders')
+            .update({ status: projectedOrderStatus, updated_at: now })
+            .eq('id', orderId),
+          orderData.table_id
+            ? supabase
+                .from('tables')
+                .update({ status: tableStatus })
+                .eq('id', orderData.table_id)
+            : Promise.resolve(),
+        ]);
+
+        if (nextStatus === 'READY' && orderData.tenant_id) {
+          const tableNumber = (orderData as any).tables?.number || '?';
+          await supabase.from('notifications').insert({
+            tenant_id: orderData.tenant_id,
+            user_id: orderData.waiter_id || null,
+            role: 'WAITER',
+            title: 'Items Ready',
+            message: `${station} items are ready for Table ${tableNumber}.`,
+            is_read: false,
+          });
         }
       } catch (e) {
-        console.warn('[updateStationItemsStatus] Waiter notification failed silently:', e);
+        console.warn('[updateStationItemsStatus] Background sync failed silently:', e);
       }
-    }
+    })();
 
     return true;
   },
