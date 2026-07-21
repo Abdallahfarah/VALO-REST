@@ -356,7 +356,7 @@ export const Settings = () => {
                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#F97316] font-bold text-[#0B1630]" 
                          />
                        ) : (
-                         <p className="font-bold text-[#0B1630]">{tenant?.name || 'Valo Bistro'}</p>
+                         <p className="font-bold text-[#0B1630]">{tenant?.name || 'Dhadhan Bistro'}</p>
                        )}
                     </div>
                  </div>

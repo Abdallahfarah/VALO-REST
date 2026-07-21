@@ -37,7 +37,7 @@ export const Onboarding = () => {
       });
       if (metaErr) console.warn('Failed to update auth role metadata:', metaErr.message);
 
-      toast.success('Workspace Created', 'Welcome to VALO-REST! Loading dashboard...');
+      toast.success('Workspace Created', 'Welcome to Dhadhan HUB! Loading dashboard...');
       
       // 3. Force page reload to let AuthContext and TenantContext fetch the newly created tenant data
       window.location.href = '/admin';

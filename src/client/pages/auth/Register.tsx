@@ -390,7 +390,7 @@ export const Register = () => {
 
          {/* Tiny Footer */}
          <div className="hidden lg:block mt-auto relative z-10 pt-8">
-            <p className="text-[#64748B] text-[10px] font-bold tracking-wider uppercase">Powered by VALO-RES</p>
+            <p className="text-[#64748B] text-[10px] font-bold tracking-wider uppercase">Powered by Dhadhan HUB</p>
          </div>
       </div>
 
@@ -408,7 +408,7 @@ export const Register = () => {
             <div className="absolute inset-0 bg-[#0F172A]/70 mix-blend-multiply" />
             <div className="absolute inset-0 p-5 flex flex-col justify-end text-white">
                <h2 className="text-xl font-bold leading-tight">Start Your Restaurant</h2>
-               <span className="text-[#F97316] text-xs font-bold">Journey with VALO-REST</span>
+               <span className="text-[#F97316] text-xs font-bold">Journey with Dhadhan HUB</span>
             </div>
          </div>
 

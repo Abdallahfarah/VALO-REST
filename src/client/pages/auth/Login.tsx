@@ -202,7 +202,7 @@ export const Login = () => {
 
          {/* Tiny Footer */}
          <div className="hidden lg:block mt-auto relative z-10 pt-8">
-            <p className="text-[#64748B] text-[10px] font-bold tracking-wider uppercase">© 2026 VALO-REST. All rights reserved.</p>
+            <p className="text-[#64748B] text-[10px] font-bold tracking-wider uppercase">© 2026 Dhadhan HUB. All rights reserved.</p>
          </div>
       </div>
 
@@ -230,7 +230,7 @@ export const Login = () => {
             <div className="mb-6 flex justify-center animate-fade-down">
                <img 
                   src={valoLogo} 
-                  alt="VALO-REST Logo" 
+                  alt="Dhadhan HUB Logo" 
                   className="h-10 w-auto object-contain"
                   loading="eager"
                   fetchPriority="high"

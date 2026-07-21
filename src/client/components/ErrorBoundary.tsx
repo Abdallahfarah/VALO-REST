@@ -20,7 +20,7 @@ export class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('[VALO-REST] Uncaught error:', error, errorInfo);
+    console.error('[Dhadhan HUB] Uncaught error:', error, errorInfo);
   }
 
   handleReset = () => {

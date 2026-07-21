@@ -31,7 +31,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
           </div>
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-black text-sm text-[#0B1630] truncate">{tenant?.name || 'VALO HQ'}</span>
+              <span className="font-black text-sm text-[#0B1630] truncate">{tenant?.name || 'DHADHAN HQ'}</span>
               <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100/50 shrink-0">
                 <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
                 Active

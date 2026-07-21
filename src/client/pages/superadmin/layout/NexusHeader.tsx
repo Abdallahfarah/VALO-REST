@@ -39,7 +39,7 @@ export const NexusHeader = ({ onToggleSidebar }: NexusHeaderProps) => {
             VP
           </div>
           <div className="flex flex-col text-left">
-            <span className="text-[14px] font-bold text-[#0B1630] leading-none mb-1">VALO Platform Owner</span>
+            <span className="text-[14px] font-bold text-[#0B1630] leading-none mb-1">DHADHAN Platform Owner</span>
             <span className="text-[11px] font-semibold text-[#64748B] uppercase">Global Admin</span>
           </div>
           <ChevronDown className="w-4 h-4 text-[#94A3B8] ml-2" />

@@ -2,12 +2,12 @@ import { ShieldCheck, Search, Filter, Download, Info, CheckCircle2, Clock, FileT
 import { Card } from '../../components/ui/card';
 
 const auditEntries = [
-  { time: '11:37:18 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: 'f7e9e2a4-b', user: 'VALO Platform Owner', role: 'OPS' },
-  { time: '11:37:12 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: '725c9e24-b', user: 'VALO Platform Owner', role: 'OPS' },
-  { time: '03:29:39 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: 'f7e9e2a4-b', user: 'VALO Platform Owner', role: 'OPS' },
-  { time: '03:29:25 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: '725c9e24-b', user: 'VALO Platform Owner', role: 'OPS' },
-  { time: '03:29:14 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: '7259a2a4-b', user: 'VALO Platform Owner', role: 'OPS' },
-  { time: '03:29:08 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: 'f7e9e2a4-b', user: 'VALO Platform Owner', role: 'OPS' },
+  { time: '11:37:18 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: 'f7e9e2a4-b', user: 'DHADHAN Platform Owner', role: 'OPS' },
+  { time: '11:37:12 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: '725c9e24-b', user: 'DHADHAN Platform Owner', role: 'OPS' },
+  { time: '03:29:39 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: 'f7e9e2a4-b', user: 'DHADHAN Platform Owner', role: 'OPS' },
+  { time: '03:29:25 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: '725c9e24-b', user: 'DHADHAN Platform Owner', role: 'OPS' },
+  { time: '03:29:14 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: '7259a2a4-b', user: 'DHADHAN Platform Owner', role: 'OPS' },
+  { time: '03:29:08 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: 'f7e9e2a4-b', user: 'DHADHAN Platform Owner', role: 'OPS' },
 ];
 
 export const AuditLogs = () => {

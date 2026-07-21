@@ -394,7 +394,7 @@ export const CustomerQRMenu = () => {
         </div>
 
         <div className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-          Powered by VALO-REST
+          Powered by Dhadhan HUB
         </div>
       </div>
     );
@@ -407,7 +407,7 @@ export const CustomerQRMenu = () => {
       <header className="bg-white border-b border-slate-100 px-6 py-5 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
           <img 
-            src={tenant.logo || 'https://ui-avatars.com/api/?name=VALO+REST&background=F97316&color=fff'} 
+            src={tenant.logo || 'https://ui-avatars.com/api/?name=Dhadhan+HUB&background=F97316&color=fff'} 
             alt="Logo" 
             className="w-10 h-10 object-cover rounded-xl border border-slate-100 shadow-sm"
           />

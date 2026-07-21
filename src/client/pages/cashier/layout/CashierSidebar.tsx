@@ -43,7 +43,7 @@ export const CashierSidebar = ({ isOpen, onClose }: CashierSidebarProps) => {
     {
       title: 'INTELLIGENCE',
       items: [
-        { name: 'VALO AI Assistant', path: '/cashier/ai', icon: Sparkles },
+        { name: 'DHADHAN AI Assistant', path: '/cashier/ai', icon: Sparkles },
       ],
     }
   ];
@@ -117,7 +117,7 @@ export const CashierSidebar = ({ isOpen, onClose }: CashierSidebarProps) => {
                           {item.badge}
                         </span>
                       )}
-                      {item.name === 'VALO AI Assistant' && (
+                      {item.name === 'DHADHAN AI Assistant' && (
                         <span className={cn(
                           "text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase",
                           isActive ? "bg-white text-[#F97316]" : "bg-[#F97316] text-white"

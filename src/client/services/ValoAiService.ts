@@ -203,14 +203,14 @@ export const ValoAiService = {
       // ─── CASE E: STAFF ASSISTANCE WORKFLOWS ───
       if (q.includes('refund') || q.includes('policy')) {
         return {
-          message: `### VALO Refund Procedures\n1. Refunds must be processed within **24 hours** of order completion.\n2. Tap the target receipt in the **Receipts** tab, click **Void / Refund**.\n3. Type a clear reason (e.g. "Wrong item entered") and confirm.\n\n*Note: Deleted or finalized cash drawer audits cannot be refunded without admin approval.*`,
+          message: `### DHADHAN Refund Procedures\n1. Refunds must be processed within **24 hours** of order completion.\n2. Tap the target receipt in the **Receipts** tab, click **Void / Refund**.\n3. Type a clear reason (e.g. "Wrong item entered") and confirm.\n\n*Note: Deleted or finalized cash drawer audits cannot be refunded without admin approval.*`,
           type: 'text'
         };
       }
 
       if (q.includes('discount')) {
         return {
-          message: `### VALO Discount Guidelines\n- **Staff discount**: 15% off food items (code: \`STAFF15\`).\n- **VIP / Promo discount**: Managed via supervisor keys.\n- Apply the discount factor inside the POS billing screen before clicking the settle checkout button.`,
+          message: `### DHADHAN Discount Guidelines\n- **Staff discount**: 15% off food items (code: \`STAFF15\`).\n- **VIP / Promo discount**: Managed via supervisor keys.\n- Apply the discount factor inside the POS billing screen before clicking the settle checkout button.`,
           type: 'text'
         };
       }
@@ -224,7 +224,7 @@ export const ValoAiService = {
 
       // Default conversational fallback
       return {
-        message: `Hello! I am your **VALO AI Operations Assistant**. I can help you verify invoice calculations, split table bills, look up active orders, check today's sales revenue, and explain staff workflows.\n\nTry asking me: \n- *Show today's revenue*\n- *Split Table 3 bill by 2 people*\n- *Calculate VAT for 1200*\n- *How to process a refund?*`,
+        message: `Hello! I am your **DHADHAN AI Operations Assistant**. I can help you verify invoice calculations, split table bills, look up active orders, check today's sales revenue, and explain staff workflows.\n\nTry asking me: \n- *Show today's revenue*\n- *Split Table 3 bill by 2 people*\n- *Calculate VAT for 1200*\n- *How to process a refund?*`,
         type: 'text'
       };
 

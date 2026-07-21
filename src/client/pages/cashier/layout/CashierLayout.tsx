@@ -41,7 +41,7 @@ export const CashierLayout = () => {
         <button 
           onClick={() => setIsAiOpen(!isAiOpen)}
           className="fixed bottom-20 lg:bottom-6 right-6 w-14 h-14 bg-[#0B1630] hover:bg-slate-800 text-[#F97316] rounded-2xl flex items-center justify-center shadow-2xl shadow-slate-950/20 hover:scale-105 active:scale-95 transition-all cursor-pointer z-50 border border-slate-700/30"
-          title="VALO AI Operations Copilot"
+          title="DHADHAN AI Operations Copilot"
         >
           <Sparkles size={24} className="animate-pulse" />
           <span className="absolute -top-1 -right-1 bg-[#F97316] text-white text-[7px] font-black px-1 py-0.5 rounded uppercase tracking-wider leading-none shadow-sm">

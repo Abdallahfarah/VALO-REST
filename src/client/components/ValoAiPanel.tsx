@@ -31,7 +31,7 @@ export const ValoAiPanel: React.FC<ValoAiPanelProps> = ({ onClose }) => {
       {
         sender: 'assistant',
         timestamp: new Date(),
-        content: `Hello! I am your **VALO AI Operations Assistant**. I am connected to **${tenant?.name || 'this restaurant'}**'s real-time workspace data. \n\nSelect a quick prompt below or type your operations question!`,
+        content: `Hello! I am your **DHADHAN AI Operations Assistant**. I am connected to **${tenant?.name || 'this restaurant'}**'s real-time workspace data. \n\nSelect a quick prompt below or type your operations question!`,
         type: 'text'
       }
     ]);
@@ -92,7 +92,7 @@ export const ValoAiPanel: React.FC<ValoAiPanelProps> = ({ onClose }) => {
             <Sparkles size={16} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#0B1630] uppercase tracking-wider leading-none">VALO AI</h3>
+            <h3 className="text-sm font-bold text-[#0B1630] uppercase tracking-wider leading-none">DHADHAN AI</h3>
             <span className="text-[9px] text-[#94A3B8] font-bold uppercase tracking-widest mt-1 block">AI Copilot</span>
           </div>
         </div>
@@ -225,7 +225,7 @@ export const ValoAiPanel: React.FC<ValoAiPanelProps> = ({ onClose }) => {
         {loading && (
           <div className="flex items-center gap-2 text-slate-400 animate-pulse text-[10px] font-bold uppercase tracking-widest pl-2">
             <Sparkles size={12} className="animate-spin text-[#F97316]" />
-            VALO AI is processing...
+            DHADHAN AI is processing...
           </div>
         )}
         <div ref={scrollRef} />
@@ -257,7 +257,7 @@ export const ValoAiPanel: React.FC<ValoAiPanelProps> = ({ onClose }) => {
           type="text" 
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
-          placeholder="Ask VALO AI calculation / insights..."
+          placeholder="Ask DHADHAN AI calculation / insights..."
           disabled={loading}
           className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#F97316] disabled:opacity-50 font-medium"
         />

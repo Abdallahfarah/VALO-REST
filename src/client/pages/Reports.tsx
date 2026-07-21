@@ -429,7 +429,7 @@ export const Reports = () => {
         filename += formatType === 'CSV' ? '.csv' : '.xlsx';
       } else {
         // PDF Simulation content
-        content = `VALO FINANCIAL REPORT\nExport Range: ${dateRange}\nRecords Count: ${rows.length}\nTotal Net Revenue: ${summaryMetrics.netRevenue}\n\n`;
+        content = `DHADHAN FINANCIAL REPORT\nExport Range: ${dateRange}\nRecords Count: ${rows.length}\nTotal Net Revenue: ${summaryMetrics.netRevenue}\n\n`;
         content += rows.map(r => r.join(' | ')).join('\n');
         filename += '.pdf';
       }

@@ -44,7 +44,7 @@ export const NexusSidebar = ({ isOpen, onClose }: NexusSidebarProps) => {
           <Server className="w-5 h-5 text-white" />
         </div>
         <div className="flex flex-col">
-          <span className="text-white font-bold text-[19px] tracking-wide leading-none">VALO NEXUS</span>
+          <span className="text-white font-bold text-[19px] tracking-wide leading-none">DHADHAN NEXUS</span>
           <span className="text-[#94A3B8] text-xs mt-1 font-medium tracking-wide">Global Architecture</span>
         </div>
       </div>

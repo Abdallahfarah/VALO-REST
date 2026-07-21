@@ -372,7 +372,7 @@ export const DetailedReceipt: React.FC<DetailedReceiptProps> = ({
                 ))}
               </div>
             </div>
-            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">VALO POS SECURE</span>
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">DHADHAN POS SECURE</span>
           </div>
         </div>
       </div>

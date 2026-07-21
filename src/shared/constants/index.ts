@@ -1,4 +1,4 @@
-export const APP_NAME = "VALO-REST";
+export const APP_NAME = "Dhadhan HUB";
 
 export const ROLES = {
   PLATFORM_OWNER: "PLATFORM_OWNER",

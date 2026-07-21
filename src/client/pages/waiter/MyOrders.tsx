@@ -128,7 +128,7 @@ export const MyOrders = () => {
 
     const content = `
 =========================================
-          ${tenant?.name || 'VALO BISTRO'}
+          ${tenant?.name || 'DHADHAN BISTRO'}
 =========================================
 Receipt No:     ${orderReceipt.receipt_number}
 Date:           ${new Date(orderReceipt.created_at).toLocaleString()}

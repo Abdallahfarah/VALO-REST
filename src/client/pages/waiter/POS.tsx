@@ -324,7 +324,7 @@ export const WaiterPOS = () => {
     if (!settledReceipt) return;
     const content = `
 =========================================
-          ${tenant?.name || 'VALO BISTRO'}
+          ${tenant?.name || 'DHADHAN BISTRO'}
 =========================================
 Receipt No:     ${settledReceipt.receipt_number}
 Date:           ${new Date(settledReceipt.created_at).toLocaleString()}
@@ -625,7 +625,7 @@ Notes:          ${settledReceipt.notes || 'None'}
                 <X size={20} />
              </button>
              <div className="text-center pb-4 border-b border-dashed border-slate-200">
-                <h3 className="text-xl font-black text-[#0B1630] uppercase tracking-wider">{tenant?.name || 'VALO BISTRO'}</h3>
+                <h3 className="text-xl font-black text-[#0B1630] uppercase tracking-wider">{tenant?.name || 'DHADHAN BISTRO'}</h3>
                 <p className="text-xs text-[#94A3B8] font-medium">Table Bill Invoice</p>
              </div>
              
