@@ -46,7 +46,7 @@ const OrderRow = React.memo(({ order, isSelected, onSelect, getStatusStyle, getT
         isSelected && "bg-orange-50/30"
       )}
     >
-      <td className="px-6 py-4 text-sm font-bold text-[#0B1630]">#{order.id.slice(0, 8).toUpperCase()}</td>
+      <td className="px-6 py-4 text-sm font-bold text-[#0B1630]">{order.orderNumber || `#${order.id.slice(0, 8).toUpperCase()}`}</td>
       <td className="px-6 py-4">
         <p className="text-xs font-bold text-[#0B1630]">Table {order.table?.number || 'N/A'}</p>
       </td>
@@ -143,6 +143,7 @@ export const Orders = () => {
     const matchesTab = !tabStatuses || tabStatuses.length === 0 || tabStatuses.includes(o.status);
     const matchesSearch = searchQuery === '' ||
       o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (o.orderNumber && o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
       o.table?.number?.toString().includes(searchQuery);
     return matchesTab && matchesSearch;
   });
@@ -316,7 +317,7 @@ export const Orders = () => {
           <>
             <div className="p-5 border-b border-slate-50 flex items-center justify-between">
                <div>
-                  <h3 className="font-bold text-[#0B1630] text-lg">Order #{selectedOrder.id.slice(0, 8).toUpperCase()}</h3>
+                  <h3 className="font-bold text-[#0B1630] text-lg">{selectedOrder.orderNumber || `Order #${selectedOrder.id.slice(0, 8).toUpperCase()}`}</h3>
                   <p className={cn(
                     "text-[10px] font-bold uppercase tracking-widest mt-0.5",
                     selectedOrder.status === 'PENDING' ? "text-orange-500" :
@@ -341,7 +342,7 @@ export const Orders = () => {
                      <div className="space-y-2 pt-2">
                         <div className="flex justify-between items-center text-xs">
                            <span className="text-[#94A3B8] font-medium">Order ID</span>
-                           <span className="text-[#0B1630] font-bold">{selectedOrder.id.slice(0, 8).toUpperCase()}</span>
+                           <span className="text-[#0B1630] font-bold">{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8).toUpperCase()}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
                            <span className="text-[#94A3B8] font-medium">Table</span>

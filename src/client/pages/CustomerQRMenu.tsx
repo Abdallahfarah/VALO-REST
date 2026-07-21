@@ -367,7 +367,7 @@ export const CustomerQRMenu = () => {
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-50 pb-2">Order Details</p>
             <div className="flex justify-between text-xs">
               <span className="text-slate-400 font-medium">Order Reference</span>
-              <span className="text-[#0B1630] font-black">#{orderPlaced.id.slice(0, 8).toUpperCase()}</span>
+              <span className="text-[#0B1630] font-black">{orderPlaced.order_number ? `ORDER-${String(orderPlaced.order_number).padStart(4, '0')}` : `#${orderPlaced.id.slice(0, 8).toUpperCase()}`}</span>
             </div>
             {tableNumber && (
               <div className="flex justify-between text-xs">

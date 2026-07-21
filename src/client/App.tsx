@@ -44,18 +44,15 @@ const WaiterDashboard = React.lazy(() => import('./pages/waiter/Dashboard').then
 const WaiterTables = React.lazy(() => import('./pages/waiter/Tables').then(m => ({ default: m.WaiterTables })));
 const WaiterPOS = React.lazy(() => import('./pages/waiter/POS').then(m => ({ default: m.WaiterPOS })));
 const MyOrders = React.lazy(() => import('./pages/waiter/MyOrders').then(m => ({ default: m.MyOrders })));
-const Messages = React.lazy(() => import('./pages/waiter/Messages').then(m => ({ default: m.Messages })));
 const Notifications = React.lazy(() => import('./pages/waiter/Notifications').then(m => ({ default: m.Notifications })));
 
 // KDS pages
 const OrdersMonitor = React.lazy(() => import('./pages/kds/OrdersMonitor').then(m => ({ default: m.OrdersMonitor })));
 const KDSReports = React.lazy(() => import('./pages/kds/KDSReports').then(m => ({ default: m.KDSReports })));
-const KDSMessages = React.lazy(() => import('./pages/kds/KDSMessages').then(m => ({ default: m.KDSMessages })));
 
 // Cashier pages
 const Payments = React.lazy(() => import('./pages/cashier/Payments').then(m => ({ default: m.Payments })));
 const Receipts = React.lazy(() => import('./pages/cashier/Receipts').then(m => ({ default: m.Receipts })));
-const CashierMessages = React.lazy(() => import('./pages/cashier/CashierMessages').then(m => ({ default: m.CashierMessages })));
 
 // SuperAdmin pages
 const Restaurants = React.lazy(() => import('./pages/superadmin/Restaurants').then(m => ({ default: m.Restaurants })));
@@ -261,7 +258,6 @@ export const App = () => {
                     <Route path="pos" element={<WaiterPOS />} />
                     <Route path="pos/:tableId" element={<WaiterPOS />} />
                     <Route path="orders" element={<MyOrders />} />
-                    <Route path="messages" element={<Messages />} />
                     <Route path="notifications" element={<Notifications />} />
                   </Route>
 
@@ -273,7 +269,6 @@ export const App = () => {
                   }>
                     <Route index element={<OrdersMonitor />} />
                     <Route path="reports" element={<KDSReports />} />
-                    <Route path="messages" element={<KDSMessages />} />
                   </Route>
 
                   {/* Cashier Application */}
@@ -285,7 +280,6 @@ export const App = () => {
                     <Route index element={<Payments />} />
                     <Route path="payments" element={<Payments />} />
                     <Route path="receipts" element={<Receipts />} />
-                    <Route path="messages" element={<CashierMessages />} />
                     <Route path="ai" element={<ValoAiPage />} />
                   </Route>
 

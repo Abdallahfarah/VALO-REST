@@ -47,8 +47,16 @@ const mapOrderItem = (row: any) => ({
   status: row.status || 'PENDING',
 });
 
+export const formatOrderNumber = (num: number | string | null | undefined) => {
+  if (num === null || num === undefined) return '';
+  const parsed = typeof num === 'string' ? parseInt(num, 10) : num;
+  if (isNaN(parsed)) return String(num);
+  return `ORDER-${String(parsed).padStart(4, '0')}`;
+};
+
 const mapOrder = (row: any) => ({
   id: row.id,
+  orderNumber: formatOrderNumber(row.order_number),
   status: row.status,
   waiterId: row.waiter_id,
   tableId: row.table_id,
@@ -465,13 +473,14 @@ export const OrderService = {
 
     // 6. Notify WAITER and ADMIN roles
     try {
-      const shortId = orderId.slice(0, 8).toUpperCase();
+      const friendlyNum = formatOrderNumber(data?.order_number);
+      const orderLabel = friendlyNum || `Order #${orderId.slice(0, 8).toUpperCase()}`;
       const table = tableNumber ? `Table ${tableNumber}` : 'Unknown table';
-      const title = `Order #${shortId} Cancelled by Kitchen`;
+      const title = `${orderLabel} Cancelled by Kitchen`;
       const message = `${table} — Reason: ${reason} — Cancelled by: ${cancelledByName || 'Kitchen Staff'}`;
 
       await supabase.from('notifications').insert([
-        { tenant_id: tenantId, user_id: null, role: 'WAITER', title, message, is_read: false },
+        { tenant_id: tenantId, user_id: data?.waiter_id || null, role: 'WAITER', title, message, is_read: false },
         { tenant_id: tenantId, user_id: null, role: 'ADMIN',  title, message, is_read: false },
       ]);
     } catch {
@@ -595,14 +604,22 @@ export const OrderService = {
           tenant_id: paymentData.tenantId,
           role: 'CASHIER',
           title: 'Payment Completed',
-          message: `Payment of ${currencySymbol} ${finalTotalAmount.toFixed(2)} completed for Table ${order?.tables?.number || '?'}.`,
+          message: `Payment of ${currencySymbol} ${finalTotalAmount.toFixed(2)} completed for Order ${formatOrderNumber(data?.order_number)} (Table ${order?.tables?.number || '?'}).`,
+          is_read: false
+        },
+        {
+          tenant_id: paymentData.tenantId,
+          user_id: order.waiter_id || null,
+          role: 'WAITER',
+          title: 'Table Closed',
+          message: `Table ${order.tables?.number || '?'} is now closed. Order ${formatOrderNumber(data?.order_number)} payment completed.`,
           is_read: false
         },
         {
           tenant_id: paymentData.tenantId,
           role: 'ADMIN',
-          title: 'Important Event: Payment Completed',
-          message: `Revenue of ${currencySymbol} ${finalTotalAmount.toFixed(2)} recorded from Table ${order?.tables?.number || '?'}.`,
+          title: 'Payment Completed',
+          message: `Revenue of ${currencySymbol} ${finalTotalAmount.toFixed(2)} recorded from Order ${formatOrderNumber(data?.order_number)} (Table ${order?.tables?.number || '?'}).`,
           is_read: false
         }
       ]);
@@ -807,6 +824,22 @@ export const TableService = {
       .single();
 
     if (error) throw error;
+
+    if (table.waiterId && data) {
+      try {
+        await supabase.from('notifications').insert({
+          tenant_id: data.tenant_id,
+          user_id: table.waiterId,
+          role: 'WAITER',
+          title: 'New Table Assigned',
+          message: `Table ${data.number} has been assigned to you.`,
+          is_read: false
+        });
+      } catch (e) {
+        console.warn('Failed to generate waiter assignment notification:', e);
+      }
+    }
+
     return mapTable(data);
   },
 
@@ -991,6 +1024,7 @@ const mapReceipt = (row: any) => ({
   currency: row.currency || 'ETB',
   order: row.orders ? {
     id: row.orders.id,
+    orderNumber: formatOrderNumber(row.orders.order_number),
     tableNumber: row.orders.tables?.number,
     waiterName: row.orders.users ? `${row.orders.users.first_name} ${row.orders.users.last_name}` : 'Unknown'
   } : null
@@ -1151,6 +1185,19 @@ export const SuperAdminService = {
       throw new Error(msg);
     }
 
+    // Notify ADMIN about staff provisioned
+    try {
+      await supabase.from('notifications').insert({
+        tenant_id: tenantId,
+        role: 'ADMIN',
+        title: 'New Staff Provisioned',
+        message: `Staff member ${fullName} (${role}) has been created successfully.`,
+        is_read: false
+      });
+    } catch (e) {
+      console.warn('Failed to generate staff provisioned notification:', e);
+    }
+
     return data;
   },
 
@@ -1234,6 +1281,18 @@ export const SuperAdminService = {
       if (error) throw error;
     }
 
+    try {
+      await supabase.from('notifications').insert({
+        tenant_id: tenantId,
+        role: 'ADMIN',
+        title: 'Subscription Updated',
+        message: `Your subscription has been updated to the ${planName} plan.`,
+        is_read: false
+      });
+    } catch (e) {
+      console.warn('Failed to notify tenant of subscription update:', e);
+    }
+
     return true;
   },
 
@@ -1253,6 +1312,18 @@ export const SuperAdminService = {
     if (subErr) {
       console.warn('Failed to update subscription status alongside tenant active status:', subErr);
     }
+    try {
+      await supabase.from('notifications').insert({
+        tenant_id: tenantId,
+        role: 'ADMIN',
+        title: isActive ? 'Restaurant Activated' : 'Restaurant Suspended',
+        message: `Your restaurant node has been ${isActive ? 'activated' : 'suspended'} by the platform administrator.`,
+        is_read: false
+      });
+    } catch (e) {
+      console.warn('Failed to notify tenant of activation status:', e);
+    }
+
     return true;
   },
 
@@ -1288,7 +1359,7 @@ export const SuperAdminService = {
 
 // ─── NotificationService ───
 export const NotificationService = {
-  async getNotifications(tenantId: string, userId?: string) {
+  async getNotifications(tenantId: string, userId?: string, role?: string) {
     let query = supabase
       .from('notifications')
       .select('*')
@@ -1296,7 +1367,9 @@ export const NotificationService = {
       .order('created_at', { ascending: false })
       .limit(50);
 
-    if (userId) {
+    if (userId && role) {
+      query = query.or(`user_id.eq.${userId},role.eq.${role},and(user_id.is.null,role.is.null)`);
+    } else if (userId) {
       query = query.or(`user_id.eq.${userId},user_id.is.null`);
     }
 
@@ -1337,12 +1410,20 @@ export const NotificationService = {
     return true;
   },
 
-  async markAllAsRead(tenantId: string, userId: string) {
-    const { error } = await supabase
+  async markAllAsRead(tenantId: string, userId: string, role?: string) {
+    let q = supabase
       .from('notifications')
       .update({ is_read: true })
       .eq('tenant_id', tenantId)
-      .or(`user_id.eq.${userId},user_id.is.null`);
+      .eq('is_read', false);
+
+    if (userId && role) {
+      q = q.or(`user_id.eq.${userId},role.eq.${role},and(user_id.is.null,role.is.null)`);
+    } else if (userId) {
+      q = q.or(`user_id.eq.${userId},user_id.is.null`);
+    }
+
+    const { error } = await q;
     if (error) throw error;
     return true;
   },

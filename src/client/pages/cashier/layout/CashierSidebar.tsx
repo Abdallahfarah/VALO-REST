@@ -1,8 +1,6 @@
-import { useEffect } from 'react';
 import { 
   CreditCard, 
   Receipt, 
-  MessageSquare,
   LogOut,
   ChevronLeft,
   Sparkles
@@ -12,9 +10,6 @@ import { NavLink } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTenant } from '../../../context/TenantContext';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { MessagingService } from '../../../services/ApiService';
-import { supabase } from '../../../../lib/supabase';
 
 interface NavItem {
   name: string;
@@ -34,36 +29,8 @@ export interface CashierSidebarProps {
 }
 
 export const CashierSidebar = ({ isOpen, onClose }: CashierSidebarProps) => {
-  const { signOut, user } = useAuth();
+  const { signOut } = useAuth();
   const { tenant } = useTenant();
-  const queryClient = useQueryClient();
-
-  const { data: conversations = [] } = useQuery({
-    queryKey: ['conversations', tenant?.id, user?.id],
-    queryFn: () => MessagingService.getConversations(tenant?.id || '', user?.id || ''),
-    enabled: !!tenant?.id && !!user?.id,
-  });
-
-  const totalUnreadMessages = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
-
-  useEffect(() => {
-    if (!tenant?.id) return;
-
-    const mChannel = supabase
-      .channel('messages-realtime-cashier-sidebar')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenant.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['conversations', tenant.id] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(mChannel);
-    };
-  }, [tenant?.id, queryClient]);
 
   const navSections: NavSection[] = [
     {
@@ -74,18 +41,13 @@ export const CashierSidebar = ({ isOpen, onClose }: CashierSidebarProps) => {
       ],
     },
     {
-      title: 'COMMUNICATION',
-      items: [
-        { name: 'Messages', path: '/cashier/messages', icon: MessageSquare, badge: totalUnreadMessages || undefined },
-      ],
-    },
-    {
       title: 'INTELLIGENCE',
       items: [
         { name: 'VALO AI Assistant', path: '/cashier/ai', icon: Sparkles },
       ],
     }
   ];
+
   return (
     <>
       {/* Mobile Sidebar Backdrop overlay */}
@@ -103,8 +65,8 @@ export const CashierSidebar = ({ isOpen, onClose }: CashierSidebarProps) => {
         {/* Brand Header */}
         <div className="flex items-center justify-between px-6 py-6 pt-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#F97316] rounded flex items-center justify-center">
-              <span className="text-white font-bold text-lg leading-none">VX</span>
+            <div className="w-10 h-10 bg-[#F97316] rounded flex items-center justify-center overflow-hidden p-1 shadow-md shadow-orange-500/10 shrink-0 select-none">
+              <img src="/dhadhan-logo.png" alt="Dhadhan Hub" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col">
               <span className="text-white font-bold text-lg leading-none drop-shadow-sm truncate max-w-[150px]">{tenant?.name || 'RESTAURANT'}</span>

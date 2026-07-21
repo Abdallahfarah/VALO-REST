@@ -1,12 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Search, Bell, MessageSquare, Menu } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../context/AuthContext';
+import { Search, Menu } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
-import { supabase } from '../../../lib/supabase';
-import { MessagingService } from '../../services/ApiService';
-import { NotificationCenterDrawer } from '../NotificationCenterDrawer';
-import { MessagingCenterDrawer } from '../MessagingCenterDrawer';
+import { NotificationBell } from '../NotificationBell';
 import { UserProfileHeaderSection } from './UserProfileHeaderSection';
 
 export interface HeaderProps {
@@ -14,70 +8,7 @@ export interface HeaderProps {
 }
 
 export const Header = ({ onToggleSidebar }: HeaderProps) => {
-  const { user, role } = useAuth();
   const { tenant } = useTenant();
-  const queryClient = useQueryClient();
-
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
-
-  // Queries for unread counts
-  const { data: unreadNotifications = [] } = useQuery({
-    queryKey: ['unread-notifications-count', tenant?.id, user?.id],
-    queryFn: async () => {
-      if (!tenant?.id) return [];
-      let q = supabase
-        .from('notifications')
-        .select('id, user_id, is_read')
-        .eq('tenant_id', tenant.id)
-        .eq('is_read', false);
-      if (user?.id) {
-        q = q.or(`user_id.eq.${user.id},user_id.is.null`);
-      }
-      const { data } = await q;
-      return data || [];
-    },
-    enabled: !!tenant?.id,
-  });
-
-  const { data: conversations = [] } = useQuery({
-    queryKey: ['conversations', tenant?.id, user?.id],
-    queryFn: () => MessagingService.getConversations(tenant?.id || '', user?.id || ''),
-    enabled: !!tenant?.id && !!user?.id,
-  });
-
-  const totalUnreadMessages = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
-
-  // Real-time subscription in Header
-  useEffect(() => {
-    if (!tenant?.id) return;
-    const nChannel = supabase
-      .channel('notifications-realtime-header')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'notifications', filter: `tenant_id=eq.${tenant.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['unread-notifications-count'] });
-        }
-      )
-      .subscribe();
-
-    const mChannel = supabase
-      .channel('messages-realtime-header')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenant.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(nChannel);
-      supabase.removeChannel(mChannel);
-    };
-  }, [tenant?.id, queryClient]);
 
   return (
     <header className="h-[76px] bg-white border-b border-[#E5E7EB] flex items-center justify-between px-4 lg:px-8 sticky top-0 z-10 shrink-0">
@@ -120,57 +51,12 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
           <Search className="w-5 h-5" />
         </button>
 
-        <button 
-          onClick={() => {
-            setIsMessagesOpen(!isMessagesOpen);
-            setIsNotificationsOpen(false);
-          }}
-          className="text-[#64748B] hover:text-[#0B1630] hover:bg-slate-50 p-2 rounded-xl transition-all relative cursor-pointer"
-        >
-          <MessageSquare className="w-5 h-5" />
-          {totalUnreadMessages > 0 && (
-            <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-1 bg-[#EF4444] text-white text-[8px] font-black rounded-full flex items-center justify-center">
-              {totalUnreadMessages}
-            </span>
-          )}
-        </button>
-
-        <button 
-          onClick={() => {
-            setIsNotificationsOpen(!isNotificationsOpen);
-            setIsMessagesOpen(false);
-          }}
-          className="text-[#64748B] hover:text-[#0B1630] hover:bg-slate-50 p-2 rounded-xl transition-all relative cursor-pointer"
-        >
-          <Bell className="w-5 h-5" />
-          {unreadNotifications.length > 0 && (
-            <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-1 bg-[#EF4444] text-white text-[8px] font-black rounded-full flex items-center justify-center">
-              {unreadNotifications.length}
-            </span>
-          )}
-        </button>
+        <NotificationBell />
         
         <div className="h-8 w-[1px] bg-[#E5E7EB] hidden sm:block" />
 
         <UserProfileHeaderSection />
       </div>
-
-      {isNotificationsOpen && (
-        <NotificationCenterDrawer 
-          tenantId={tenant?.id || ''} 
-          userId={user?.id || ''} 
-          onClose={() => setIsNotificationsOpen(false)} 
-        />
-      )}
-
-      {isMessagesOpen && (
-        <MessagingCenterDrawer 
-          tenantId={tenant?.id || ''} 
-          userId={user?.id || ''} 
-          role={role || ''}
-          onClose={() => setIsMessagesOpen(false)} 
-        />
-      )}
     </header>
   );
 };

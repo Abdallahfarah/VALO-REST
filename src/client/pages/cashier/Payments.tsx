@@ -34,6 +34,10 @@ export const Payments = () => {
   const [discountRate, setDiscountRate] = useState<number>(0);
   const [serviceChargeRate, setServiceChargeRate] = useState<number>(0);
   const [cashReceived, setCashReceived] = useState<string>('');
+  
+  // Interactive filters and search states
+  const [paymentFilter, setPaymentFilter] = useState<'PENDING' | 'COMPLETED'>('PENDING');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setDiscountRate(0);
@@ -68,6 +72,20 @@ export const Payments = () => {
 
   const pendingOrders = orders.filter((o: any) => o.status === 'READY' || o.status === 'SERVED');
   const completedOrders = orders.filter((o: any) => o.status === 'COMPLETED');
+  
+  // Scoped lists based on active filters
+  const displayedOrders = paymentFilter === 'PENDING' ? pendingOrders : completedOrders;
+
+  const filteredDisplayedOrders = displayedOrders.filter((o: any) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      o.id.toLowerCase().includes(q) ||
+      (o.customerName && o.customerName.toLowerCase().includes(q)) ||
+      (o.table?.number && o.table.number.toString().includes(q))
+    );
+  });
+
   const selectedOrder = orders.find((o: any) => o.id === selectedOrderId);
 
   // Auto-calculated billing totals
@@ -119,10 +137,9 @@ export const Payments = () => {
   };
 
   const kpis = [
-    { label: 'Pending Payments', value: pendingOrders.length.toString(), sub: 'Awaiting checkout', icon: Receipt, color: 'text-indigo-500 lg:text-indigo-500', bg: 'lg:bg-indigo-50 bg-indigo-500/10' },
-    { label: 'Completed Today', value: completedOrders.length.toString(), sub: 'Success', icon: CheckCircle2, color: 'text-emerald-500 lg:text-emerald-500', bg: 'lg:bg-emerald-50 bg-emerald-500/10' },
-    { label: 'Revenue Today', value: format(completedOrders.reduce((acc: number, o: any) => acc + Number(o.totalAmount), 0)), sub: 'Total collected', icon: DollarSign, color: 'text-orange-500 lg:text-orange-500', bg: 'lg:bg-orange-50 bg-orange-500/10' },
-    { label: 'Average Bill', value: format(completedOrders.length > 0 ? completedOrders.reduce((acc: number, o: any) => acc + Number(o.totalAmount), 0) / completedOrders.length : 0), sub: 'Per order average', icon: Smartphone, color: 'text-blue-500 lg:text-blue-500', bg: 'lg:bg-blue-50 bg-blue-500/10' },
+    { id: 'PENDING', label: 'Pending Payments', value: pendingOrders.length.toString(), sub: 'Awaiting checkout', icon: Receipt, color: 'text-indigo-500 lg:text-indigo-500', bg: 'lg:bg-indigo-50 bg-indigo-500/10' },
+    { id: 'COMPLETED', label: 'Completed Today', value: completedOrders.length.toString(), sub: 'Success', icon: CheckCircle2, color: 'text-emerald-500 lg:text-emerald-500', bg: 'lg:bg-emerald-50 bg-emerald-500/10' },
+    { id: 'REVENUE', label: 'Revenue Today', value: format(completedOrders.reduce((acc: number, o: any) => acc + Number(o.totalAmount), 0)), sub: 'Total collected', icon: DollarSign, color: 'text-orange-500 lg:text-orange-500', bg: 'lg:bg-orange-50 bg-orange-500/10' },
   ];
 
   return (
@@ -137,10 +154,20 @@ export const Payments = () => {
         </div>
       </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 shrink-0">
+      {/* KPI Row - Naturally Reflowed to 3 Columns */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0">
         {kpis.map((kpi, i) => (
-          <Card key={i} className="p-4 lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none lg:border-none border border-[#232B5E]/50 shadow-2xl lg:shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex items-center gap-4">
+          <Card 
+            key={i} 
+            onClick={() => (kpi.id === 'PENDING' || kpi.id === 'COMPLETED') && setPaymentFilter(kpi.id as 'PENDING' | 'COMPLETED')}
+            className={cn(
+              "p-4 lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none lg:border-none border shadow-2xl lg:shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex items-center gap-4 transition-all duration-200",
+              (kpi.id === 'PENDING' || kpi.id === 'COMPLETED') ? "cursor-pointer hover:border-[#F97316]/50" : "border-transparent",
+              (kpi.id === 'PENDING' || kpi.id === 'COMPLETED') && paymentFilter === kpi.id 
+                ? "border-[#F97316] bg-orange-500/10 shadow-[0_0_15px_rgba(249,115,22,0.15)]" 
+                : "border-[#232B5E]/50"
+            )}
+          >
              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm", kpi.bg, kpi.color)}>
                 <kpi.icon size={24} />
              </div>
@@ -160,13 +187,22 @@ export const Payments = () => {
          <Card className="flex-1 lg:bg-white bg-transparent lg:border-none border-none lg:shadow-[0_2px_12px_rgba(0,0,0,0.04)] shadow-none p-0 overflow-hidden flex flex-col">
             <div className="p-6 lg:border-b lg:border-slate-50 border-b border-[#232B5E]/30 flex flex-wrap items-center justify-between lg:bg-white bg-[#131A38]/70 backdrop-blur-md rounded-xl lg:rounded-none border border-[#232B5E]/50 shadow-2xl lg:shadow-none gap-4">
                <div className="flex items-center gap-4">
-                  <h3 className="text-sm font-black lg:text-[#0B1630] text-white uppercase tracking-wider">Awaiting Payment</h3>
-                  <span className="w-6 h-6 rounded-full lg:bg-indigo-50 bg-indigo-500/20 lg:text-indigo-600 text-indigo-400 text-[10px] font-black flex items-center justify-center">{pendingOrders.length}</span>
+                  <h3 className="text-sm font-black lg:text-[#0B1630] text-white uppercase tracking-wider">
+                     {paymentFilter === 'PENDING' ? 'Awaiting Payment' : 'Completed Payments'}
+                  </h3>
+                  <span className="w-6 h-6 rounded-full lg:bg-indigo-50 bg-indigo-500/20 lg:text-indigo-600 text-indigo-400 text-[10px] font-black flex items-center justify-center">
+                     {paymentFilter === 'PENDING' ? pendingOrders.length : completedOrders.length}
+                  </span>
                </div>
                <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
                   <div className="relative">
                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                     <input className="w-64 h-10 pl-10 pr-4 rounded-xl lg:bg-slate-50/50 bg-[#1E293B] lg:border lg:border-slate-100 border border-[#232B5E]/30 lg:text-slate-800 text-white text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]" placeholder="Search order or customer..." />
+                     <input 
+                       value={searchQuery}
+                       onChange={(e) => setSearchQuery(e.target.value)}
+                       className="w-64 h-10 pl-10 pr-4 rounded-xl lg:bg-slate-50/50 bg-[#1E293B] lg:border lg:border-slate-100 border border-[#232B5E]/30 lg:text-slate-800 text-white text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]" 
+                       placeholder="Search order or customer..." 
+                     />
                   </div>
                   <button className="p-2.5 rounded-xl lg:bg-white bg-[#1E293B] lg:border lg:border-slate-100 border-none lg:text-[#94A3B8] text-[#94A3B8] hover:bg-slate-50"><Filter size={16} /></button>
                </div>
@@ -187,53 +223,61 @@ export const Payments = () => {
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                     {pendingOrders.map((order: any) => (
-                        <tr 
-                          key={order.id} 
-                          onClick={() => setSelectedOrderId(order.id)}
-                          className={cn(
-                            "hover:bg-slate-50 transition-colors group cursor-pointer",
-                            selectedOrderId === order.id && "bg-indigo-50/50 border-l-4 border-l-indigo-500"
-                          )}
-                        >
-                           <td className="px-6 py-4 text-xs font-black text-[#4F46E5]">#{order.id.slice(0, 8)}</td>
-                           <td className="px-6 py-4 text-xs font-bold text-[#0B1630]">T{order.table?.number || '?'}</td>
-                           <td className="px-6 py-4 text-xs font-medium text-[#64748B]">{order.waiterName || 'Unassigned'}</td>
-                           <td className="px-6 py-4 text-xs font-bold text-[#0B1630]">{order.customerName || 'Guest'}</td>
-                           <td className="px-6 py-4">
-                              <span className={cn(
-                                "text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider bg-orange-50 text-orange-600"
-                              )}>
-                                {order.status}
-                              </span>
-                           </td>
-                           <td className="px-6 py-4 text-xs font-black text-[#0B1630]">{format(Number(order.totalAmount))}</td>
-                           <td className="px-6 py-4 text-xs font-medium text-[#94A3B8]">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                           <td className="px-6 py-4 text-right">
-                              <div className="w-8 h-8 rounded-lg bg-[#0B1630] text-white flex items-center justify-center ml-auto">
-                                 <ChevronRight size={16} />
-                              </div>
+                     {filteredDisplayedOrders.length === 0 ? (
+                        <tr>
+                           <td colSpan={8} className="text-center py-8 text-xs text-[#94A3B8] font-bold">
+                              No payments found
                            </td>
                         </tr>
-                     ))}
+                     ) : (
+                        filteredDisplayedOrders.map((order: any) => (
+                           <tr 
+                             key={order.id} 
+                             onClick={() => setSelectedOrderId(order.id)}
+                             className={cn(
+                               "hover:bg-white/5 transition-colors group cursor-pointer border-l-4 border-l-transparent",
+                               selectedOrderId === order.id && "bg-orange-500/10 border-l-4 border-l-[#F97316] shadow-[inset_4px_0_12px_rgba(249,115,22,0.06)]"
+                             )}
+                           >
+                              <td className="px-6 py-4 text-xs font-black text-[#4F46E5]">{order.orderNumber || `#${order.id.slice(0, 8)}`}</td>
+                              <td className="px-6 py-4 text-xs font-bold text-[#0B1630]">T{order.table?.number || '?'}</td>
+                              <td className="px-6 py-4 text-xs font-medium text-[#64748B]">{order.waiterName || 'Unassigned'}</td>
+                              <td className="px-6 py-4 text-xs font-bold text-[#0B1630]">{order.customerName || 'Guest'}</td>
+                              <td className="px-6 py-4">
+                                 <span className={cn(
+                                   "text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider bg-orange-50 text-orange-600"
+                                 )}>
+                                   {order.status}
+                                 </span>
+                              </td>
+                              <td className="px-6 py-4 text-xs font-black text-[#0B1630]">{format(Number(order.totalAmount))}</td>
+                              <td className="px-6 py-4 text-xs font-medium text-[#94A3B8]">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                              <td className="px-6 py-4 text-right">
+                                 <div className="w-8 h-8 rounded-lg bg-[#0B1630] text-white flex items-center justify-center ml-auto">
+                                    <ChevronRight size={16} />
+                                 </div>
+                              </td>
+                           </tr>
+                        ))
+                     )}
                   </tbody>
                </table>
 
                {/* MOBILE RESPONSIVE CARDS VIEW */}
                <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 p-6 bg-transparent">
-                  {pendingOrders.map((order: any) => (
+                  {filteredDisplayedOrders.map((order: any) => (
                     <Card 
                       key={order.id} 
                       onClick={() => setSelectedOrderId(order.id)}
                       className={cn(
                         "p-4 border shadow-2xl flex flex-col gap-4 cursor-pointer transition-all",
                         selectedOrderId === order.id 
-                          ? "border-[#F97316] bg-[#1E293B] text-white" 
-                          : "border-[#232B5E]/50 bg-[#131A38]/70 text-white"
+                          ? "border-[#F97316] bg-orange-500/10 shadow-[0_0_15px_rgba(249,115,22,0.15)] text-white" 
+                          : "border-[#232B5E]/50 bg-white/5 text-white"
                       )}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-indigo-400">#{order.id.slice(0, 8)}</span>
+                        <span className="text-xs font-black text-indigo-400">{order.orderNumber || `#${order.id.slice(0, 8)}`}</span>
                         <span className="text-[10px] text-[#94A3B8]">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       
@@ -255,9 +299,9 @@ export const Payments = () => {
                       </div>
                     </Card>
                   ))}
-                  {pendingOrders.length === 0 && (
+                  {filteredDisplayedOrders.length === 0 && (
                     <div className="text-center py-8 text-xs text-[#94A3B8] font-bold col-span-full">
-                      No pending payments found
+                      No payments found
                     </div>
                   )}
                </div>
@@ -267,7 +311,7 @@ export const Payments = () => {
          {/* Settlement Panel */}
          <Card className="w-full lg:w-[450px] lg:bg-white bg-[#131A38]/70 backdrop-blur-md lg:backdrop-blur-none lg:border-none border border-[#232B5E]/50 shadow-2xl flex flex-col p-8 overflow-y-auto">
             <div className="flex items-center justify-between mb-8">
-               <h3 className="text-lg font-black lg:text-[#0B1630] text-white">Order Summary</h3>
+               <h3 className="text-lg font-black lg:text-[#0B1630] text-white">{selectedOrder ? `Summary - ${selectedOrder.orderNumber}` : 'Order Summary'}</h3>
                <span className="text-[10px] font-black bg-orange-50/10 text-orange-400 border border-orange-500/20 px-3 py-1 rounded-full uppercase">Select Order</span>
             </div>
 
@@ -437,13 +481,13 @@ export const Payments = () => {
              <div className="space-y-3 mt-auto">
                 <button 
                   onClick={handleSettle}
-                  disabled={!selectedOrderId || settleOrderMutation.isPending || (selectedMethod === 'Cash' && Number(cashReceived) > 0 && Number(cashReceived) < finalGrandTotal)}
+                  disabled={!selectedOrderId || selectedOrder?.status === 'COMPLETED' || settleOrderMutation.isPending || (selectedMethod === 'Cash' && Number(cashReceived) > 0 && Number(cashReceived) < finalGrandTotal)}
                   className={cn(
                      "w-full bg-[#F97316] text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-[#ea580c] transition-all shadow-lg shadow-orange-500/20 active:scale-[0.98]",
-                     (!selectedOrderId || settleOrderMutation.isPending || (selectedMethod === 'Cash' && Number(cashReceived) > 0 && Number(cashReceived) < finalGrandTotal)) && "opacity-50 cursor-not-allowed shadow-none"
+                     (!selectedOrderId || selectedOrder?.status === 'COMPLETED' || settleOrderMutation.isPending || (selectedMethod === 'Cash' && Number(cashReceived) > 0 && Number(cashReceived) < finalGrandTotal)) && "opacity-50 cursor-not-allowed shadow-none"
                   )}
                 >
-                   {settleOrderMutation.isPending ? 'PROCESSING...' : <>{selectedOrder ? `Collect ${format(finalGrandTotal)}` : 'Collect Payment'} <ChevronRight size={18} strokeWidth={3} /></>}
+                   {settleOrderMutation.isPending ? 'PROCESSING...' : selectedOrder?.status === 'COMPLETED' ? 'PAID & SETTLED' : <>{selectedOrder ? `Collect ${format(finalGrandTotal)}` : 'Collect Payment'} <ChevronRight size={18} strokeWidth={3} /></>}
                 </button>
                 <div className="grid grid-cols-2 gap-3">
                    <button className="lg:bg-white bg-[#1E293B] lg:text-[#0B1630] text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 lg:border lg:border-slate-200 border-none hover:bg-slate-50 transition-all active:scale-[0.98]">

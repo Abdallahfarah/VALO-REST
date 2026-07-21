@@ -139,7 +139,7 @@ export const Receipts = () => {
                         return (
                           <tr key={rcpt.id} className="hover:bg-slate-50 transition-colors group cursor-pointer">
                              <td className="px-6 py-4 text-xs font-black text-[#64748B]">{rcpt.receiptNumber}</td>
-                             <td className="px-6 py-4 text-xs font-black text-[#4F46E5]">#{rcpt.orderId.slice(0, 8)}</td>
+                             <td className="px-6 py-4 text-xs font-black text-[#4F46E5]">{rcpt.order?.orderNumber || `#${rcpt.orderId.slice(0, 8)}`}</td>
                              <td className="px-6 py-4 text-xs font-medium text-[#64748B]">{rcpt.order?.waiterName || 'Cashier User'}</td>
                              <td className="px-6 py-4">
                                 <div className="flex items-center gap-2 text-xs font-bold text-[#0B1630]">
@@ -186,7 +186,7 @@ export const Receipts = () => {
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="text-sm font-black text-white">Order: #{rcpt.orderId.slice(0, 8)}</h4>
+                          <h4 className="text-sm font-black text-white">Order: {rcpt.order?.orderNumber || `#${rcpt.orderId.slice(0, 8)}`}</h4>
                           <span className="text-[10px] text-[#94A3B8]">Waiter: {rcpt.order?.waiterName || 'Cashier User'}</span>
                         </div>
                         <span className="text-[10px] font-bold text-white flex items-center gap-1.5 bg-[#1E293B] border border-[#232B5E]/30 px-2 py-0.5 rounded">
@@ -238,7 +238,7 @@ export const Receipts = () => {
               </div>
               <div className="flex justify-between text-xs font-bold text-[#94A3B8]">
                 <span>Order Ref:</span>
-                <span className="lg:text-[#0B1630] text-white">#{activeReceipt.orderId.slice(0, 8)}</span>
+                <span className="lg:text-[#0B1630] text-white">{activeReceipt.order?.orderNumber || `#${activeReceipt.orderId.slice(0, 8)}`}</span>
               </div>
               <div className="flex justify-between text-xs font-bold text-[#94A3B8]">
                 <span>Date/Time:</span>

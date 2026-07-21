@@ -59,7 +59,7 @@ const CancellationDialog = ({ order, onConfirm, onClose, isPending }: Cancellati
             <div>
               <h2 className="text-sm font-black text-white uppercase tracking-wider">Cancel Order</h2>
               <p className="text-[11px] text-[#94A3B8] font-medium mt-0.5">
-                #{order.id?.slice(0, 8).toUpperCase()} · Table {order.table?.number || 'N/A'}
+                {order.orderNumber || `#${order.id?.slice(0, 8).toUpperCase()}`} · Table {order.table?.number || 'N/A'}
               </p>
             </div>
           </div>
@@ -392,7 +392,7 @@ const ViewAllOrdersDialog = ({
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-black text-white">#{order.id.slice(0, 8).toUpperCase()}</span>
+                    <span className="text-xs font-black text-white">{order.orderNumber || `#${order.id.slice(0, 8).toUpperCase()}`}</span>
                     <span className="text-[9px] font-bold text-[#94A3B8]">Table {order.table?.number || 'N/A'}</span>
                   </div>
                   <p className="text-[10px] text-[#94A3B8] font-medium">
@@ -895,7 +895,7 @@ export const OrdersMonitor = () => {
                           className="p-4 bg-[#141935]/65 border border-[#232B5E]/20 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:border-[#F97316]/50 hover:shadow-[0_4px_25px_rgba(249,115,22,0.1)] group transition-all duration-300 cursor-pointer"
                         >
                            <div className="flex items-center justify-between mb-4">
-                              <span className="text-xs font-black text-white">#{order.id.slice(0, 8).toUpperCase()}</span>
+                              <span className="text-xs font-black text-white">{order.orderNumber || `#${order.id.slice(0, 8).toUpperCase()}`}</span>
                               <span className="text-[10px] text-[#94A3B8] font-bold">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                            </div>
                            <div className="flex items-center justify-between text-[10px] font-bold text-[#94A3B8] mb-2">
@@ -1002,7 +1002,7 @@ export const OrdersMonitor = () => {
                       >
                         {/* Order header */}
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-black text-white">#{order.id.slice(0, 8)}</span>
+                           <span className="text-xs font-black text-white">{order.orderNumber || `#${order.id.slice(0, 8)}`}</span>
                           <span className="text-[10px] text-[#94A3B8] font-bold">
                             {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>

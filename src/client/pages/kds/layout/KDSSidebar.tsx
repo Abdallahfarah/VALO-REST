@@ -1,8 +1,6 @@
-import { useEffect } from 'react';
 import { 
   Receipt, 
   BarChart2, 
-  MessageSquare,
   LogOut,
   ChevronLeft
 } from 'lucide-react';
@@ -11,9 +9,6 @@ import { NavLink } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTenant } from '../../../context/TenantContext';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { MessagingService } from '../../../services/ApiService';
-import { supabase } from '../../../../lib/supabase';
 
 interface NavItem {
   name: string;
@@ -39,12 +34,6 @@ const navSections: NavSection[] = [
     items: [
       { name: 'Reports', path: '/kds/reports', icon: BarChart2 },
     ],
-  },
-  {
-    title: 'COMMUNICATION',
-    items: [
-      { name: 'Messages', path: '/kds/messages', icon: MessageSquare },
-    ],
   }
 ];
 
@@ -54,36 +43,9 @@ export interface KDSSidebarProps {
 }
 
 export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
-  const { signOut, preparationStation, user } = useAuth();
+  const { signOut, preparationStation } = useAuth();
   const { tenant } = useTenant();
-  const queryClient = useQueryClient();
 
-  const { data: conversations = [] } = useQuery({
-    queryKey: ['conversations', tenant?.id, user?.id],
-    queryFn: () => MessagingService.getConversations(tenant?.id || '', user?.id || ''),
-    enabled: !!tenant?.id && !!user?.id,
-  });
-
-  const totalUnreadMessages = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
-
-  useEffect(() => {
-    if (!tenant?.id) return;
-
-    const mChannel = supabase
-      .channel('messages-realtime-kds-sidebar')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenant.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(mChannel);
-    };
-  }, [tenant?.id, queryClient]);
   return (
     <>
       {/* Mobile Sidebar Backdrop overlay */}
@@ -101,8 +63,8 @@ export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
         {/* Brand Header */}
         <div className="flex items-center justify-between px-6 py-6 pt-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#F97316] rounded flex items-center justify-center shadow-md shadow-orange-500/20">
-              <span className="text-white font-bold text-lg leading-none">VX</span>
+            <div className="w-10 h-10 bg-[#F97316] rounded flex items-center justify-center overflow-hidden p-1 shadow-md shadow-orange-500/20 shrink-0 select-none">
+              <img src="/dhadhan-logo.png" alt="Dhadhan Hub" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col">
               <span className="text-white font-bold text-lg leading-none drop-shadow-sm truncate max-w-[150px]">{tenant?.name || 'RESTAURANT'}</span>
@@ -147,16 +109,7 @@ export const KDSSidebar = ({ isOpen, onClose }: KDSSidebarProps) => {
                         />
                         <span className="font-bold tracking-wide">{item.name}</span>
                       </div>
-                      {item.name === 'Messages' ? (
-                        totalUnreadMessages > 0 ? (
-                          <span className={cn(
-                            "text-[10px] font-black px-2 py-0.5 rounded-full",
-                            isActive ? "bg-white text-[#F97316]" : "bg-indigo-500/30 text-indigo-200 border border-indigo-500/20"
-                          )}>
-                            {totalUnreadMessages}
-                          </span>
-                        ) : null
-                      ) : item.badge ? (
+                      {item.badge ? (
                         <span className={cn(
                           "text-[10px] font-black px-2 py-0.5 rounded-full",
                           isActive ? "bg-white text-[#F97316]" : "bg-indigo-500/30 text-indigo-200 border border-indigo-500/20"

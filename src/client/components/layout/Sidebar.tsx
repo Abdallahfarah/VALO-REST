@@ -64,8 +64,8 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       )}>
       {/* Brand Header */}
       <div className="flex items-center gap-3 px-6 py-6 pt-8">
-        <div className="w-10 h-10 bg-[#F97316] rounded-xl flex items-center justify-center shadow-md shadow-orange-500/10 shrink-0 select-none">
-          <span className="text-white font-extrabold text-lg leading-none tracking-tight">VX</span>
+        <div className="w-10 h-10 bg-[#F97316] rounded-xl flex items-center justify-center shadow-md shadow-orange-500/10 shrink-0 select-none overflow-hidden p-1">
+          <img src="/dhadhan-logo.png" alt="Dhadhan Hub" className="w-full h-full object-contain" />
         </div>
         <div className="flex flex-col min-w-0">
           <span className="text-white font-black text-base leading-tight truncate">{tenant?.name || 'RESTAURANT'}</span>

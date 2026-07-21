@@ -19,7 +19,7 @@ import {
 import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MenuService, OrderService, TableService, ActivityLogService, SettingService } from '../../services/ApiService';
+import { MenuService, OrderService, TableService, ActivityLogService, SettingService, formatOrderNumber } from '../../services/ApiService';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../lib/toast-store';
@@ -623,7 +623,7 @@ Notes:          ${settledReceipt.notes || 'None'}
              
              <div className="space-y-4">
                 <div className="flex justify-between text-xs text-[#64748B] font-bold">
-                   <span>Order ID: #{activeOrder?.id.slice(0, 8)}</span>
+                   <span>Order ID: {formatOrderNumber(activeOrder?.order_number) || `#${activeOrder?.id.slice(0, 8)}`}</span>
                    <span>Table {tables.find((t: any) => t.id === selectedTable)?.number}</span>
                 </div>
                 <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">

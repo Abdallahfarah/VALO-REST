@@ -143,8 +143,13 @@ body {
   color: #F8FAFC !important;
 }
 
-/* Dark Glassmorphic Card Surface with Accent Neon Border & Glow */
+/* Dark Glassmorphic Card Surface with Accent Neon Border & Glow (including responsive classes) */
 .restaurant-portal .bg-white,
+.restaurant-portal .lg\:bg-white,
+.restaurant-portal .md\:bg-white,
+.restaurant-portal .sm\:bg-white,
+.restaurant-portal .lg\:bg-white\/70,
+.restaurant-portal .bg-white\/70,
 .restaurant-portal .card,
 .restaurant-portal .bg-white.rounded-3xl,
 .restaurant-portal .bg-white.rounded-2xl,
@@ -162,6 +167,7 @@ body {
 /* Subtle card hover animation */
 .restaurant-portal .bg-white.rounded-3xl:hover,
 .restaurant-portal .bg-white.rounded-2xl:hover,
+.restaurant-portal .lg\:bg-white:hover,
 .restaurant-portal .card:hover,
 .restaurant-portal .hover\:shadow-md:hover {
   border-color: rgba(249, 115, 22, 0.5) !important;
@@ -171,33 +177,67 @@ body {
 
 /* Light background surfaces -> semi-transparent dark surfaces */
 .restaurant-portal .bg-slate-50,
+.restaurant-portal .lg\:bg-slate-50,
+.restaurant-portal .md\:bg-slate-50,
+.restaurant-portal .bg-slate-50\/30,
+.restaurant-portal .bg-slate-50\/50,
 .restaurant-portal .bg-gray-50,
+.restaurant-portal .lg\:bg-gray-50,
 .restaurant-portal .bg-slate-100,
+.restaurant-portal .lg\:bg-slate-100,
+.restaurant-portal .bg-slate-100\/50,
 .restaurant-portal .bg-gray-100,
-.restaurant-portal .bg-orange-50 {
+.restaurant-portal .bg-slate-200\/10,
+.restaurant-portal .bg-slate-900\/50,
+.restaurant-portal .bg-slate-950\/20 {
   background-color: rgba(255, 255, 255, 0.04) !important;
   color: #F8FAFC !important;
 }
 
-.restaurant-portal .bg-emerald-50 {
+/* Responsive Green/Emerald Status Badges */
+.restaurant-portal .bg-emerald-50,
+.restaurant-portal .lg\:bg-emerald-50,
+.restaurant-portal .bg-emerald-500\/10,
+.restaurant-portal .bg-emerald-500\/20,
+.restaurant-portal .bg-emerald-500\/30 {
   background-color: rgba(16, 185, 129, 0.12) !important;
   color: #34D399 !important;
   border-color: rgba(16, 185, 129, 0.2) !important;
 }
 
-.restaurant-portal .bg-blue-50 {
+/* Responsive Orange/Amber Status Badges */
+.restaurant-portal .bg-orange-50,
+.restaurant-portal .lg\:bg-orange-50,
+.restaurant-portal .bg-amber-50,
+.restaurant-portal .lg\:bg-amber-50,
+.restaurant-portal .bg-orange-500\/10,
+.restaurant-portal .bg-orange-500\/20,
+.restaurant-portal .bg-amber-500\/10,
+.restaurant-portal .bg-amber-500\/20 {
+  background-color: rgba(249, 115, 22, 0.12) !important;
+  color: #F97316 !important;
+  border-color: rgba(249, 115, 22, 0.2) !important;
+}
+
+/* Responsive Blue/Indigo Status Badges */
+.restaurant-portal .bg-blue-50,
+.restaurant-portal .lg\:bg-blue-50,
+.restaurant-portal .bg-indigo-50,
+.restaurant-portal .lg\:bg-indigo-50,
+.restaurant-portal .bg-blue-500\/10,
+.restaurant-portal .bg-blue-500\/20,
+.restaurant-portal .bg-indigo-500\/10,
+.restaurant-portal .bg-indigo-500\/20 {
   background-color: rgba(59, 130, 246, 0.12) !important;
   color: #60A5FA !important;
   border-color: rgba(59, 130, 246, 0.2) !important;
 }
 
-.restaurant-portal .bg-indigo-50 {
-  background-color: rgba(99, 102, 241, 0.12) !important;
-  color: #818CF8 !important;
-  border-color: rgba(99, 102, 241, 0.2) !important;
-}
-
-.restaurant-portal .bg-red-50 {
+/* Responsive Red/Error Status Badges */
+.restaurant-portal .bg-red-50,
+.restaurant-portal .lg\:bg-red-50,
+.restaurant-portal .bg-red-500\/10,
+.restaurant-portal .bg-red-500\/20 {
   background-color: rgba(239, 68, 68, 0.12) !important;
   color: #FCA5A5 !important;
   border-color: rgba(239, 68, 68, 0.2) !important;
@@ -205,33 +245,58 @@ body {
 
 /* Borders -> thin translucent borders */
 .restaurant-portal .border-slate-200,
+.restaurant-portal .lg\:border-slate-200,
+.restaurant-portal .md\:border-slate-200,
 .restaurant-portal .border-gray-200,
+.restaurant-portal .lg\:border-gray-200,
 .restaurant-portal .border-slate-100,
+.restaurant-portal .lg\:border-slate-100,
 .restaurant-portal .border-\[\#E5E7EB\],
+.restaurant-portal .lg\:border-\[\#E5E7EB\],
+.restaurant-portal .border-\[\#232B5E\]\/30,
+.restaurant-portal .border-\[\#232B5E\]\/50,
 .restaurant-portal .border-t,
+.restaurant-portal .lg\:border-t,
 .restaurant-portal .border-b,
+.restaurant-portal .lg\:border-b,
 .restaurant-portal .border-l,
-.restaurant-portal .border-r {
+.restaurant-portal .lg\:border-l,
+.restaurant-portal .border-r,
+.restaurant-portal .lg\:border-r {
   border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Dark text colors -> Light text colors for readability */
 .restaurant-portal .text-\[\#0B1630\],
+.restaurant-portal .lg\:text-\[\#0B1630\],
+.restaurant-portal .md\:text-\[\#0B1630\],
 .restaurant-portal .text-slate-900,
+.restaurant-portal .lg\:text-slate-900,
+.restaurant-portal .md\:text-slate-900,
 .restaurant-portal .text-gray-900,
+.restaurant-portal .lg\:text-gray-900,
 .restaurant-portal .text-slate-800,
+.restaurant-portal .lg\:text-slate-800,
+.restaurant-portal .md\:text-slate-800,
 .restaurant-portal .text-gray-800,
-.restaurant-portal .text-slate-700 {
+.restaurant-portal .text-slate-700,
+.restaurant-portal .lg\:text-slate-700,
+.restaurant-portal .md\:text-slate-700 {
   color: #F8FAFC !important;
 }
 
+/* Muted text colors */
 .restaurant-portal .text-slate-600,
-.restaurant-portal .text-gray-600 {
+.restaurant-portal .lg\:text-slate-600,
+.restaurant-portal .text-gray-600,
+.restaurant-portal .lg\:text-gray-600 {
   color: #94A3B8 !important;
 }
 
 .restaurant-portal .text-slate-500,
-.restaurant-portal .text-gray-500 {
+.restaurant-portal .lg\:text-slate-500,
+.restaurant-portal .text-gray-500,
+.restaurant-portal .lg\:text-gray-500 {
   color: #64748B !important;
 }
 

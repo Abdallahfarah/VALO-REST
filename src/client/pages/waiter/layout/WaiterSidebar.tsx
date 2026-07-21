@@ -4,7 +4,6 @@ import {
   MonitorSmartphone, 
   Armchair, 
   Receipt, 
-  MessageSquare, 
   Bell, 
   LogOut, 
   ChevronLeft 
@@ -15,7 +14,6 @@ import { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTenant } from '../../../context/TenantContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { MessagingService } from '../../../services/ApiService';
 import { supabase } from '../../../../lib/supabase';
 
 interface NavItem {
@@ -43,7 +41,6 @@ const navSections: NavSection[] = [
   {
     title: 'COMMUNICATION',
     items: [
-      { name: 'Messages', path: '/waiter/messages', icon: MessageSquare },
       { name: 'Notifications', path: '/waiter/notifications', icon: Bell },
     ],
   }
@@ -55,26 +52,22 @@ export interface WaiterSidebarProps {
 }
 
 export const WaiterSidebar = ({ isOpen, onClose }: WaiterSidebarProps) => {
-  const { signOut, user } = useAuth();
+  const { signOut, user, role } = useAuth();
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
 
-  const { data: conversations = [] } = useQuery({
-    queryKey: ['conversations', tenant?.id, user?.id],
-    queryFn: () => MessagingService.getConversations(tenant?.id || '', user?.id || ''),
-    enabled: !!tenant?.id && !!user?.id,
-  });
-
   const { data: unreadNotifications = [] } = useQuery({
-    queryKey: ['unread-notifications-count', tenant?.id, user?.id],
+    queryKey: ['unread-notifications-count', tenant?.id, user?.id, role],
     queryFn: async () => {
       if (!tenant?.id) return [];
       let q = supabase
         .from('notifications')
-        .select('id, user_id, is_read')
+        .select('id, user_id, role, is_read')
         .eq('tenant_id', tenant.id)
         .eq('is_read', false);
-      if (user?.id) {
+      if (user?.id && role) {
+        q = q.or(`user_id.eq.${user.id},role.eq.${role},and(user_id.is.null,role.is.null)`);
+      } else if (user?.id) {
         q = q.or(`user_id.eq.${user.id},user_id.is.null`);
       }
       const { data } = await q;
@@ -82,8 +75,6 @@ export const WaiterSidebar = ({ isOpen, onClose }: WaiterSidebarProps) => {
     },
     enabled: !!tenant?.id,
   });
-
-  const totalUnreadMessages = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
 
   // Real-time subscription in WaiterSidebar
   useEffect(() => {
@@ -100,22 +91,11 @@ export const WaiterSidebar = ({ isOpen, onClose }: WaiterSidebarProps) => {
       )
       .subscribe();
 
-    const mChannel = supabase
-      .channel('messages-realtime-waiter-sidebar')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenant.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        }
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(nChannel);
-      supabase.removeChannel(mChannel);
     };
   }, [tenant?.id, queryClient]);
+
   return (
     <>
       {/* Mobile Sidebar Backdrop overlay */}
@@ -133,8 +113,8 @@ export const WaiterSidebar = ({ isOpen, onClose }: WaiterSidebarProps) => {
         {/* Brand Header */}
         <div className="flex items-center justify-between px-6 py-6 pt-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#F97316] rounded flex items-center justify-center">
-              <span className="text-white font-bold text-lg leading-none">VX</span>
+            <div className="w-10 h-10 bg-[#F97316] rounded flex items-center justify-center overflow-hidden p-1 shadow-md shadow-orange-500/10 shrink-0 select-none">
+              <img src="/dhadhan-logo.png" alt="Dhadhan Hub" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col">
               <span className="text-white font-bold text-lg leading-none drop-shadow-sm truncate max-w-[150px]">{tenant?.name || 'RESTAURANT'}</span>
@@ -177,13 +157,7 @@ export const WaiterSidebar = ({ isOpen, onClose }: WaiterSidebarProps) => {
                         />
                         <span className="font-medium tracking-wide">{item.name}</span>
                       </div>
-                      {item.name === 'Messages' ? (
-                        totalUnreadMessages > 0 ? (
-                          <span className="bg-[#4F46E5] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                            {totalUnreadMessages}
-                          </span>
-                        ) : null
-                      ) : item.name === 'Notifications' ? (
+                      {item.name === 'Notifications' ? (
                         unreadNotifications.length > 0 ? (
                           <span className="bg-[#4F46E5] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                             {unreadNotifications.length}

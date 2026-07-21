@@ -53,7 +53,7 @@ export const KDSReports = () => {
         prepMinutes = Math.round(Math.max(0, (completed - created) / 60000));
       }
       return {
-        id: o.id?.slice(0, 8).toUpperCase(),
+        id: o.orderNumber || o.id?.slice(0, 8).toUpperCase(),
         table: o.table?.number || 'N/A',
         waiter: o.waiterName || 'Unassigned',
         items: o.items?.length || 0,
