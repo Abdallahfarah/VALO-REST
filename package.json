@@ -1,7 +1,7 @@
 {
   "name": "valo-rest",
   "version": "1.0.0",
-  "description": "Dhadhan HUB Enterprise SaaS Platform",
+  "description": "Dhadhan HUB Platform",
   "private": true,
   "type": "module",
   "scripts": {
