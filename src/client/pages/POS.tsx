@@ -125,68 +125,56 @@ export const POS = () => {
   const allCategories = [{ id: null, name: 'ALL ITEMS' }, ...categories.map((c: any) => ({ id: c.id, name: c.name.toUpperCase() }))];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-auto lg:h-[calc(100vh-140px)]">
+    <div className="h-[calc(100vh-100px)] lg:h-[calc(100vh-140px)] flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden">
       {/* Category Sidebar */}
-      <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:w-[200px] w-full shrink-0 pb-2 lg:pb-0 whitespace-nowrap lg:whitespace-normal">
+      <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:w-[200px] w-full shrink-0 pb-2 lg:pb-0 whitespace-nowrap lg:whitespace-normal pr-2">
         {allCategories.map((c: any) => (
           <button
             key={c.id || 'all'}
             onClick={() => setSelectedCategory(c.id)}
             className={cn(
-              "text-left px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer inline-block lg:block lg:w-full w-auto",
-              selectedCategory === c.id ? "text-[#F97316]" : "text-[#64748B] hover:text-[#0B1630]"
+              "text-left px-4 py-3 lg:py-4 rounded-2xl text-[10px] font-black tracking-widest uppercase transition-all inline-block lg:block lg:w-full w-auto",
+              selectedCategory === c.id ? "bg-orange-50 text-[#F97316] border border-orange-100 shadow-sm" : "text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-50"
             )}
           >
-            <span className={cn("inline-block w-2 h-2 rounded-full mr-2", selectedCategory === c.id ? "bg-[#F97316]" : "bg-[#D1D5DB]")} />
             {c.name}
           </button>
         ))}
       </div>
 
-      {/* Menu Grid */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-[#0B1630]">
+      {/* Menu Grid (Independently Scrollable on Mobile & Desktop) */}
+      <div className="flex-1 min-h-0 flex flex-col gap-4 lg:gap-6 overflow-hidden">
+        <div className="flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg lg:text-xl font-bold text-[#0B1630]">
               {selectedCategory ? categories.find((c: any) => c.id === selectedCategory)?.name || 'Items' : 'All Items'}
             </h2>
-            <span className="text-sm text-[#94A3B8] font-medium">{filteredProducts.length} ITEMS</span>
+            <span className="text-xs font-bold text-[#94A3B8]">{filteredProducts.length} ITEMS</span>
           </div>
-          <div className="relative w-56">
+          <div className="relative w-48 sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 rounded-lg border border-[#E5E7EB] text-sm bg-white placeholder:text-[#94A3B8] focus:outline-none focus:border-[#F97316]"
+              className="w-full h-9 lg:h-10 pl-10 pr-4 rounded-xl border border-slate-200 text-xs lg:text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]"
               placeholder="Search menu items..."
             />
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 overflow-y-auto pr-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-4 flex-1 overflow-y-auto pr-1 pb-2">
           {filteredProducts.map((item: any) => (
-            <Card key={item.id} className="border border-[#E5E7EB] shadow-none hover:shadow-md transition-shadow bg-white cursor-pointer" onClick={() => addToCart(item)}>
-              <div className="h-32 bg-slate-800 rounded-t-2xl flex items-center justify-center">
-                {item.imageUrl ? (
-                  <img 
-                    src={item.imageUrl} 
-                    alt={item.name} 
-                    className="w-full h-full object-cover rounded-t-2xl" 
-                    loading="lazy"
-                    decoding="async"
-                    width={300}
-                    height={128}
-                  />
-                ) : (
-                  <span className="text-slate-500 text-xs">No Image</span>
-                )}
+            <Card key={item.id} onClick={() => addToCart(item)} className="p-0 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform text-left flex flex-col">
+              <div className="aspect-[4/3] bg-slate-50 flex items-center justify-center text-4xl lg:text-5xl group-hover:scale-110 transition-transform duration-500 relative shrink-0">
+                {item.icon || '🍔'}
+                <div className="absolute inset-0 bg-[#0B1630]/0 group-hover:bg-[#0B1630]/5 transition-colors" />
               </div>
-              <div className="p-4">
-                <p className="font-semibold text-[#0B1630] text-sm mb-2 leading-tight min-h-[36px]">{item.name}</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#0B1630]">{format(Number(item.price))}</span>
-                  <button className="w-7 h-7 rounded-full border-2 border-[#F97316] flex items-center justify-center text-[#F97316] hover:bg-[#F97316] hover:text-white transition-colors cursor-pointer">
+              <div className="p-3 lg:p-4 flex flex-col gap-1 justify-between flex-1">
+                <h4 className="text-xs lg:text-sm font-bold text-[#0B1630] line-clamp-1">{item.name}</h4>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-xs lg:text-sm font-black text-[#0B1630]">{format(Number(item.price))}</span>
+                  <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg border border-slate-100 flex items-center justify-center text-[#F97316] hover:bg-[#F97316] hover:text-white transition-colors">
                     <Plus size={14} strokeWidth={3} />
-                  </button>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -194,17 +182,17 @@ export const POS = () => {
         </div>
       </div>
 
-      {/* Order Panel */}
-      <Card className="w-full lg:w-[340px] shrink-0 flex flex-col border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] bg-white">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="font-bold text-[#0B1630]">Current Order</h3>
-          <span className="text-xs font-bold text-[#F97316] bg-orange-50 px-2 py-1 rounded uppercase">Dine_In</span>
+      {/* Current Order (Anchored at Bottom on Mobile, Side Panel on Desktop) */}
+      <Card className="w-full lg:w-[340px] h-[45vh] lg:h-full shrink-0 border-none shadow-[0_4px_24px_rgba(0,0,0,0.06)] flex flex-col p-0 overflow-hidden bg-white">
+        <div className="p-3 lg:p-5 border-b border-slate-50 flex items-center justify-between shrink-0 bg-white">
+          <h3 className="font-bold text-[#0B1630] text-xs lg:text-sm uppercase tracking-wider">Current Order</h3>
+          <span className="text-[10px] font-black text-[#F97316] tracking-widest uppercase">DINE_IN</span>
         </div>
-        <div className="p-5 flex gap-3">
+        <div className="px-3 py-2.5 lg:p-5 border-b border-slate-50 bg-slate-50/50 shrink-0">
           <select
             value={selectedTable}
             onChange={(e) => setSelectedTable(e.target.value)}
-            className="flex-1 h-10 rounded-lg border border-[#E5E7EB] px-3 text-sm bg-white text-[#0B1630] cursor-pointer"
+            className="w-full h-10 rounded-lg border border-[#E5E7EB] px-3 text-sm bg-white text-[#0B1630] cursor-pointer"
           >
             <option value="">Select Table</option>
             {availableTables.map((t: any) => (
@@ -214,19 +202,19 @@ export const POS = () => {
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto px-5 space-y-3">
+        <div className="flex-1 overflow-y-auto px-3 lg:px-5 space-y-3 min-h-0">
           {cart.length > 0 ? (
             cart.map((item) => (
               <div key={item.id} className="flex items-center justify-between py-3 border-b border-slate-50">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-[#0B1630] truncate">{item.name}</p>
-                  <p className="text-xs text-[#94A3B8]">{format(Number(item.price))} each</p>
+                  <p className="text-xs lg:text-sm font-bold text-[#0B1630] truncate">{item.name}</p>
+                  <p className="text-[10px] lg:text-xs text-[#94A3B8]">{format(Number(item.price))} each</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => updateQuantity(item.id, -1)} className="w-6 h-6 rounded-md border border-slate-200 flex items-center justify-center text-[#94A3B8] hover:bg-slate-50 cursor-pointer">
                     <Minus size={12} />
                   </button>
-                  <span className="text-sm font-bold text-[#0B1630] w-6 text-center">{item.quantity}</span>
+                  <span className="text-xs lg:text-sm font-bold text-[#0B1630] w-6 text-center">{item.quantity}</span>
                   <button onClick={() => updateQuantity(item.id, 1)} className="w-6 h-6 rounded-md border border-slate-200 flex items-center justify-center text-[#94A3B8] hover:bg-slate-50 cursor-pointer">
                     <Plus size={12} />
                   </button>
@@ -237,27 +225,29 @@ export const POS = () => {
               </div>
             ))
           ) : (
-            <div className="flex flex-col items-center justify-center text-center py-10">
-              <ShoppingCart className="text-slate-300 mb-3" size={48} />
-              <p className="font-semibold text-[#0B1630]">Your cart is empty</p>
-              <p className="text-sm text-[#94A3B8]">Add items from the menu</p>
+            <div className="flex flex-col items-center justify-center text-center py-6 lg:py-10">
+              <ShoppingCart className="text-slate-300 mb-3" size={36} />
+              <p className="font-semibold text-[#0B1630] text-sm">Your cart is empty</p>
+              <p className="text-xs text-[#94A3B8]">Add items from the menu</p>
             </div>
           )}
         </div>
 
         {/* Totals & Actions */}
-        <div className="p-5 border-t border-slate-100 space-y-3">
-          <div className="flex justify-between text-sm"><span className="text-[#94A3B8] font-medium uppercase tracking-wider text-xs">Subtotal</span><span className="font-semibold text-[#0B1630]">{format(subtotal)}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-[#94A3B8] font-medium uppercase tracking-wider text-xs">Tax (15%)</span><span className="font-semibold text-[#0B1630]">{format(tax)}</span></div>
-          <div className="flex justify-between font-bold text-lg pt-2 border-t border-slate-100"><span>Grand Total</span><span>{format(total)}</span></div>
+        <div className="p-3 lg:p-5 border-t border-slate-100 space-y-2 lg:space-y-3 shrink-0 bg-slate-50/50">
+          <div className="space-y-1">
+            <div className="flex justify-between text-[11px] lg:text-xs font-medium text-[#94A3B8]"><span>SUBTOTAL</span><span>{format(subtotal)}</span></div>
+            <div className="flex justify-between text-[11px] lg:text-xs font-medium text-[#94A3B8]"><span>TAX (15%)</span><span>{format(tax)}</span></div>
+            <div className="flex justify-between text-base lg:text-lg font-black text-[#0B1630] pt-1"><span>GRAND TOTAL</span><span>{format(total)}</span></div>
+          </div>
           <button
             onClick={handlePlaceOrder}
             disabled={cart.length === 0 || !selectedTable || createOrderMutation.isPending}
-            className="w-full bg-[#F97316] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#ea580c] transition-colors shadow-lg shadow-[#F97316]/20 disabled:opacity-50 cursor-pointer"
+            className="w-full bg-[#F97316] text-white py-3 lg:py-3.5 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm uppercase tracking-widest flex items-center justify-center gap-2 lg:gap-3 hover:bg-[#ea580c] transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50 active:scale-[0.98] cursor-pointer"
           >
             {createOrderMutation.isPending ? 'SENDING...' : <><Send size={16} /> PLACE ORDER</>}
           </button>
-          <div className="text-center">
+          <div className="text-center hidden lg:block">
             <span className="text-xs font-semibold text-emerald-500 flex items-center justify-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Ready to Order</span>
           </div>
         </div>

@@ -11,7 +11,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
   const { tenant } = useTenant();
 
   return (
-    <header className="h-[76px] bg-white border-b border-[#E5E7EB] flex items-center justify-between px-4 lg:px-8 sticky top-0 z-10 shrink-0">
+    <header className="h-[76px] bg-white border-b border-[#E5E7EB] flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30 shrink-0">
       <div className="flex items-center gap-4 min-w-0">
         <button 
           onClick={onToggleSidebar}

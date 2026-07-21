@@ -12,7 +12,7 @@ export const MainLayout = () => {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="flex-1 flex flex-col lg:ml-[260px] ml-0 min-w-0">
         <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <main className="relative flex-1 p-4 sm:p-8 overflow-y-auto">
+        <main className="relative flex-1 p-4 sm:p-8">
           <ValoSaaSBackground type="admin" />
           <div className="relative z-10">
             <Outlet />

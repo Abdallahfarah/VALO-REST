@@ -17,10 +17,11 @@ import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase';
-import { OrderService } from '../../services/ApiService';
+import { OrderService, SettingService } from '../../services/ApiService';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../services/CurrencyService';
+import { DetailedReceipt, getItemModifiersAndNotes } from '../../components/layout/DetailedReceipt';
 
 export const MyOrders = () => {
   const { tenant } = useTenant();
@@ -32,10 +33,17 @@ export const MyOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [orderReceipt, setOrderReceipt] = useState<any | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [paperWidth, setPaperWidth] = useState<'58mm' | '80mm'>('80mm');
 
   const { data: allOrders = [] } = useQuery({
     queryKey: ['orders', tenant?.id],
     queryFn: () => OrderService.getOrders(tenant?.id || ''),
+    enabled: !!tenant?.id,
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ['settings', tenant?.id],
+    queryFn: () => SettingService.getSettings(tenant?.id || ''),
     enabled: !!tenant?.id,
   });
 
@@ -105,6 +113,19 @@ export const MyOrders = () => {
 
   const handleDownloadReceipt = () => {
     if (!selectedOrder || !orderReceipt) return;
+    const itemsText = (selectedOrder.items || []).map((item: any) => {
+      const itemName = item.menuItem?.name || 'Item';
+      const { modifiers, notes } = getItemModifiersAndNotes(itemName);
+      let detailsText = ` - ${item.quantity}x ${itemName} @ ${format(item.unitPrice)} = ${format(item.price)}`;
+      if (modifiers.length > 0) {
+        detailsText += '\n' + modifiers.map(m => `    • ${m.name} ${m.price > 0 ? `(+${m.price})` : ''}`).join('\n');
+      }
+      if (notes || item.notes) {
+        detailsText += `\n    Note: ${item.notes || notes}`;
+      }
+      return detailsText;
+    }).join('\n');
+
     const content = `
 =========================================
           ${tenant?.name || 'VALO BISTRO'}
@@ -115,7 +136,7 @@ Table:          Table ${selectedOrder.table?.number || 'N/A'}
 Waiter:         ${selectedOrder.waiterName || user?.email?.split('@')[0]}
 -----------------------------------------
 Items:
-${(selectedOrder.items || []).map((item: any) => ` - ${item.quantity}x ${item.menuItem?.name} @ ${format(item.unitPrice)} = ${format(item.price)}`).join('\n')}
+${itemsText}
 -----------------------------------------
 Subtotal:       ${format(Number(orderReceipt.subtotal))}
 Tax (15%):      ${format(Number(orderReceipt.tax_amount))}
@@ -396,22 +417,57 @@ Notes:          ${orderReceipt.notes || 'None'}
 
              {/* Receipt section for COMPLETED orders */}
              {selectedOrder.status === 'COMPLETED' && orderReceipt && (
-                <div className="space-y-4 lg:border-t border-t border-dashed lg:border-slate-200 border-[#232B5E]/30 pt-6">
+                <div className="space-y-4 lg:border-t border-t border-dashed lg:border-slate-200 border-[#232B5E]/30 pt-4">
                    <h4 className="text-xs font-black lg:text-[#0B1630] text-white uppercase tracking-wider">Official Payment Receipt</h4>
-                   <div className="lg:bg-emerald-50/50 bg-[#10B981]/10 p-4 rounded-xl lg:border lg:border-emerald-100 border border-[#10B981]/30 space-y-2 text-xs font-semibold lg:text-[#64748B] text-[#94A3B8]">
-                      <div className="flex justify-between"><span>Receipt Number</span><span className="lg:text-[#0B1630] text-white font-bold">{orderReceipt.receipt_number}</span></div>
-                      <div className="flex justify-between"><span>Payment Method</span><span className="lg:text-[#0B1630] text-white font-bold">{orderReceipt.payment_method}</span></div>
-                      <div className="flex justify-between"><span>Amount Tendered</span><span className="lg:text-[#0B1630] text-white font-bold">{format(Number(orderReceipt.amount_received ?? orderReceipt.total_amount))}</span></div>
-                      <div className="flex justify-between"><span>Change Returned</span><span className="lg:text-[#0B1630] text-white font-bold">{format(Number(orderReceipt.change_amount ?? 0))}</span></div>
-                      {orderReceipt.notes && (
-                         <div className="pt-2 lg:border-t lg:border-emerald-100 border-t border-[#10B981]/20 mt-1">
-                            <span className="block text-[#94A3B8] font-bold uppercase text-[9px]">Notes</span>
-                            <p className="lg:text-[#0B1630] text-white mt-0.5 leading-relaxed font-normal">{orderReceipt.notes}</p>
-                         </div>
-                      )}
+                   
+                   {/* Width Toggle Selector */}
+                   <div className="flex justify-center items-center gap-2 bg-slate-50 border border-slate-100 p-1.5 rounded-xl">
+                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-2">Paper Width:</span>
+                     <button 
+                       onClick={() => setPaperWidth('58mm')}
+                       className={cn(
+                         "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer",
+                         paperWidth === '58mm' ? "bg-[#F97316] text-white shadow-sm" : "bg-transparent text-slate-500 hover:bg-slate-100"
+                       )}
+                     >
+                       58mm
+                     </button>
+                     <button 
+                       onClick={() => setPaperWidth('80mm')}
+                       className={cn(
+                         "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer",
+                         paperWidth === '80mm' ? "bg-[#F97316] text-white shadow-sm" : "bg-transparent text-slate-500 hover:bg-slate-100"
+                       )}
+                     >
+                       80mm
+                     </button>
+                   </div>
+
+                   {/* Receipt Content Wrapper */}
+                   <div className="overflow-y-auto max-h-[40vh] border border-slate-100 rounded-2xl bg-white p-2">
+                     <div className="print-receipt-container">
+                       <DetailedReceipt 
+                         receipt={{
+                           receiptNumber: orderReceipt.receipt_number,
+                           subtotal: Number(orderReceipt.subtotal),
+                           taxAmount: Number(orderReceipt.tax_amount),
+                           discountAmount: Number(orderReceipt.discount_amount || 0),
+                           totalAmount: Number(orderReceipt.total_amount),
+                           paymentMethod: orderReceipt.payment_method,
+                           amountReceived: Number(orderReceipt.amount_received ?? orderReceipt.total_amount),
+                           changeAmount: Number(orderReceipt.change_amount ?? 0),
+                           notes: orderReceipt.notes,
+                           createdAt: orderReceipt.created_at
+                         }}
+                         order={selectedOrder}
+                         tenant={tenant}
+                         settings={settings}
+                         paperWidth={paperWidth}
+                       />
+                     </div>
                    </div>
                    
-                   <div className="grid grid-cols-2 gap-2">
+                   <div className="grid grid-cols-2 gap-2 pt-2">
                       <button 
                         onClick={() => window.print()}
                         className="py-3 px-4 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"

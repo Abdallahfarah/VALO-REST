@@ -12,25 +12,50 @@ import {
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
-import { useQuery } from '@tanstack/react-query';
-import { ReceiptService } from '../../services/ApiService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ReceiptService, SettingService } from '../../services/ApiService';
 import { useTenant } from '../../context/TenantContext';
+import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../services/CurrencyService';
+import { toast } from '../../lib/toast-store';
+import { DetailedReceipt } from '../../components/layout/DetailedReceipt';
 
 export const Receipts = () => {
   const { tenant } = useTenant();
+  const { user } = useAuth();
   const { format } = useCurrency();
+  const queryClient = useQueryClient();
+
+  const refundReceiptMutation = useMutation({
+    mutationFn: (receiptId: string) => ReceiptService.refundReceipt(receiptId, user?.id || '', tenant?.id || ''),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['receipts'] });
+      setActiveReceiptId(null);
+      toast.success('Refund completed', 'Receipt status has been updated to REFUNDED');
+    },
+    onError: (err: any) => {
+      toast.error('Refund failed', err?.message || 'Failed to process refund');
+    }
+  });
 
 
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMethod, setSelectedMethod] = useState('All');
   const [activeReceiptId, setActiveReceiptId] = useState<string | null>(null);
+  const [paperWidth, setPaperWidth] = useState<'58mm' | '80mm'>('80mm');
 
   // ─── Query receipts ───
   const { data: receipts = [] } = useQuery({
     queryKey: ['receipts', tenant?.id],
     queryFn: () => ReceiptService.getReceipts(tenant?.id || ''),
+    enabled: !!tenant?.id,
+  });
+
+  // Query settings for receipt preferences
+  const { data: settings } = useQuery({
+    queryKey: ['settings', tenant?.id],
+    queryFn: () => SettingService.getSettings(tenant?.id || ''),
     enabled: !!tenant?.id,
   });
 
@@ -217,70 +242,84 @@ export const Receipts = () => {
 
       {/* ─── DETAIL POPUP DIALOG ─── */}
       {activeReceipt && (
-        <div className="fixed inset-0 z-50 bg-[#090D1F]/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <Card className="w-full max-w-md p-8 lg:bg-white bg-[#131A38] lg:border-none border border-[#232B5E]/50 shadow-2xl relative flex flex-col gap-6">
+        <div className="fixed inset-0 z-50 bg-[#090D1F]/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <Card className="w-full max-w-md p-6 lg:bg-white bg-[#131A38] lg:border-none border border-[#232B5E]/50 shadow-2xl relative flex flex-col gap-4 max-h-[90vh]">
             <button 
               onClick={() => setActiveReceiptId(null)}
-              className="absolute top-6 right-6 text-slate-400 hover:text-white cursor-pointer"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer"
             >
               <X size={20} />
             </button>
-            <div className="text-center">
-              <h3 className="text-xl font-black lg:text-[#0B1630] text-white uppercase tracking-wider">{tenant?.name || 'VALO BISTRO'}</h3>
-              <p className="text-[10px] font-bold text-[#94A3B8] mt-1">{tenant?.address || 'Restaurant Address'}</p>
-              <p className="text-[10px] font-bold text-[#94A3B8]">{tenant?.phone || 'Phone Number'}</p>
+            <div className="text-center pt-2">
+              <h3 className="text-lg font-black lg:text-[#0B1630] text-white uppercase tracking-wider">Receipt Preview</h3>
+              <p className="text-[10px] font-bold text-[#94A3B8]">Review details and format print output</p>
             </div>
 
-            <div className="border-t-2 border-dashed lg:border-slate-200 border-[#232B5E]/30 pt-4 space-y-2">
-              <div className="flex justify-between text-xs font-bold text-[#94A3B8]">
-                <span>Receipt:</span>
-                <span className="lg:text-[#0B1630] text-white">{activeReceipt.receiptNumber}</span>
-              </div>
-              <div className="flex justify-between text-xs font-bold text-[#94A3B8]">
-                <span>Order Ref:</span>
-                <span className="lg:text-[#0B1630] text-white">{activeReceipt.order?.orderNumber || `#${activeReceipt.orderId.slice(0, 8)}`}</span>
-              </div>
-              <div className="flex justify-between text-xs font-bold text-[#94A3B8]">
-                <span>Date/Time:</span>
-                <span className="lg:text-[#0B1630] text-white">
-                  {new Date(activeReceipt.createdAt).toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between text-xs font-bold text-[#94A3B8]">
-                <span>Table:</span>
-                <span className="lg:text-[#0B1630] text-white">Table {activeReceipt.order?.tableNumber || 'N/A'}</span>
-              </div>
+            {/* Width Toggle Selector */}
+            <div className="flex justify-center items-center gap-2 bg-slate-50 border border-slate-100 p-1.5 rounded-xl">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-2">Paper Width:</span>
+              <button 
+                onClick={() => setPaperWidth('58mm')}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer",
+                  paperWidth === '58mm' ? "bg-[#F97316] text-white shadow-sm" : "bg-transparent text-slate-500 hover:bg-slate-100"
+                )}
+              >
+                58mm
+              </button>
+              <button 
+                onClick={() => setPaperWidth('80mm')}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer",
+                  paperWidth === '80mm' ? "bg-[#F97316] text-white shadow-sm" : "bg-transparent text-slate-500 hover:bg-slate-100"
+                )}
+              >
+                80mm
+              </button>
             </div>
 
-            <div className="border-t lg:border-slate-100 border-[#232B5E]/20 pt-4 space-y-4">
-              <div className="flex justify-between text-xs font-bold lg:text-[#0B1630] text-white">
-                <span>Payment Method</span>
-                <span>{activeReceipt.paymentMethod}</span>
-              </div>
-              <div className="flex justify-between text-xs font-bold text-[#94A3B8]">
-                <span>Subtotal</span>
-                <span>{format(activeReceipt.subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-xs font-bold text-[#94A3B8]">
-                <span>VAT / Tax</span>
-                <span>{format(activeReceipt.taxAmount)}</span>
-              </div>
-              <div className="flex justify-between text-base font-black lg:text-[#0B1630] text-white pt-2 border-t-2 border-dashed lg:border-slate-200 border-[#232B5E]/30">
-                <span>Total Amount</span>
-                <span>{format(activeReceipt.totalAmount)}</span>
+            {/* Receipt Content Wrapper */}
+            <div className="flex-1 overflow-y-auto max-h-[50vh] border border-slate-100 rounded-2xl bg-white p-2">
+              <div className="print-receipt-container">
+                <DetailedReceipt 
+                  receipt={activeReceipt}
+                  order={activeReceipt.order}
+                  tenant={tenant}
+                  settings={settings}
+                  paperWidth={paperWidth}
+                />
               </div>
             </div>
 
-            <div className="flex gap-2 pt-4">
+            {activeReceipt.status === 'REFUNDED' && (
+              <div className="text-center py-2 text-xs font-extrabold text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl uppercase tracking-wider">
+                ⚠️ Voided / Refunded
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2 border-t border-slate-100 mt-auto">
               <button 
                 onClick={() => { window.print(); }}
-                className="flex-1 h-11 lg:bg-white bg-[#1E293B] lg:border lg:border-slate-200 border-none lg:text-[#0B1630] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 h-11 bg-[#F97316] hover:bg-[#ea580c] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-orange-500/10"
               >
                 <Printer size={14} /> Print Receipt
               </button>
+              {activeReceipt.status !== 'REFUNDED' && (
+                <button 
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to void and refund this receipt? This action is permanent and will be logged.')) {
+                      refundReceiptMutation.mutate(activeReceipt.id);
+                    }
+                  }}
+                  disabled={refundReceiptMutation.isPending}
+                  className="flex-1 h-11 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center justify-center cursor-pointer"
+                >
+                  {refundReceiptMutation.isPending ? 'Refunding...' : 'Void / Refund'}
+                </button>
+              )}
               <button 
                 onClick={() => setActiveReceiptId(null)}
-                className="flex-1 h-11 lg:bg-[#0B1630] bg-[#1E293B] hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center cursor-pointer"
+                className="flex-1 h-11 bg-[#0B1630] hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center cursor-pointer"
               >
                 Close
               </button>

@@ -134,12 +134,61 @@ body {
   }
 }
 
+/* ── Overlay Override: premium dark emerald/forest green gradient for Restaurant Portal ── */
+.restaurant-portal .restaurant-illustration-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(4, 36, 25, 0.76) 0%,
+    rgba(2, 18, 12, 0.86) 100%
+  ) !important;
+}
+
+@media (min-width: 600px) {
+  .restaurant-portal .restaurant-illustration-overlay {
+    background: linear-gradient(
+      to bottom,
+      rgba(4, 36, 25, 0.74) 0%,
+      rgba(2, 18, 12, 0.84) 100%
+    ) !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .restaurant-portal .restaurant-illustration-overlay {
+    background: linear-gradient(
+      to bottom,
+      rgba(4, 36, 25, 0.70) 0%,
+      rgba(2, 18, 12, 0.82) 100%
+    ) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .restaurant-portal .restaurant-illustration-overlay {
+    background: linear-gradient(
+      to bottom,
+      rgba(4, 36, 25, 0.66) 0%,
+      rgba(2, 18, 12, 0.78) 100%
+    ) !important;
+  }
+}
+
+@media (min-width: 1440px) {
+  .restaurant-portal .restaurant-illustration-overlay {
+    background: linear-gradient(
+      to bottom,
+      rgba(4, 36, 25, 0.60) 0%,
+      rgba(2, 18, 12, 0.72) 100%
+    ) !important;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    Premium Dark Glassmorphic Theme Overrides (Restaurant Portal only)
    ───────────────────────────────────────────────────────────────────────────── */
 
 .restaurant-portal {
-  background-color: #070913 !important;
+  background-color: #02120b !important;
   color: #F8FAFC !important;
 }
 
@@ -406,5 +455,50 @@ body {
 }
 .restaurant-portal *::-webkit-scrollbar-thumb:hover {
   background: rgba(249, 115, 22, 0.3);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Thermal Printer Output System (@media print)
+   Isolates only the detailed receipt for professional thermal printing outputs.
+   Supports 58mm and 80mm widths cleanly.
+   ───────────────────────────────────────────────────────────────────────────── */
+@media print {
+  /* Hide the entire application UI layout */
+  html, body, #root, #root > *, header, aside, main, .fixed, .absolute, .modal {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  body * {
+    visibility: hidden;
+  }
+
+  /* Target only the active print container and its contents */
+  .print-receipt-container,
+  .print-receipt-container * {
+    visibility: visible;
+  }
+
+  /* Position the receipt at the absolute top-left of the print paper */
+  .print-receipt-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  /* Reset margins for standard thermal printers */
+  @page {
+    margin: 0;
+    size: auto;
+  }
 }
 

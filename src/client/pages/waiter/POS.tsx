@@ -20,6 +20,7 @@ import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MenuService, OrderService, TableService, ActivityLogService, SettingService, formatOrderNumber } from '../../services/ApiService';
+import { DetailedReceipt } from '../../components/layout/DetailedReceipt';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../lib/toast-store';
@@ -62,6 +63,7 @@ export const WaiterPOS = () => {
   const [paymentNotes, setPaymentNotes] = useState('');
   const [settledReceipt, setSettledReceipt] = useState<any | null>(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [paperWidth, setPaperWidth] = useState<'58mm' | '80mm'>('80mm');
 
   useEffect(() => {
     if (tableId) {
@@ -363,7 +365,7 @@ Notes:          ${settledReceipt.notes || 'None'}
     : 0;
 
   return (
-    <div className="h-auto lg:h-[calc(100vh-120px)] flex flex-col lg:flex-row gap-8">
+    <div className="h-[calc(100vh-100px)] lg:h-[calc(100vh-120px)] flex flex-col lg:flex-row gap-4 lg:gap-8 overflow-hidden">
       {/* Category Sidebar */}
       <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:w-56 w-full shrink-0 pb-2 lg:pb-0 whitespace-nowrap lg:whitespace-normal pr-2">
         <button 
@@ -389,32 +391,32 @@ Notes:          ${settledReceipt.notes || 'None'}
         ))}
       </div>
 
-      {/* Product Grid */}
-      <div className="flex-1 flex flex-col gap-6">
-        <div className="flex items-center justify-between">
+      {/* Product Grid Container (Independently Scrollable on Mobile & Desktop) */}
+      <div className="flex-1 min-h-0 flex flex-col gap-4 lg:gap-6 overflow-hidden">
+        <div className="flex items-center justify-between shrink-0">
            <div className="flex items-center gap-4">
-              <h2 className="text-xl font-bold text-[#0B1630]">{selectedCategory ? categories.find((c:any) => c.id === selectedCategory)?.name : 'All Items'}</h2>
+              <h2 className="text-lg lg:text-xl font-bold text-[#0B1630]">{selectedCategory ? categories.find((c:any) => c.id === selectedCategory)?.name : 'All Items'}</h2>
               <span className="text-xs font-bold text-[#94A3B8]">{products.length} ITEMS</span>
            </div>
-           <div className="relative w-64">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-             <input className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]" placeholder="Search menu items..." />
+           <div className="relative w-48 sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+              <input className="w-full h-9 lg:h-10 pl-10 pr-4 rounded-xl border border-slate-200 text-xs lg:text-sm focus:outline-none focus:border-[#F97316] placeholder:text-[#94A3B8]" placeholder="Search menu items..." />
            </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto pb-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4 flex-1 overflow-y-auto pr-1 pb-2">
           {products.map((product: any) => (
-            <Card key={product.id} onClick={() => handleAddToCart(product)} className="p-0 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform text-left">
-               <div className="aspect-[4/3] bg-slate-50 flex items-center justify-center text-5xl group-hover:scale-110 transition-transform duration-500 relative">
+            <Card key={product.id} onClick={() => handleAddToCart(product)} className="p-0 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform text-left flex flex-col">
+               <div className="aspect-[4/3] bg-slate-50 flex items-center justify-center text-4xl lg:text-5xl group-hover:scale-110 transition-transform duration-500 relative shrink-0">
                   {product.icon || '🍔'}
                   <div className="absolute inset-0 bg-[#0B1630]/0 group-hover:bg-[#0B1630]/5 transition-colors" />
                </div>
-               <div className="p-4 flex flex-col gap-1">
-                  <h4 className="text-sm font-bold text-[#0B1630] line-clamp-1">{product.name}</h4>
-                  <div className="flex items-center justify-between mt-2">
-                     <span className="text-sm font-black text-[#0B1630]">{format(Number(product.price))}</span>
-                     <div className="w-8 h-8 rounded-lg border border-slate-100 flex items-center justify-center text-[#F97316] hover:bg-[#F97316] hover:text-white transition-colors">
-                        <Plus size={16} strokeWidth={3} />
+               <div className="p-3 lg:p-4 flex flex-col gap-1 justify-between flex-1">
+                  <h4 className="text-xs lg:text-sm font-bold text-[#0B1630] line-clamp-1">{product.name}</h4>
+                  <div className="flex items-center justify-between mt-1">
+                     <span className="text-xs lg:text-sm font-black text-[#0B1630]">{format(Number(product.price))}</span>
+                     <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg border border-slate-100 flex items-center justify-center text-[#F97316] hover:bg-[#F97316] hover:text-white transition-colors">
+                        <Plus size={14} strokeWidth={3} />
                      </div>
                   </div>
                </div>
@@ -423,16 +425,16 @@ Notes:          ${settledReceipt.notes || 'None'}
         </div>
       </div>
 
-      {/* Cart / Order Panel */}
-      <Card className="w-full lg:w-[380px] shrink-0 border-none shadow-[0_4px_24px_rgba(0,0,0,0.06)] flex flex-col p-0 overflow-hidden">
-        <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-           <h3 className="font-bold text-[#0B1630] text-sm uppercase tracking-wider">Current Order</h3>
+      {/* Current Order Card (Permanently Anchored at Bottom on Mobile, Side Panel on Desktop) */}
+      <Card className="w-full lg:w-[380px] h-[45vh] lg:h-full shrink-0 border-none shadow-[0_4px_24px_rgba(0,0,0,0.06)] flex flex-col p-0 overflow-hidden bg-white">
+        <div className="p-3 lg:p-6 border-b border-slate-50 flex items-center justify-between shrink-0 bg-white">
+           <h3 className="font-bold text-[#0B1630] text-xs lg:text-sm uppercase tracking-wider">Current Order</h3>
            <span className="text-[10px] font-black text-[#F97316] tracking-widest uppercase">DINE_IN</span>
         </div>
 
-        <div className="p-6 space-y-4 border-b border-slate-50 bg-slate-50/50">
-           <div className="flex items-center gap-4">
-              <div className="flex-1 flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200">
+        <div className="px-3 py-2.5 lg:p-6 space-y-3 lg:space-y-4 border-b border-slate-50 bg-slate-50/50 shrink-0">
+           <div className="flex items-center gap-3 lg:gap-4">
+              <div className="flex-1 flex items-center gap-2 bg-white px-3 py-1.5 lg:py-2 rounded-xl border border-slate-200">
                  <Armchair size={14} className="text-[#94A3B8]" />
                  <select 
                     value={selectedTable}
@@ -445,7 +447,7 @@ Notes:          ${settledReceipt.notes || 'None'}
                     ))}
                  </select>
               </div>
-              <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2 bg-white px-3 py-1.5 lg:py-2 rounded-xl border border-slate-200">
                  <Users size={14} className="text-[#94A3B8]" />
                  <span className="text-xs font-bold text-[#0B1630]">
                    {(() => {
@@ -457,96 +459,102 @@ Notes:          ${settledReceipt.notes || 'None'}
            </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-           {cart.map((item, i) => (
-              <div key={i} className="flex gap-4 relative group">
-                 <div className="w-6 h-6 rounded-full bg-indigo-500 text-white text-[10px] font-black flex items-center justify-center shrink-0 mt-1">
-                    {item.seat}
-                 </div>
-                 <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-2xl">
-                    {item.icon || '🍔'}
-                 </div>
-                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                       <h5 className="text-xs font-bold text-[#0B1630] truncate">{item.name}</h5>
-                       <span className="text-xs font-black text-[#0B1630]">{format(Number(item.price) * item.quantity)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                          <button 
-                            onClick={() => handleRemoveFromCart(item.id, item.sent)} 
-                            className={cn("text-[#94A3B8]", item.sent ? "opacity-30 cursor-not-allowed" : "hover:text-[#EF4444]")}
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                          <div className="flex items-center bg-slate-50 rounded-lg border border-slate-100 px-1 py-0.5">
-                             <button 
-                               onClick={() => updateQuantity(item.id, -1, item.sent)} 
-                               className={cn("p-1", item.sent ? "opacity-30 cursor-not-allowed" : "hover:text-[#F97316]")}
-                             >
-                               <Minus size={10} />
-                             </button>
-                             <span className="text-[10px] font-black px-2">{item.quantity}</span>
-                             <button 
-                               onClick={() => updateQuantity(item.id, 1, item.sent)} 
-                               className={cn("p-1", item.sent ? "opacity-30 cursor-not-allowed" : "hover:text-[#F97316]")}
-                             >
-                               <Plus size={10} />
-                             </button>
-                          </div>
-                       </div>
-                       <span className="text-[10px] font-medium text-[#94A3B8]">{format(Number(item.price))}</span>
-                    </div>
-                    {item.sent && (
-                      <span className="absolute top-0 right-0 text-[8px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded scale-75 origin-top-right">
-                         Kitchen
-                      </span>
-                    )}
-                 </div>
+        <div className="flex-1 overflow-y-auto p-3 lg:p-6 space-y-3 lg:space-y-6 min-h-0">
+           {cart.length === 0 ? (
+              <div className="text-center py-6 text-slate-400 text-xs font-medium">
+                 No items added yet. Tap menu items to add.
               </div>
-           ))}
+           ) : (
+              cart.map((item, i) => (
+                <div key={i} className="flex gap-3 lg:gap-4 relative group">
+                   <div className="w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-indigo-500 text-white text-[9px] lg:text-[10px] font-black flex items-center justify-center shrink-0 mt-1">
+                      {item.seat}
+                   </div>
+                   <div className="w-10 h-10 lg:w-14 lg:h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-lg lg:text-2xl shrink-0">
+                      {item.icon || '🍔'}
+                   </div>
+                   <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5 lg:mb-1">
+                         <h5 className="text-xs font-bold text-[#0B1630] truncate">{item.name}</h5>
+                         <span className="text-xs font-black text-[#0B1630]">{format(Number(item.price) * item.quantity)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-2 lg:gap-3">
+                            <button 
+                              onClick={() => handleRemoveFromCart(item.id, item.sent)} 
+                              className={cn("text-[#94A3B8]", item.sent ? "opacity-30 cursor-not-allowed" : "hover:text-[#EF4444]")}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                            <div className="flex items-center bg-slate-50 rounded-lg border border-slate-100 px-1 py-0.5">
+                               <button 
+                                 onClick={() => updateQuantity(item.id, -1, item.sent)} 
+                                 className={cn("p-0.5 lg:p-1", item.sent ? "opacity-30 cursor-not-allowed" : "hover:text-[#F97316]")}
+                               >
+                                 <Minus size={10} />
+                               </button>
+                               <span className="text-[10px] font-black px-1.5 lg:px-2">{item.quantity}</span>
+                               <button 
+                                 onClick={() => updateQuantity(item.id, 1, item.sent)} 
+                                 className={cn("p-0.5 lg:p-1", item.sent ? "opacity-30 cursor-not-allowed" : "hover:text-[#F97316]")}
+                               >
+                                 <Plus size={10} />
+                               </button>
+                            </div>
+                         </div>
+                         <span className="text-[10px] font-medium text-[#94A3B8]">{format(Number(item.price))}</span>
+                      </div>
+                      {item.sent && (
+                        <span className="absolute top-0 right-0 text-[8px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-600 px-1 py-0.5 rounded scale-75 origin-top-right">
+                           Kitchen
+                        </span>
+                      )}
+                   </div>
+                </div>
+              ))
+           )}
         </div>
 
-        <div className="p-6 bg-slate-50/50 border-t border-slate-100 space-y-6">
-           <div className="space-y-2">
-              <div className="flex justify-between text-xs font-medium text-[#94A3B8]">
+        <div className="p-3 lg:p-6 bg-slate-50/50 border-t border-slate-100 space-y-3 lg:space-y-6 shrink-0">
+           <div className="space-y-1 lg:space-y-2">
+              <div className="flex justify-between text-[11px] lg:text-xs font-medium text-[#94A3B8]">
                  <span>SUBTOTAL</span>
                  <span>{format(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-xs font-medium text-[#94A3B8]">
+              <div className="flex justify-between text-[11px] lg:text-xs font-medium text-[#94A3B8]">
                  <span>TAX (15%)</span>
                  <span>{format(tax)}</span>
               </div>
-              <div className="flex justify-between text-lg font-black text-[#0B1630] pt-2">
+              <div className="flex justify-between text-base lg:text-lg font-black text-[#0B1630] pt-1">
                  <span>GRAND TOTAL</span>
                  <span>{format(total)}</span>
               </div>
            </div>
 
-           <div className="space-y-3">
+           <div className="space-y-2 lg:space-y-3">
               {newItems.length > 0 ? (
                 <button 
                   onClick={handlePlaceOrder}
                   disabled={createOrderMutation.isPending}
                   className={cn(
-                     "w-full bg-[#F97316] text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-[#ea580c] transition-all shadow-lg shadow-orange-500/20 active:scale-[0.98]",
+                     "w-full bg-[#F97316] text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm uppercase tracking-widest flex items-center justify-center gap-2 lg:gap-3 hover:bg-[#ea580c] transition-all shadow-lg shadow-orange-500/20 active:scale-[0.98]",
                      createOrderMutation.isPending && "opacity-50 cursor-not-allowed"
                   )}
                 >
-                   {createOrderMutation.isPending ? 'SENDING...' : <><Send size={18} strokeWidth={3} /> SEND TO KITCHEN</>}
+                   {createOrderMutation.isPending ? 'SENDING...' : <><Send size={16} className="lg:w-[18px] lg:h-[18px]" strokeWidth={3} /> SEND TO KITCHEN</>}
                 </button>
               ) : activeOrder ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 lg:gap-3">
                   <button 
                     onClick={() => printBillMutation.mutate()}
                     disabled={printBillMutation.isPending}
-                    className="bg-white text-[#0B1630] py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 border border-slate-200 hover:bg-slate-50 transition-all active:scale-[0.98]"
+                    className="bg-white text-[#0B1630] py-2.5 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 border border-slate-200 hover:bg-slate-50 transition-all active:scale-[0.98]"
                   >
                      <Printer size={16} /> Bill
                   </button>
                   <button 
                     onClick={() => setIsPaymentModalOpen(true)}
-                    className="bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20"
+                    className="bg-emerald-500 text-white py-2.5 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20"
                   >
                      <DollarSign size={16} /> Pay
                   </button>
@@ -554,14 +562,14 @@ Notes:          ${settledReceipt.notes || 'None'}
               ) : (
                 <button 
                   disabled
-                  className="w-full bg-slate-100 text-slate-400 py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 cursor-not-allowed"
+                  className="w-full bg-slate-100 text-slate-400 py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm uppercase tracking-widest flex items-center justify-center gap-3 cursor-not-allowed"
                 >
                    Add Items to Start
                 </button>
               )}
            </div>
            
-           <div className="flex items-center justify-center gap-2">
+           <div className="flex items-center justify-center gap-2 hidden lg:flex">
               <div className={cn("w-2 h-2 rounded-full", activeOrder ? "bg-indigo-500 animate-pulse" : "bg-emerald-500")} />
               <span className={cn("text-[10px] font-bold uppercase tracking-wider", activeOrder ? "text-indigo-600" : "text-emerald-600")}>
                  {activeOrder ? 'Serving Table' : 'Ready to Order'}
@@ -771,58 +779,69 @@ Notes:          ${settledReceipt.notes || 'None'}
           </Card>
         </div>
       )}
-
       {/* --- MODAL: OFFICIAL RECEIPT PREVIEW --- */}
       {isReceiptModalOpen && settledReceipt && (
-        <div className="fixed inset-0 z-50 bg-[#0B1630]/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <Card className="w-full max-w-md p-8 border-none shadow-2xl relative bg-white flex flex-col gap-6 max-h-[90vh] overflow-y-auto">
-             <div className="text-center pb-4 border-b border-dashed border-slate-200 flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-3">
-                   <CheckCircle2 className="w-6 h-6" />
+        <div className="fixed inset-0 z-50 bg-[#0B1630]/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <Card className="w-full max-w-md p-6 border-none shadow-2xl relative bg-white flex flex-col gap-4 max-h-[90vh]">
+             <div className="text-center pt-2 flex flex-col items-center">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-2 animate-bounce">
+                   <CheckCircle2 className="w-5 h-5" />
                 </div>
-                <h3 className="text-xl font-black text-[#0B1630] uppercase tracking-wider">{tenant?.name || 'VALO BISTRO'}</h3>
-                <p className="text-xs text-[#94A3B8] font-bold mt-1">Transaction Successful</p>
-             </div>
-             
-             <div className="space-y-4 text-xs font-semibold text-[#64748B]">
-                <div className="flex justify-between">
-                   <span>Receipt No: {settledReceipt.receipt_number}</span>
-                   <span>Table {tables.find((t: any) => t.id === activeOrder?.table_id)?.number || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Waiter: {user?.email ? user.email.split('@')[0] : 'Waiter'}</span>
-                   <span>{new Date(settledReceipt.created_at).toLocaleTimeString()}</span>
-                </div>
-                
-                <div className="divide-y divide-slate-100 border-t border-b border-slate-100 py-2">
-                   {cart.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center py-2 text-[#0B1630] font-bold">
-                         <span>{item.quantity}x {item.name}</span>
-                         <span>{format(item.price * item.quantity)}</span>
-                      </div>
-                   ))}
-                </div>
-
-                <div className="space-y-2 pt-2">
-                   <div className="flex justify-between"><span>Subtotal</span><span className="text-[#0B1630]">{format(Number(settledReceipt.subtotal))}</span></div>
-                   <div className="flex justify-between"><span>Tax (15%)</span><span className="text-[#0B1630]">{format(Number(settledReceipt.tax_amount))}</span></div>
-                   <div className="flex justify-between text-base font-black text-[#0B1630] pt-2 border-t border-dashed border-slate-200"><span>Grand Total</span><span>{format(Number(settledReceipt.total_amount))}</span></div>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-xl space-y-2 border border-slate-100 text-[11px]">
-                   <div className="flex justify-between"><span>Payment Method</span><span className="text-[#0B1630] font-bold">{settledReceipt.payment_method}</span></div>
-                   <div className="flex justify-between"><span>Amount Received</span><span className="text-[#0B1630] font-bold">{format(Number(settledReceipt.amount_received))}</span></div>
-                   <div className="flex justify-between"><span>Change Given</span><span className="text-[#0B1630] font-bold">{format(Number(settledReceipt.change_amount))}</span></div>
-                   {settledReceipt.notes && (
-                      <div className="pt-2 border-t border-slate-200/50 mt-1">
-                         <span className="block text-[#94A3B8] font-bold uppercase text-[9px]">Notes</span>
-                         <p className="text-[#0B1630] mt-0.5 leading-relaxed">{settledReceipt.notes}</p>
-                      </div>
-                   )}
-                </div>
+                <h3 className="text-lg font-black text-[#0B1630] uppercase tracking-wider">Transaction Complete</h3>
+                <p className="text-[10px] font-bold text-[#94A3B8]">Order settled successfully</p>
              </div>
 
-             <div className="flex flex-col gap-2 pt-4 border-t border-slate-100">
+             {/* Width Toggle Selector */}
+             <div className="flex justify-center items-center gap-2 bg-slate-50 border border-slate-100 p-1.5 rounded-xl">
+               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-2">Paper Width:</span>
+               <button 
+                 onClick={() => setPaperWidth('58mm')}
+                 className={cn(
+                   "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer",
+                   paperWidth === '58mm' ? "bg-[#F97316] text-white shadow-sm" : "bg-transparent text-slate-500 hover:bg-slate-100"
+                 )}
+               >
+                 58mm
+               </button>
+               <button 
+                 onClick={() => setPaperWidth('80mm')}
+                 className={cn(
+                   "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer",
+                   paperWidth === '80mm' ? "bg-[#F97316] text-white shadow-sm" : "bg-transparent text-slate-500 hover:bg-slate-100"
+                 )}
+               >
+                 80mm
+               </button>
+             </div>
+
+             {/* Receipt Content Wrapper */}
+             <div className="flex-1 overflow-y-auto max-h-[50vh] border border-slate-100 rounded-2xl bg-white p-2">
+               <div className="print-receipt-container">
+                 <DetailedReceipt 
+                   receipt={{
+                     receiptNumber: settledReceipt.receipt_number,
+                     subtotal: Number(settledReceipt.subtotal),
+                     taxAmount: Number(settledReceipt.tax_amount),
+                     discountAmount: Number(settledReceipt.discount_amount || 0),
+                     totalAmount: Number(settledReceipt.total_amount),
+                     paymentMethod: settledReceipt.payment_method,
+                     amountReceived: Number(settledReceipt.amount_received),
+                     changeAmount: Number(settledReceipt.change_amount),
+                     notes: settledReceipt.notes,
+                     createdAt: settledReceipt.created_at
+                   }}
+                   order={{
+                     ...activeOrder,
+                     items: activeOrder?.items || cart
+                   }}
+                   tenant={tenant}
+                   settings={settings}
+                   paperWidth={paperWidth}
+                 />
+               </div>
+             </div>
+
+             <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 mt-auto">
                 <div className="grid grid-cols-2 gap-2">
                    <button 
                      onClick={() => window.print()}

@@ -28,11 +28,17 @@ const mapMenuItem = (row: any) => ({
 const mapTable = (row: any) => ({
   id: row.id,
   number: row.number,
+  name: row.name || null,
   capacity: row.capacity ?? 4,
+  floor: row.floor || null,
+  isActive: row.is_active ?? true,
+  qrStatus: row.qr_status ?? 'ACTIVE',
   status: row.status ?? 'AVAILABLE',
   waiterId: row.waiter_id,
   guestCount: row.guest_count ?? 0,
   waiter: row.users ? { id: row.users.id, name: `${row.users.first_name} ${row.users.last_name}`, email: row.users.email } : null,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
 });
 
 const mapOrderItem = (row: any) => ({
@@ -599,7 +605,7 @@ export const OrderService = {
 
     // 7. Smart Notifications
     try {
-      await supabase.from('notifications').insert([
+      const notificationRows = [
         {
           tenant_id: paymentData.tenantId,
           role: 'CASHIER',
@@ -622,9 +628,53 @@ export const OrderService = {
           message: `Revenue of ${currencySymbol} ${finalTotalAmount.toFixed(2)} recorded from Order ${formatOrderNumber(data?.order_number)} (Table ${order?.tables?.number || '?'}).`,
           is_read: false
         }
-      ]);
-    } catch {
-      console.warn('[settleOrder] Notification failed silently');
+      ];
+
+      if (discountRate >= 20 || discountAmount >= 50) {
+        notificationRows.push({
+          tenant_id: paymentData.tenantId,
+          role: 'ADMIN',
+          title: 'Large Discount Applied',
+          message: `Discount of ${discountRate}% (${currencySymbol} ${discountAmount.toFixed(2)}) applied to Order ${formatOrderNumber(data?.order_number)}.`,
+          is_read: false
+        });
+      }
+
+      if (finalTotalAmount >= 150) {
+        notificationRows.push({
+          tenant_id: paymentData.tenantId,
+          role: 'ADMIN',
+          title: 'Large Transaction Completed',
+          message: `High value transaction of ${currencySymbol} ${finalTotalAmount.toFixed(2)} completed for Order ${formatOrderNumber(data?.order_number)}.`,
+          is_read: false
+        });
+      }
+
+      // Check Daily Revenue Target ($1,000)
+      const startOfDay = new Date();
+      startOfDay.setHours(0,0,0,0);
+      const { data: todayReceipts } = await supabase
+        .from('receipts')
+        .select('total_amount')
+        .eq('tenant_id', paymentData.tenantId)
+        .gte('created_at', startOfDay.toISOString());
+
+      const todayTotal = (todayReceipts || []).reduce((acc: number, r: any) => acc + Number(r.total_amount), 0) + finalTotalAmount;
+      const previousTotal = todayTotal - finalTotalAmount;
+      const target = 1000;
+      if (previousTotal < target && todayTotal >= target) {
+        notificationRows.push({
+          tenant_id: paymentData.tenantId,
+          role: 'ADMIN',
+          title: 'Daily Revenue Target Achieved',
+          message: `Congratulations! Today's total revenue has reached ${currencySymbol} ${todayTotal.toFixed(2)}, crossing the target of ${currencySymbol} ${target.toFixed(2)}.`,
+          is_read: false
+        });
+      }
+
+      await supabase.from('notifications').insert(notificationRows);
+    } catch (e) {
+      console.warn('[settleOrder] Notification failed silently', e);
     }
 
     // 8. Audit log
@@ -795,7 +845,11 @@ export const TableService = {
       .insert({
         tenant_id: table.tenantId,
         number: table.number,
+        name: table.name || null,
         capacity: table.capacity,
+        floor: table.floor || null,
+        is_active: table.isActive ?? true,
+        qr_status: table.qrStatus ?? 'ACTIVE',
         status: table.status || 'AVAILABLE',
         waiter_id: table.waiterId || null,
         guest_count: table.guestCount ?? 0,
@@ -810,7 +864,11 @@ export const TableService = {
   async updateTable(tableId: string, table: any) {
     const updateData: any = {};
     if (table.number !== undefined) updateData.number = table.number;
+    if (table.name !== undefined) updateData.name = table.name || null;
     if (table.capacity !== undefined) updateData.capacity = table.capacity;
+    if (table.floor !== undefined) updateData.floor = table.floor || null;
+    if (table.isActive !== undefined) updateData.is_active = table.isActive;
+    if (table.qrStatus !== undefined) updateData.qr_status = table.qrStatus;
     if (table.status !== undefined) updateData.status = table.status;
     if (table.waiterId !== undefined) updateData.waiter_id = table.waiterId;
     if (table.guestCount !== undefined) updateData.guest_count = table.guestCount;
@@ -1022,11 +1080,17 @@ const mapReceipt = (row: any) => ({
   status: row.payment_status,
   createdAt: row.created_at,
   currency: row.currency || 'ETB',
+  cashierName: row.cashier ? `${row.cashier.first_name} ${row.cashier.last_name}` : 'Unknown',
+  amountReceived: Number(row.amount_received || row.total_amount),
+  changeAmount: Number(row.change_amount || 0),
+  notes: row.notes || null,
   order: row.orders ? {
     id: row.orders.id,
     orderNumber: formatOrderNumber(row.orders.order_number),
     tableNumber: row.orders.tables?.number,
-    waiterName: row.orders.users ? `${row.orders.users.first_name} ${row.orders.users.last_name}` : 'Unknown'
+    customerName: row.orders.customer_name || 'Walk-in',
+    waiterName: row.orders.users ? `${row.orders.users.first_name} ${row.orders.users.last_name}` : 'Unknown',
+    items: (row.orders.order_items || []).map(mapOrderItem)
   } : null
 });
 
@@ -1034,12 +1098,56 @@ export const ReceiptService = {
   async getReceipts(tenantId: string) {
     const { data, error } = await supabase
       .from('receipts')
-      .select('*, orders(*, tables(number), users(*))')
+      .select('*, orders(*, tables(number), users(*), order_items(*, menu_items(name, preparation_station))), cashier:users(*)')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
     return (data || []).map(mapReceipt);
+  },
+
+  async refundReceipt(receiptId: string, cashierId: string, tenantId: string) {
+    const { data: receipt, error: fetchErr } = await supabase
+      .from('receipts')
+      .select('*, orders(*)')
+      .eq('id', receiptId)
+      .single();
+
+    if (fetchErr) throw fetchErr;
+    if (!receipt) throw new Error('Receipt not found');
+
+    const now = new Date().toISOString();
+
+    const { error: updateErr } = await supabase
+      .from('receipts')
+      .update({ payment_status: 'REFUNDED' })
+      .eq('id', receiptId);
+
+    if (updateErr) throw updateErr;
+
+    try {
+      await supabase.from('notifications').insert({
+        tenant_id: tenantId,
+        role: 'ADMIN',
+        title: 'Refund Processed',
+        message: `A refund of ${receipt.currency || 'ETB'} ${Number(receipt.total_amount).toFixed(2)} was processed for Receipt ${receipt.receipt_number}.`,
+        is_read: false
+      });
+    } catch (e) {
+      console.warn('[refundReceipt] Notification failed silently', e);
+    }
+
+    try {
+      await supabase.from('activity_logs').insert({
+        user_id: cashierId || null,
+        action: 'ORDER_REFUNDED',
+        entity_type: 'order',
+        entity_id: receipt.order_id,
+        timestamp: now,
+      });
+    } catch (e) {
+      console.warn('[refundReceipt] Audit log failed silently', e);
+    }
   }
 };
 
