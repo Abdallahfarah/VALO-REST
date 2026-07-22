@@ -11,7 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SuperAdminService } from '../../services/ApiService';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../lib/toast-store';
-import { exportRestaurantPackage } from '../../lib/export-restaurant-package';
+import { generateRestaurantReportPackage } from '../../lib/restaurant-report-engine';
 
 const filters = ['ALL', 'ACTIVE', 'TRIAL', 'EXPIRED', 'SUSPENDED'];
 
@@ -455,7 +455,14 @@ export const Restaurants = () => {
                 onClick={() => {
                   const target = exportModalTenant;
                   setExportModalTenant(null);
-                  exportRestaurantPackage(target, 'PDF');
+                  generateRestaurantReportPackage({
+                    tenantId: target.id,
+                    tenantName: target.name,
+                    currencyCode: target.currency_code || 'ETB',
+                    currencySymbol: target.currency_symbol || 'ETB',
+                    dateRange: 'ALL',
+                    formatType: 'PDF'
+                  });
                 }}
                 className="p-5 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all cursor-pointer group"
               >
@@ -473,7 +480,14 @@ export const Restaurants = () => {
                 onClick={() => {
                   const target = exportModalTenant;
                   setExportModalTenant(null);
-                  exportRestaurantPackage(target, 'EXCEL');
+                  generateRestaurantReportPackage({
+                    tenantId: target.id,
+                    tenantName: target.name,
+                    currencyCode: target.currency_code || 'ETB',
+                    currencySymbol: target.currency_symbol || 'ETB',
+                    dateRange: 'ALL',
+                    formatType: 'EXCEL'
+                  });
                 }}
                 className="p-5 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all cursor-pointer group"
               >
@@ -491,7 +505,14 @@ export const Restaurants = () => {
                 onClick={() => {
                   const target = exportModalTenant;
                   setExportModalTenant(null);
-                  exportRestaurantPackage(target, 'CSV');
+                  generateRestaurantReportPackage({
+                    tenantId: target.id,
+                    tenantName: target.name,
+                    currencyCode: target.currency_code || 'ETB',
+                    currencySymbol: target.currency_symbol || 'ETB',
+                    dateRange: 'ALL',
+                    formatType: 'CSV'
+                  });
                 }}
                 className="p-5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all cursor-pointer group"
               >

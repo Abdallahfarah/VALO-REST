@@ -18,8 +18,7 @@ import { OrderService, ReceiptService, ActivityLogService } from '../services/Ap
 import { useTenant } from '../context/TenantContext';
 import { useCurrency } from '../services/CurrencyService';
 import { supabase } from '../../lib/supabase';
-import { toast } from '../lib/toast-store';
-import { exportToPdf, exportToExcel, exportToCsv } from '../lib/export-utils';
+import { generateRestaurantReportPackage } from '../lib/restaurant-report-engine';
 
 type DateRangeType = 'TODAY' | 'YESTERDAY' | 'WEEK' | 'MONTH' | 'CUSTOM';
 
@@ -392,54 +391,19 @@ export const Reports = () => {
     return events.sort((a, b) => b.time.getTime() - a.time.getTime()).slice(0, 15);
   }, [filteredReceipts, filteredOrders, logs]);
 
-  // Export handlers respecting active filters
+  // Export handlers respecting active filters (Single Source of Truth)
   const handleExport = (formatType: 'PDF' | 'EXCEL' | 'CSV') => {
-    try {
-      toast.success('Generating export', `Exporting active dashboard records as ${formatType}...`);
-      
-      const headers = ['Time', 'Receipt No.', 'Order No.', 'Table', 'Customer', 'Waiter', 'Cashier', 'Method', 'Amount', 'Status'];
-      const rows = filteredRegistry.map((r: any) => [
-        new Date(r.createdAt).toLocaleString(),
-        r.receiptNumber,
-        r.order?.orderNumber || '',
-        r.order?.tableNumber ? `Table ${r.order.tableNumber}` : 'N/A',
-        r.order?.customerName || 'Walk-in',
-        r.order?.waiterName || '',
-        r.cashierName,
-        r.paymentMethod,
-        r.totalAmount,
-        r.status || 'PAID'
-      ]);
-
-      const symbol = tenant?.currencySymbol || tenant?.currencyCode || 'ETB';
-      const options = {
-        title: 'Financial Operations Report',
-        subtitle: 'Real-time payment journal auditing & sales records',
-        restaurantName: tenant?.name || 'DHADHAN HQ',
-        dateRange: dateRange,
-        headers,
-        rows,
-        summaryMetrics: [
-          { label: 'Net Revenue', value: `${symbol} ${summaryMetrics.netRevenue.toFixed(2)}` },
-          { label: 'Today Revenue', value: `${symbol} ${summaryMetrics.todayRevenue.toFixed(2)}` },
-          { label: 'Pending Payments', value: `${symbol} ${summaryMetrics.pendingPayments.toFixed(2)}` },
-          { label: 'Completed Receipts', value: summaryMetrics.completedPaymentsCount },
-          { label: 'Refunded Amount', value: `${symbol} ${summaryMetrics.refundedAmount.toFixed(2)}` },
-        ],
-        filename: `financial_report_${dateRange.toLowerCase()}_${new Date().toISOString().slice(0, 10)}`
-      };
-
-      if (formatType === 'PDF') {
-        exportToPdf(options);
-      } else if (formatType === 'EXCEL') {
-        exportToExcel(options);
-      } else if (formatType === 'CSV') {
-        exportToCsv(options);
-      }
-    } catch (err: any) {
-      console.error('[handleExport] Export failed:', err);
-      toast.error('Export Failed', err.message || 'Could not generate report export.');
-    }
+    if (!tenant?.id) return;
+    generateRestaurantReportPackage({
+      tenantId: tenant.id,
+      tenantName: tenant.name || 'DHADHAN HQ',
+      currencySymbol: tenant.currencySymbol,
+      currencyCode: tenant.currencyCode,
+      dateRange: dateRange,
+      customStartDate: customStartDate,
+      customEndDate: customEndDate,
+      formatType: formatType
+    });
   };
 
   return (
