@@ -19,6 +19,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../services/CurrencyService';
 import { toast } from '../../lib/toast-store';
 import { DetailedReceipt } from '../../components/layout/DetailedReceipt';
+import { generateRestaurantReportPackage } from '../../lib/restaurant-report-engine';
 
 export const Receipts = () => {
   const { tenant } = useTenant();
@@ -96,6 +97,56 @@ export const Receipts = () => {
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="lg:text-emerald-600 text-emerald-400 text-xs font-bold uppercase tracking-wider">Live</span>
            </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (!tenant?.id) return;
+              generateRestaurantReportPackage({
+                tenantId: tenant.id,
+                tenantName: tenant.name || 'Restaurant',
+                currencySymbol: tenant.currencySymbol,
+                currencyCode: tenant.currencyCode,
+                dateRange: 'ALL',
+                formatType: 'PDF'
+              });
+            }}
+            className="px-3.5 py-2 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+          >
+            PDF Report
+          </button>
+          <button
+            onClick={() => {
+              if (!tenant?.id) return;
+              generateRestaurantReportPackage({
+                tenantId: tenant.id,
+                tenantName: tenant.name || 'Restaurant',
+                currencySymbol: tenant.currencySymbol,
+                currencyCode: tenant.currencyCode,
+                dateRange: 'ALL',
+                formatType: 'EXCEL'
+              });
+            }}
+            className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+          >
+            Excel (.xlsx)
+          </button>
+          <button
+            onClick={() => {
+              if (!tenant?.id) return;
+              generateRestaurantReportPackage({
+                tenantId: tenant.id,
+                tenantName: tenant.name || 'Restaurant',
+                currencySymbol: tenant.currencySymbol,
+                currencyCode: tenant.currencyCode,
+                dateRange: 'ALL',
+                formatType: 'CSV'
+              });
+            }}
+            className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-[#0B1630] hover:bg-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+          >
+            CSV
+          </button>
         </div>
       </div>
 
