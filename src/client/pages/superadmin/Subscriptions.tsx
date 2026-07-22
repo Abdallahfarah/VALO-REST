@@ -45,77 +45,77 @@ export const Subscriptions = () => {
     <div className="space-y-6 max-w-[1500px]">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#0B1630]">Entitlement Architecture</h1>
-          <p className="text-[#64748B] mt-1 text-sm font-medium">Strategic plan matrix and entitlement feed for platform growth.</p>
+          <h1 className="text-3xl font-bold text-white">Entitlement Architecture</h1>
+          <p className="text-[#94A3B8] mt-1 text-sm font-medium">Strategic plan matrix and entitlement feed for platform growth.</p>
         </div>
-        <span className="text-xs font-bold text-[#0B1630] bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 uppercase tracking-wider">
+        <span className="text-xs font-bold text-white bg-[#1E293B] px-3 py-1.5 rounded-full border border-[#232B5E]/50 uppercase tracking-wider">
           Active Plans: {plans.length}
         </span>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden relative bg-white">
+        <Card className="p-6 border border-[#232B5E]/50 shadow-2xl overflow-hidden relative bg-[#131A38]/70 backdrop-blur-md">
           <div className="flex items-center gap-4 z-10 relative">
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500"><CreditCard size={22} /></div>
+            <div className="w-12 h-12 rounded-xl bg-[#1E293B]/70 border border-[#232B5E]/50 flex items-center justify-center text-indigo-400"><CreditCard size={22} /></div>
             <div>
-              <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Platform MRR</p>
-              <h3 className="text-3xl font-bold text-[#0B1630]">ETB {(stats?.platformRevenue ?? 0).toFixed(2)}</h3>
+              <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Platform MRR</p>
+              <h3 className="text-3xl font-bold text-white">ETB {(stats?.platformRevenue ?? 0).toFixed(2)}</h3>
             </div>
           </div>
-          <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mt-4 z-10 relative">Live Revenue</p>
+          <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mt-4 z-10 relative">Live Revenue</p>
           <svg className="absolute bottom-0 right-0 w-24 h-12 opacity-30 text-indigo-400" viewBox="0 0 100 50" fill="none"><path d="M0,40 Q25,10 50,30 T100,20" stroke="currentColor" strokeWidth="3" fill="none"/></svg>
         </Card>
-        <Card className="p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden relative bg-white">
+        <Card className="p-6 border border-[#232B5E]/50 shadow-2xl overflow-hidden relative bg-[#131A38]/70 backdrop-blur-md">
           <div className="flex items-center gap-4 z-10 relative">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500"><TrendingUp size={22} /></div>
+            <div className="w-12 h-12 rounded-xl bg-[#1E293B]/70 border border-[#232B5E]/50 flex items-center justify-center text-emerald-400"><TrendingUp size={22} /></div>
             <div>
-              <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Active Subscriptions</p>
-              <h3 className="text-3xl font-bold text-[#0B1630]">{stats?.activeSubsCount ?? 0}</h3>
+              <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Active Subscriptions</p>
+              <h3 className="text-3xl font-bold text-white">{stats?.activeSubsCount ?? 0}</h3>
             </div>
           </div>
-          <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mt-4 z-10 relative">Operational</p>
+          <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mt-4 z-10 relative">Operational</p>
           <svg className="absolute bottom-0 right-0 w-24 h-12 opacity-30 text-emerald-400" viewBox="0 0 100 50" fill="none"><path d="M0,30 Q25,20 50,35 T100,15" stroke="currentColor" strokeWidth="3" fill="none"/></svg>
         </Card>
-        <Card className="p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden relative bg-white">
+        <Card className="p-6 border border-[#232B5E]/50 shadow-2xl overflow-hidden relative bg-[#131A38]/70 backdrop-blur-md">
           <div className="flex items-center gap-4 z-10 relative">
-            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-[#F97316]"><TrendingUp size={22} /></div>
+            <div className="w-12 h-12 rounded-xl bg-[#1E293B]/70 border border-[#232B5E]/50 flex items-center justify-center text-[#F97316]"><TrendingUp size={22} /></div>
             <div>
-              <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Total Tenants</p>
-              <h3 className="text-3xl font-bold text-[#0B1630]">{stats?.tenantCount ?? 0}</h3>
+              <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Total Tenants</p>
+              <h3 className="text-3xl font-bold text-white">{stats?.tenantCount ?? 0}</h3>
             </div>
           </div>
-          <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mt-4 z-10 relative">Growth</p>
+          <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mt-4 z-10 relative">Growth</p>
           <svg className="absolute bottom-0 right-0 w-24 h-12 opacity-30 text-orange-400" viewBox="0 0 100 50" fill="none"><path d="M0,40 Q25,30 50,20 T100,10" stroke="currentColor" strokeWidth="3" fill="none"/></svg>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Plan Strategic Matrix */}
-        <Card className="lg:col-span-2 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] bg-white">
-          <div className="p-6 pb-4 flex items-center justify-between border-b border-slate-50">
+        <Card className="lg:col-span-2 border border-[#232B5E]/50 shadow-2xl bg-[#131A38]/70 backdrop-blur-md">
+          <div className="p-6 pb-4 flex items-center justify-between border-b border-[#232B5E]/30">
             <div className="flex items-center gap-2">
-              <CreditCard size={18} className="text-[#64748B]" />
-              <h3 className="font-bold text-sm text-[#0B1630] uppercase tracking-wider">Plan Strategic Matrix</h3>
+              <CreditCard size={18} className="text-[#94A3B8]" />
+              <h3 className="font-bold text-sm text-white uppercase tracking-wider">Plan Strategic Matrix</h3>
             </div>
             <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Monthly Revenue</span>
           </div>
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-[#232B5E]/30">
             {plans.map((plan: any) => {
               const PlanIcon = planIcons[plan.name?.toUpperCase()] || Store;
               return (
-                <div key={plan.id} className="px-6 py-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors cursor-pointer group">
+                <div key={plan.id} className="px-6 py-5 flex items-center justify-between hover:bg-[#1E293B]/40 transition-colors cursor-pointer group">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 group-hover:text-[#F97316] transition-colors">
+                    <div className="w-10 h-10 rounded-lg bg-[#1E293B]/70 border border-[#232B5E]/50 flex items-center justify-center text-[#94A3B8] group-hover:text-[#F97316] transition-colors">
                       <PlanIcon size={18} />
                     </div>
                     <div>
-                      <p className="font-bold text-sm text-[#0B1630]">{plan.name}</p>
+                      <p className="font-bold text-sm text-white">{plan.name}</p>
                       <p className="text-xs text-[#94A3B8] font-semibold mt-0.5 uppercase tracking-wider">{plan.description || 'SaaS Plan'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-[#0B1630]">${Number(plan.price).toFixed(0)}</span>
+                    <span className="text-lg font-bold text-white">${Number(plan.price).toFixed(0)}</span>
                     <span className="text-xs text-[#94A3B8]">/mo</span>
                     <ChevronRight size={16} className="text-[#94A3B8] ml-2" />
                   </div>
@@ -126,23 +126,23 @@ export const Subscriptions = () => {
         </Card>
 
         {/* Entitlement Feed */}
-        <Card className="border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] bg-white">
-          <div className="p-6 pb-4 flex items-center gap-2 border-b border-slate-50">
-            <CreditCard size={18} className="text-[#64748B]" />
-            <h3 className="font-bold text-sm text-[#0B1630] uppercase tracking-wider">Entitlement Feed</h3>
+        <Card className="border border-[#232B5E]/50 shadow-2xl bg-[#131A38]/70 backdrop-blur-md">
+          <div className="p-6 pb-4 flex items-center gap-2 border-b border-[#232B5E]/30">
+            <CreditCard size={18} className="text-[#94A3B8]" />
+            <h3 className="font-bold text-sm text-white uppercase tracking-wider">Entitlement Feed</h3>
           </div>
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-[#232B5E]/30">
             {subscriptions.map((sub: any) => (
-              <div key={sub.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div key={sub.id} className="px-6 py-4 flex items-center justify-between hover:bg-[#1E293B]/40 transition-colors">
                 <div>
-                  <p className="text-xs font-bold text-[#0B1630]">{sub.tenants?.name || 'Unknown'}</p>
+                  <p className="text-xs font-bold text-white">{sub.tenants?.name || 'Unknown'}</p>
                   <p className="text-[10px] font-bold text-[#94A3B8] uppercase mt-0.5">{sub.plans?.name || 'N/A'} • {sub.status}</p>
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="text-[10px] text-[#94A3B8] font-medium">
                     {new Date(sub.created_at).toLocaleDateString()}
                   </span>
-                  <CheckCircle2 size={14} className="text-emerald-500 mt-1" />
+                  <CheckCircle2 size={14} className="text-emerald-400 mt-1" />
                 </div>
               </div>
             ))}

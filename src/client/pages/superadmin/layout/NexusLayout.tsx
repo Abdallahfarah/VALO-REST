@@ -8,7 +8,7 @@ export const NexusLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex min-h-screen bg-[#090D1F]">
       <NexusSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="flex-1 flex flex-col lg:ml-[260px] ml-0 min-w-0">
         <NexusHeader onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />

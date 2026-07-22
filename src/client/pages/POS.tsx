@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Send, Trash2 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
@@ -34,6 +35,7 @@ export const POS = () => {
 
   const searchQuery = tenantState.posSearchQuery;
   const setSearchQuery = (val: string) => updateTenantState(tenantId, { posSearchQuery: val });
+  const [activeMobileTab, setActiveMobileTab] = useState<'menu' | 'cart'>('menu');
 
   // ─── Data Fetching ───
   const { data: categories = [] } = useQuery({
@@ -126,8 +128,35 @@ export const POS = () => {
 
   return (
     <div className="h-[calc(100vh-100px)] lg:h-[calc(100vh-140px)] flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden">
+      {/* Mobile Tab Switcher */}
+      <div className="flex lg:hidden bg-[#131A38]/50 p-1 rounded-xl border border-[#232B5E]/30 shrink-0 w-full">
+        <button
+          onClick={() => setActiveMobileTab('menu')}
+          className={cn(
+            "flex-1 py-2 text-xs font-bold rounded-lg transition-all uppercase tracking-wider",
+            activeMobileTab === 'menu' ? "bg-[#F97316] text-white shadow-md" : "text-[#94A3B8]"
+          )}
+        >
+          Menu Grid
+        </button>
+        <button
+          onClick={() => setActiveMobileTab('cart')}
+          className={cn(
+            "flex-1 py-2 text-xs font-bold rounded-lg transition-all uppercase tracking-wider flex items-center justify-center gap-2",
+            activeMobileTab === 'cart' ? "bg-[#F97316] text-white shadow-md" : "text-[#94A3B8]"
+          )}
+        >
+          Current Order
+          {cart.length > 0 && (
+            <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full font-black">
+              {cart.reduce((sum, item) => sum + item.quantity, 0)}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Category Sidebar */}
-      <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:w-[200px] w-full shrink-0 pb-2 lg:pb-0 whitespace-nowrap lg:whitespace-normal pr-2">
+      <div className={cn("flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:w-[200px] w-full shrink-0 pb-2 lg:pb-0 whitespace-nowrap lg:whitespace-normal pr-2", activeMobileTab !== 'menu' && "hidden lg:flex")}>
         {allCategories.map((c: any) => (
           <button
             key={c.id || 'all'}
@@ -143,7 +172,7 @@ export const POS = () => {
       </div>
 
       {/* Menu Grid (Independently Scrollable on Mobile & Desktop) */}
-      <div className="flex-1 min-h-0 flex flex-col gap-4 lg:gap-6 overflow-hidden">
+      <div className={cn("flex-1 min-h-0 flex flex-col gap-4 lg:gap-6 overflow-hidden", activeMobileTab !== 'menu' && "hidden lg:flex")}>
         <div className="flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <h2 className="text-lg lg:text-xl font-bold text-[#0B1630]">
@@ -161,7 +190,7 @@ export const POS = () => {
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-4 flex-1 overflow-y-auto pr-1 pb-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-4 flex-1 overflow-y-auto pr-1 pb-2 content-start">
           {filteredProducts.map((item: any) => (
             <Card key={item.id} onClick={() => addToCart(item)} className="p-0 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform text-left flex flex-col">
               <div className="aspect-[4/3] bg-slate-50 flex items-center justify-center text-4xl lg:text-5xl group-hover:scale-110 transition-transform duration-500 relative shrink-0">
@@ -183,7 +212,7 @@ export const POS = () => {
       </div>
 
       {/* Current Order (Anchored at Bottom on Mobile, Side Panel on Desktop) */}
-      <Card className="w-full lg:w-[340px] h-[45vh] lg:h-full shrink-0 border-none shadow-[0_4px_24px_rgba(0,0,0,0.06)] flex flex-col p-0 overflow-hidden bg-white">
+      <Card className={cn("w-full lg:w-[340px] shrink-0 border-none shadow-[0_4px_24px_rgba(0,0,0,0.06)] flex flex-col p-0 overflow-hidden bg-white", activeMobileTab === 'cart' ? "flex-1 min-h-0 flex" : "hidden lg:flex", "lg:h-full")}>
         <div className="p-3 lg:p-5 border-b border-slate-50 flex items-center justify-between shrink-0 bg-white">
           <h3 className="font-bold text-[#0B1630] text-xs lg:text-sm uppercase tracking-wider">Current Order</h3>
           <span className="text-[10px] font-black text-[#F97316] tracking-widest uppercase">DINE_IN</span>

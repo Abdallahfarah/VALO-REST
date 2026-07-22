@@ -19,7 +19,7 @@ import {
 import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MenuService, OrderService, TableService, ActivityLogService, SettingService, formatOrderNumber } from '../../services/ApiService';
+import { MenuService, OrderService, TableService, ActivityLogService, SettingService } from '../../services/ApiService';
 import { DetailedReceipt } from '../../components/layout/DetailedReceipt';
 import { useAuth } from '../../context/AuthContext';
 import { useTenant } from '../../context/TenantContext';
@@ -63,8 +63,10 @@ export const WaiterPOS = () => {
   const [amountReceived, setAmountReceived] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
   const [settledReceipt, setSettledReceipt] = useState<any | null>(null);
+  const [settledOrderData, setSettledOrderData] = useState<any | null>(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [paperWidth, setPaperWidth] = useState<'58mm' | '80mm'>('80mm');
+  const [activeMobileTab, setActiveMobileTab] = useState<'menu' | 'cart'>('menu');
 
   useEffect(() => {
     if (tableId) {
@@ -198,9 +200,16 @@ export const WaiterPOS = () => {
         .from('receipts')
         .select('*')
         .eq('order_id', activeOrder?.id)
-        .single();
+        .maybeSingle();
+
+      const { data: fullOrder } = await supabase
+        .from('orders')
+        .select('*, tables(number), users(first_name, last_name, email), order_items(*, menu_items(name, price))')
+        .eq('id', activeOrder?.id)
+        .maybeSingle();
 
       setSettledReceipt(recData);
+      setSettledOrderData(fullOrder || activeOrder);
 
       ActivityLogService.log({
         tenantId: tenant?.id || '',
@@ -317,6 +326,7 @@ export const WaiterPOS = () => {
     setAmountReceived('');
     setPaymentNotes('');
     setSettledReceipt(null);
+    setSettledOrderData(null);
     setIsReceiptModalOpen(false);
     navigate('/waiter/tables');
   };
@@ -332,12 +342,17 @@ export const WaiterPOS = () => {
         date: new Date(settledReceipt.created_at).toLocaleString(),
         paymentMethod: settledReceipt.payment_method,
         currency: tenant?.currencyCode || 'ETB',
-        items: cart.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: Number(item.price),
-          totalPrice: Number(item.price) * item.quantity
-        })),
+        items: (settledOrderData?.order_items || activeOrder?.order_items || cart).map((item: any) => {
+          const q = item.quantity || 1;
+          const uP = Number(item.unit_price || item.unitPrice || item.price || 0);
+          const tP = Number(item.price || item.totalPrice || uP * q);
+          return {
+            name: item.menu_items?.name || item.menuItem?.name || item.name || 'Item',
+            quantity: q,
+            unitPrice: uP,
+            totalPrice: tP
+          };
+        }),
         subtotal: Number(settledReceipt.subtotal),
         taxAmount: Number(settledReceipt.tax_amount),
         totalAmount: Number(settledReceipt.total_amount),
@@ -361,9 +376,36 @@ export const WaiterPOS = () => {
     : 0;
 
   return (
-    <div className="h-[calc(100vh-100px)] lg:h-[calc(100vh-120px)] flex flex-col lg:flex-row gap-4 lg:gap-8 overflow-hidden">
+    <div className="h-[calc(100vh-176px)] lg:h-[calc(100vh-140px)] flex flex-col lg:flex-row gap-4 lg:gap-8 overflow-hidden">
+      {/* Mobile Tab Switcher */}
+      <div className="flex lg:hidden bg-[#131A38]/50 p-1 rounded-xl border border-[#232B5E]/30 shrink-0 w-full">
+        <button
+          onClick={() => setActiveMobileTab('menu')}
+          className={cn(
+            "flex-1 py-2 text-xs font-bold rounded-lg transition-all uppercase tracking-wider",
+            activeMobileTab === 'menu' ? "bg-[#F97316] text-white shadow-md" : "text-[#94A3B8]"
+          )}
+        >
+          Menu Grid
+        </button>
+        <button
+          onClick={() => setActiveMobileTab('cart')}
+          className={cn(
+            "flex-1 py-2 text-xs font-bold rounded-lg transition-all uppercase tracking-wider flex items-center justify-center gap-2",
+            activeMobileTab === 'cart' ? "bg-[#F97316] text-white shadow-md" : "text-[#94A3B8]"
+          )}
+        >
+          Current Order
+          {cart.length > 0 && (
+            <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full font-black">
+              {cart.reduce((sum, item) => sum + item.quantity, 0)}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Category Sidebar */}
-      <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:w-56 w-full shrink-0 pb-2 lg:pb-0 whitespace-nowrap lg:whitespace-normal pr-2">
+      <div className={cn("flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:w-56 w-full shrink-0 pb-2 lg:pb-0 whitespace-nowrap lg:whitespace-normal pr-2", activeMobileTab !== 'menu' && "hidden lg:flex")}>
         <button 
           onClick={() => setSelectedCategory(null)}
           className={cn(
@@ -388,7 +430,7 @@ export const WaiterPOS = () => {
       </div>
 
       {/* Product Grid Container (Independently Scrollable on Mobile & Desktop) */}
-      <div className="flex-1 min-h-0 flex flex-col gap-4 lg:gap-6 overflow-hidden">
+      <div className={cn("flex-1 min-h-0 flex flex-col gap-4 lg:gap-6 overflow-hidden", activeMobileTab !== 'menu' && "hidden lg:flex")}>
         <div className="flex items-center justify-between shrink-0">
            <div className="flex items-center gap-4">
               <h2 className="text-lg lg:text-xl font-bold text-[#0B1630]">{selectedCategory ? categories.find((c:any) => c.id === selectedCategory)?.name : 'All Items'}</h2>
@@ -400,7 +442,7 @@ export const WaiterPOS = () => {
            </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4 flex-1 overflow-y-auto pr-1 pb-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4 flex-1 overflow-y-auto pr-1 pb-2 content-start">
           {products.map((product: any) => (
             <Card key={product.id} onClick={() => handleAddToCart(product)} className="p-0 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform text-left flex flex-col">
                <div className="aspect-[4/3] bg-slate-50 flex items-center justify-center text-4xl lg:text-5xl group-hover:scale-110 transition-transform duration-500 relative shrink-0">
@@ -422,7 +464,7 @@ export const WaiterPOS = () => {
       </div>
 
       {/* Current Order Card (Permanently Anchored at Bottom on Mobile, Side Panel on Desktop) */}
-      <Card className="w-full lg:w-[380px] h-[45vh] lg:h-full shrink-0 border-none shadow-[0_4px_24px_rgba(0,0,0,0.06)] flex flex-col p-0 overflow-hidden bg-white">
+      <Card className={cn("w-full lg:w-[380px] shrink-0 border-none shadow-[0_4px_24px_rgba(0,0,0,0.06)] flex flex-col p-0 overflow-hidden bg-white", activeMobileTab === 'cart' ? "flex-1 min-h-0 flex" : "hidden lg:flex", "lg:h-full")}>
         <div className="p-3 lg:p-6 border-b border-slate-50 flex items-center justify-between shrink-0 bg-white">
            <h3 className="font-bold text-[#0B1630] text-xs lg:text-sm uppercase tracking-wider">Current Order</h3>
            <span className="text-[10px] font-black text-[#F97316] tracking-widest uppercase">DINE_IN</span>
@@ -471,7 +513,14 @@ export const WaiterPOS = () => {
                    </div>
                    <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5 lg:mb-1">
-                         <h5 className="text-xs font-bold text-[#0B1630] truncate">{item.name}</h5>
+                         <div className="flex items-center gap-1.5 min-w-0">
+                            <h5 className="text-xs font-bold text-[#0B1630] truncate">{item.name}</h5>
+                            {item.sent && (
+                              <span className="text-[8px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-600 px-1 py-0.5 rounded shrink-0">
+                                 Kitchen
+                              </span>
+                            )}
+                         </div>
                          <span className="text-xs font-black text-[#0B1630]">{format(Number(item.price) * item.quantity)}</span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -500,11 +549,6 @@ export const WaiterPOS = () => {
                          </div>
                          <span className="text-[10px] font-medium text-[#94A3B8]">{format(Number(item.price))}</span>
                       </div>
-                      {item.sent && (
-                        <span className="absolute top-0 right-0 text-[8px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-600 px-1 py-0.5 rounded scale-75 origin-top-right">
-                           Kitchen
-                        </span>
-                      )}
                    </div>
                 </div>
               ))
@@ -613,52 +657,69 @@ export const WaiterPOS = () => {
       {/* --- MODAL: PRINT BILL / INVOICE VIEW --- */}
       {isBillModalOpen && (
         <div className="fixed inset-0 z-50 bg-[#0B1630]/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <Card className="w-full max-w-md p-8 border-none shadow-2xl relative bg-white flex flex-col gap-6">
+          <Card className="w-full max-w-md p-6 border-none shadow-2xl relative bg-white flex flex-col gap-4">
              <button 
                onClick={() => setIsBillModalOpen(false)}
-               className="absolute top-6 right-6 text-slate-400 hover:text-slate-600"
+               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer"
              >
                 <X size={20} />
              </button>
-             <div className="text-center pb-4 border-b border-dashed border-slate-200">
-                <h3 className="text-xl font-black text-[#0B1630] uppercase tracking-wider">{tenant?.name || 'DHADHAN BISTRO'}</h3>
-                <p className="text-xs text-[#94A3B8] font-medium">Table Bill Invoice</p>
+
+             <div className="flex items-center justify-between border-b border-slate-100 pb-3 pr-8">
+               <h3 className="text-sm font-black text-[#0B1630] uppercase tracking-wider">Print Bill Preview</h3>
+               <div className="flex bg-slate-100 p-1 rounded-lg">
+                 <button
+                   onClick={() => setPaperWidth('58mm')}
+                   className={cn(
+                     "px-2 py-1 rounded text-[10px] font-bold uppercase transition-all cursor-pointer",
+                     paperWidth === '58mm' ? "bg-white text-[#0B1630] shadow-sm" : "text-slate-500"
+                   )}
+                 >
+                   58mm
+                 </button>
+                 <button
+                   onClick={() => setPaperWidth('80mm')}
+                   className={cn(
+                     "px-2 py-1 rounded text-[10px] font-bold uppercase transition-all cursor-pointer",
+                     paperWidth === '80mm' ? "bg-white text-[#0B1630] shadow-sm" : "text-slate-500"
+                   )}
+                 >
+                   80mm
+                 </button>
+               </div>
              </div>
              
-             <div className="space-y-4">
-                <div className="flex justify-between text-xs text-[#64748B] font-bold">
-                   <span>Order ID: {formatOrderNumber(activeOrder?.order_number) || `#${activeOrder?.id.slice(0, 8)}`}</span>
-                   <span>Table {tables.find((t: any) => t.id === selectedTable)?.number}</span>
-                </div>
-                <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
-                   {cart.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center py-2.5 text-xs text-[#0B1630] font-bold">
-                         <span>{item.quantity}x {item.name}</span>
-                         <span>{format(item.price * item.quantity)}</span>
-                      </div>
-                   ))}
-                </div>
-                <div className="pt-4 border-t border-slate-100 space-y-2 text-xs font-semibold text-[#64748B]">
-                   <div className="flex justify-between"><span>Subtotal</span><span className="text-[#0B1630]">{format(subtotal)}</span></div>
-                   <div className="flex justify-between"><span>Tax (15%)</span><span className="text-[#0B1630]">{format(tax)}</span></div>
-                   <div className="flex justify-between text-base font-black text-[#0B1630] pt-2 border-t border-dashed border-slate-200"><span>Grand Total</span><span>{format(total)}</span></div>
+             <div className="flex-1 overflow-y-auto max-h-[55vh] border border-slate-100 rounded-xl bg-white p-2">
+                <div className="print-receipt-container">
+                  <DetailedReceipt 
+                    order={{
+                      ...activeOrder,
+                      tableNumber: tables.find((t: any) => t.id === selectedTable)?.number,
+                      items: activeOrder?.items || cart,
+                      waiterName: user?.user_metadata?.first_name ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim() : (user?.email ? user.email.split('@')[0] : 'Staff')
+                    }}
+                    tenant={tenant}
+                    settings={settings}
+                    paperWidth={paperWidth}
+                    type="CUSTOMER"
+                  />
                 </div>
              </div>
 
-             <div className="flex gap-4">
+             <div className="flex gap-3 pt-2 border-t border-slate-100">
                 <button 
                   onClick={() => {
                      window.print();
                   }}
-                  className="flex-1 py-3.5 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+                  className="flex-1 py-3 rounded-xl bg-[#F97316] hover:bg-[#ea580c] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 cursor-pointer"
                 >
                    <Printer size={16} /> Print Bill
                 </button>
                 <button 
                   onClick={() => setIsBillModalOpen(false)}
-                  className="flex-1 py-3.5 rounded-2xl border border-slate-200 text-slate-500 font-bold text-xs uppercase tracking-wider hover:bg-slate-50"
+                  className="py-3 px-5 rounded-xl border border-slate-200 text-slate-500 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 cursor-pointer"
                 >
-                   Done
+                   Close
                 </button>
              </div>
           </Card>
@@ -826,13 +887,16 @@ export const WaiterPOS = () => {
                      notes: settledReceipt.notes,
                      createdAt: settledReceipt.created_at
                    }}
-                   order={{
-                     ...activeOrder,
-                     items: activeOrder?.items || cart
-                   }}
+                    order={{
+                      ...(settledOrderData || activeOrder),
+                      tableNumber: tables.find((t: any) => t.id === (settledOrderData?.table_id || selectedTable))?.number || settledOrderData?.tables?.number,
+                      items: settledOrderData?.order_items || activeOrder?.items || cart,
+                      waiterName: user?.user_metadata?.first_name ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim() : (user?.email ? user.email.split('@')[0] : 'Staff')
+                    }}
                    tenant={tenant}
                    settings={settings}
                    paperWidth={paperWidth}
+                   type="PAYMENT"
                  />
                </div>
              </div>

@@ -111,25 +111,25 @@ export const PlatformReports = () => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[#0B1630]">Platform Reports & Audit</h1>
-          <p className="text-[#64748B] mt-1 text-sm font-medium">Aggregated real-time financial telemetry across all restaurant nodes.</p>
+          <h1 className="text-3xl font-bold text-white">Platform Reports & Audit</h1>
+          <p className="text-[#94A3B8] mt-1 text-sm font-medium">Aggregated real-time financial telemetry across all restaurant nodes.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleExport('PDF')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl text-xs font-bold transition-all cursor-pointer border border-rose-200 shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#1E293B] text-rose-400 hover:bg-[#1E293B]/80 hover:text-rose-300 rounded-xl text-xs font-bold transition-all cursor-pointer border border-rose-500/20 shadow-sm"
           >
             <Download size={14} /> PDF Report
           </button>
           <button
             onClick={() => handleExport('EXCEL')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all cursor-pointer border border-emerald-200 shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#1E293B] text-emerald-400 hover:bg-[#1E293B]/80 hover:text-emerald-300 rounded-xl text-xs font-bold transition-all cursor-pointer border border-emerald-500/20 shadow-sm"
           >
             <FileSpreadsheet size={14} /> Excel (.xlsx)
           </button>
           <button
             onClick={() => handleExport('CSV')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-[#0B1630] hover:bg-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer border border-slate-200 shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#1E293B] text-[#94A3B8] hover:bg-[#1E293B]/80 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer border border-[#232B5E]/50 shadow-sm"
           >
             <Download size={14} /> CSV
           </button>
@@ -138,65 +138,65 @@ export const PlatformReports = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] bg-white">
+        <Card className="p-6 border border-[#232B5E]/50 shadow-2xl bg-[#131A38]/70 backdrop-blur-md">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-[#F97316]">
+            <div className="w-12 h-12 rounded-xl bg-[#1E293B]/70 border border-[#232B5E]/50 flex items-center justify-center text-[#F97316]">
               <TrendingUp size={24} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Gross GMV Volume</p>
-              <h3 className="text-2xl font-bold text-[#0B1630]">ETB {totalGrossGmv.toFixed(2)}</h3>
+              <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Gross GMV Volume</p>
+              <h3 className="text-2xl font-bold text-white">ETB {totalGrossGmv.toFixed(2)}</h3>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] bg-white">
+        <Card className="p-6 border border-[#232B5E]/50 shadow-2xl bg-[#131A38]/70 backdrop-blur-md">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+            <div className="w-12 h-12 rounded-xl bg-[#1E293B]/70 border border-[#232B5E]/50 flex items-center justify-center text-emerald-400">
               <DollarSign size={24} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Platform Cut (15%)</p>
-              <h3 className="text-2xl font-bold text-emerald-600">ETB {platformShareCut.toFixed(2)}</h3>
+              <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Platform Cut (15%)</p>
+              <h3 className="text-2xl font-bold text-emerald-400">ETB {platformShareCut.toFixed(2)}</h3>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] bg-white">
+        <Card className="p-6 border border-[#232B5E]/50 shadow-2xl bg-[#131A38]/70 backdrop-blur-md">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
+            <div className="w-12 h-12 rounded-xl bg-[#1E293B]/70 border border-[#232B5E]/50 flex items-center justify-center text-blue-400">
               <Receipt size={24} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Paid Receipts</p>
-              <h3 className="text-2xl font-bold text-[#0B1630]">{completedReceiptsCount}</h3>
+              <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Paid Receipts</p>
+              <h3 className="text-2xl font-bold text-white">{completedReceiptsCount}</h3>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] bg-white">
+        <Card className="p-6 border border-[#232B5E]/50 shadow-2xl bg-[#131A38]/70 backdrop-blur-md">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500">
+            <div className="w-12 h-12 rounded-xl bg-[#1E293B]/70 border border-[#232B5E]/50 flex items-center justify-center text-purple-400">
               <Store size={24} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Avg Ticket Size</p>
-              <h3 className="text-2xl font-bold text-[#0B1630]">ETB {avgTicket.toFixed(2)}</h3>
+              <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Avg Ticket Size</p>
+              <h3 className="text-2xl font-bold text-white">ETB {avgTicket.toFixed(2)}</h3>
             </div>
           </div>
         </Card>
       </div>
 
       {/* Filter Controls Toolbar */}
-      <Card className="p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] bg-white space-y-4">
+      <Card className="p-6 border border-[#232B5E]/50 shadow-2xl bg-[#131A38]/70 backdrop-blur-md space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Restaurant Filter */}
           <div className="flex items-center gap-3">
-            <Store size={18} className="text-[#64748B]" />
+            <Store size={18} className="text-[#94A3B8]" />
             <select
               value={selectedTenantId}
               onChange={(e) => setSelectedTenantId(e.target.value)}
-              className="px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs font-bold text-[#0B1630] focus:outline-none focus:border-[#F97316] cursor-pointer"
+              className="px-4 py-2.5 bg-[#1E293B] rounded-xl border border-[#232B5E]/30 text-xs font-bold text-white focus:outline-none focus:border-[#F97316] cursor-pointer"
             >
               <option value="ALL">🌐 All Restaurant Nodes</option>
               {(tenants || []).map((t: any) => (
@@ -208,15 +208,15 @@ export const PlatformReports = () => {
           </div>
 
           {/* Date Range Selector */}
-          <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200">
+          <div className="flex flex-wrap items-center gap-2 bg-[#1E293B] p-1.5 rounded-2xl border border-[#232B5E]/30">
             {(['TODAY', 'YESTERDAY', 'THIS_WEEK', 'THIS_MONTH', 'THIS_YEAR', 'ALL'] as DateRangeFilter[]).map((range) => (
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
                 className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                   dateRange === range
-                    ? 'bg-[#F97316] text-white shadow-sm'
-                    : 'text-[#64748B] hover:text-[#0B1630]'
+                    ? 'bg-[#F97316] text-white shadow-lg shadow-orange-500/20'
+                    : 'text-[#94A3B8] hover:text-white'
                 }`}
               >
                 {range.replace('_', ' ')}
@@ -233,67 +233,67 @@ export const PlatformReports = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by receipt #, restaurant, order #, or cashier..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 rounded-xl border border-slate-200 text-xs text-[#0B1630] focus:outline-none focus:border-[#F97316]"
+            className="w-full pl-10 pr-4 py-2.5 bg-[#1E293B] rounded-xl border border-[#232B5E]/30 text-xs text-white placeholder:text-[#94A3B8] focus:outline-none focus:border-[#F97316]"
           />
         </div>
       </Card>
 
       {/* Live Data Registry Table */}
-      <Card className="border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] bg-white overflow-hidden">
+      <Card className="border border-[#232B5E]/50 shadow-2xl bg-[#131A38]/70 backdrop-blur-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Time</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Restaurant Node</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Receipt No.</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Order / Table</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Cashier</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Method</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-right">Amount</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-center">Status</th>
+              <tr className="border-b border-[#232B5E]/30 bg-[#1E293B]/40">
+                <th className="px-6 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Time</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Restaurant Node</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Receipt No.</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Order / Table</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Cashier</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Method</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest text-right">Amount</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest text-center">Status</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-sm text-[#64748B] font-medium">
+                  <td colSpan={8} className="text-center py-12 text-sm text-[#94A3B8] font-medium">
                     Loading live platform reports...
                   </td>
                 </tr>
               ) : filteredEntries.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-sm text-[#64748B] font-medium">
+                  <td colSpan={8} className="text-center py-12 text-sm text-[#94A3B8] font-medium">
                     No transactions match the selected filters.
                   </td>
                 </tr>
               ) : (
                 filteredEntries.map((r: any) => (
-                  <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 text-xs font-semibold text-[#0B1630]">
+                  <tr key={r.id} className="border-b border-[#232B5E]/20 hover:bg-[#1E293B]/40 transition-colors">
+                    <td className="px-6 py-4 text-xs font-semibold text-white">
                       {new Date(r.createdAt).toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 text-xs font-bold text-[#0B1630]">
+                    <td className="px-6 py-4 text-xs font-bold text-white">
                       {r.restaurantName}
                     </td>
                     <td className="px-6 py-4 text-xs font-mono font-bold text-[#F97316]">
                       #{r.receiptNumber}
                     </td>
-                    <td className="px-6 py-4 text-xs text-[#64748B]">
+                    <td className="px-6 py-4 text-xs text-[#94A3B8]">
                       {r.orderNumber} ({r.tableNumber})
                     </td>
-                    <td className="px-6 py-4 text-xs text-[#0B1630] font-medium">
+                    <td className="px-6 py-4 text-xs text-white font-medium">
                       {r.cashierName}
                     </td>
-                    <td className="px-6 py-4 text-xs font-bold text-slate-600">
+                    <td className="px-6 py-4 text-xs font-bold text-[#94A3B8]">
                       {r.paymentMethod}
                     </td>
-                    <td className="px-6 py-4 text-xs font-bold text-[#0B1630] text-right">
+                    <td className="px-6 py-4 text-xs font-bold text-white text-right">
                       ETB {r.totalAmount.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                        r.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'
+                        r.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                       }`}>
                         {r.status}
                       </span>

@@ -23,6 +23,7 @@ export interface ReceiptExportData {
   restaurantName?: string;
   restaurantAddress?: string;
   restaurantPhone?: string;
+  restaurantEmail?: string;
   date: string;
   paymentMethod: string;
   currency?: string;
@@ -280,125 +281,162 @@ export const exportReceiptPdf = (receipt: ReceiptExportData) => {
 
     const pageWidth = 80;
 
-    // Header Branding
+    // Restaurant Header Info
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.setTextColor(11, 22, 48);
-    doc.text(receipt.restaurantName || 'DHADHAN HUB', pageWidth / 2, 10, { align: 'center' });
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(receipt.restaurantName || 'Dhadhan Restaurant', pageWidth / 2, 10, { align: 'center' });
 
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 116, 139);
+    doc.setTextColor(50, 50, 50);
+    let y = 14;
     if (receipt.restaurantAddress) {
-      doc.text(receipt.restaurantAddress, pageWidth / 2, 14, { align: 'center' });
+      doc.text(receipt.restaurantAddress, pageWidth / 2, y, { align: 'center' });
+      y += 4;
     }
     if (receipt.restaurantPhone) {
-      doc.text(`Tel: ${receipt.restaurantPhone}`, pageWidth / 2, 18, { align: 'center' });
+      doc.text(receipt.restaurantPhone, pageWidth / 2, y, { align: 'center' });
+      y += 4;
+    }
+    if (receipt.restaurantEmail) {
+      doc.text(receipt.restaurantEmail, pageWidth / 2, y, { align: 'center' });
+      y += 4;
     }
 
     // Divider Line
-    let y = receipt.restaurantAddress || receipt.restaurantPhone ? 22 : 16;
-    doc.setDrawColor(226, 232, 240);
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineDashPattern([1, 1], 0);
     doc.line(6, y, pageWidth - 6, y);
-    y += 5;
+    y += 4;
 
     // Receipt Meta Details
+    const getSafeString = (val: any): string => {
+      if (val === null || val === undefined) return '';
+      if (typeof val === 'string') return val.trim();
+      if (typeof val === 'number') return String(val);
+      return String(val);
+    };
+
+    const rawOrderVal = getSafeString(receipt.orderNumber) || getSafeString(receipt.receiptNumber) || 'ORD-LOCAL';
+    const rawOrderNum = getSafeString(rawOrderVal) || 'ORD-LOCAL';
+    const orderNum = rawOrderNum.startsWith('#') ? rawOrderNum : `#${rawOrderNum}`;
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(11, 22, 48);
-    doc.text(`RECEIPT: #${receipt.receiptNumber}`, 6, y);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`ORDER ${orderNum}`, 6, y);
     y += 4;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
-    doc.setTextColor(71, 85, 105);
-    if (receipt.orderNumber) {
-      doc.text(`Order #: ${receipt.orderNumber}`, 6, y);
-      y += 4;
-    }
-    if (receipt.tableNumber) {
-      doc.text(`Table: Table ${receipt.tableNumber}`, 6, y);
-      y += 4;
-    }
+    doc.setTextColor(60, 60, 60);
     doc.text(`Date: ${receipt.date}`, 6, y);
     y += 4;
-    doc.text(`Payment: ${receipt.paymentMethod}`, 6, y);
-    y += 4;
-    if (receipt.cashierName) {
-      doc.text(`Cashier: ${receipt.cashierName}`, 6, y);
+    
+    if (receipt.tableNumber) {
+      doc.text(`Table: T-${receipt.tableNumber}`, 6, y);
       y += 4;
     }
-    if (receipt.waiterName) {
-      doc.text(`Waiter: ${receipt.waiterName}`, 6, y);
+    if (receipt.cashierName || receipt.waiterName) {
+      doc.text(`Cashier: ${receipt.cashierName || receipt.waiterName}`, 6, y);
       y += 4;
     }
 
     doc.line(6, y, pageWidth - 6, y);
-    y += 4;
+    y += 3;
 
     // Items Table
-    const curr = receipt.currency || 'ETB';
     autoTable(doc, {
       startY: y,
-      head: [['QTY', 'ITEM', 'TOTAL']],
+      head: [['ITEM', 'QTY', 'PRICE', 'TOTAL']],
       body: receipt.items.map((i) => [
-        `${i.quantity}x`,
         i.name,
-        `${curr} ${i.totalPrice.toFixed(2)}`,
+        `${i.quantity}`,
+        i.unitPrice ? i.unitPrice.toFixed(2) : (i.totalPrice / i.quantity).toFixed(2),
+        i.totalPrice.toFixed(2),
       ]),
       theme: 'plain',
       styles: {
         fontSize: 7.5,
         cellPadding: 1,
-        textColor: [30, 41, 59],
+        textColor: [0, 0, 0],
       },
       headStyles: {
         fontStyle: 'bold',
-        textColor: [11, 22, 48],
+        textColor: [0, 0, 0],
       },
       columnStyles: {
-        0: { cellWidth: 10 },
-        1: { cellWidth: 42 },
-        2: { cellWidth: 20, halign: 'right' },
+        0: { cellWidth: 32 },
+        1: { cellWidth: 10, halign: 'center' },
+        2: { cellWidth: 13, halign: 'right' },
+        3: { cellWidth: 13, halign: 'right' },
       },
       margin: { left: 6, right: 6 },
     });
 
-    y = (doc as any).lastAutoTable.finalY + 4;
+    y = (doc as any).lastAutoTable.finalY + 2;
     doc.line(6, y, pageWidth - 6, y);
-    y += 5;
+    y += 4;
 
     // Financial Totals
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.text('Subtotal:', 6, y);
-    doc.text(`${curr} ${receipt.subtotal.toFixed(2)}`, pageWidth - 6, y, { align: 'right' });
+    doc.text(`${receipt.subtotal.toFixed(2)}`, pageWidth - 6, y, { align: 'right' });
     y += 4;
 
     if (receipt.discountAmount && receipt.discountAmount > 0) {
+      doc.setTextColor(220, 38, 38);
       doc.text('Discount:', 6, y);
-      doc.text(`-${curr} ${receipt.discountAmount.toFixed(2)}`, pageWidth - 6, y, { align: 'right' });
+      doc.text(`-${receipt.discountAmount.toFixed(2)}`, pageWidth - 6, y, { align: 'right' });
+      doc.setTextColor(0, 0, 0);
       y += 4;
     }
 
-    doc.text('Tax:', 6, y);
-    doc.text(`${curr} ${receipt.taxAmount.toFixed(2)}`, pageWidth - 6, y, { align: 'right' });
-    y += 5;
+    doc.text('VAT (15%):', 6, y);
+    doc.text(`${receipt.taxAmount.toFixed(2)}`, pageWidth - 6, y, { align: 'right' });
+    y += 4;
+
+    doc.line(6, y, pageWidth - 6, y);
+    y += 4;
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(249, 115, 22);
-    doc.text('TOTAL PAID:', 6, y);
-    doc.text(`${curr} ${receipt.totalAmount.toFixed(2)}`, pageWidth - 6, y, { align: 'right' });
-    y += 6;
+    doc.setFontSize(9);
+    doc.text('TOTAL:', 6, y);
+    doc.text(`${receipt.totalAmount.toFixed(2)}`, pageWidth - 6, y, { align: 'right' });
+    y += 5;
+
+    if (receipt.amountReceived) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.text('Payment Method:', 6, y);
+      doc.text(receipt.paymentMethod || 'Cash', pageWidth - 6, y, { align: 'right' });
+      y += 4;
+      doc.text('Paid Amount:', 6, y);
+      doc.text(`${receipt.amountReceived.toFixed(2)}`, pageWidth - 6, y, { align: 'right' });
+      y += 4;
+      doc.text('Change:', 6, y);
+      doc.text(`${(receipt.changeAmount || 0).toFixed(2)}`, pageWidth - 6, y, { align: 'right' });
+      y += 5;
+    }
+
+    doc.line(6, y, pageWidth - 6, y);
+    y += 4;
 
     // Footer Message
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Thank you!', pageWidth / 2, y, { align: 'center' });
+    y += 3.5;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.setTextColor(148, 163, 184);
-    doc.text(receipt.footerMessage || 'Thank you for dining with us!', pageWidth / 2, y, { align: 'center' });
+    doc.setTextColor(60, 60, 60);
+    doc.text('We appreciate your visit.', pageWidth / 2, y, { align: 'center' });
+    y += 3.5;
+    doc.text('Please come again!', pageWidth / 2, y, { align: 'center' });
 
-    const filename = `Receipt_${receipt.receiptNumber}.pdf`;
+    const filename = `Receipt_${rawOrderNum}.pdf`;
     doc.save(filename);
   } catch (error) {
     console.error('[exportReceiptPdf] Error generating receipt PDF:', error);
