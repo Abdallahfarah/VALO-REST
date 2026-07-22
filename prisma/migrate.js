@@ -489,39 +489,7 @@ BEGIN
     VALUES (new_tenant_id, pro_plan_id, 'ACTIVE', NOW() + INTERVAL '30 days');
   END IF;
 
-  -- 7. Seed default categories
-  INSERT INTO public.categories (tenant_id, name, sort_order) VALUES
-    (new_tenant_id, 'Burgers', 1),
-    (new_tenant_id, 'Pizza', 2),
-    (new_tenant_id, 'Drinks', 3),
-    (new_tenant_id, 'Desserts', 4);
-
-  -- 8. Seed default tables
-  INSERT INTO public.tables (tenant_id, number, capacity, status) VALUES
-    (new_tenant_id, '1', 2, 'AVAILABLE'),
-    (new_tenant_id, '2', 2, 'AVAILABLE'),
-    (new_tenant_id, '3', 4, 'AVAILABLE'),
-    (new_tenant_id, '4', 4, 'AVAILABLE'),
-    (new_tenant_id, '5', 6, 'AVAILABLE');
-
-  -- 9. Seed default menu items
-  INSERT INTO public.menu_items (tenant_id, category_id, name, description, price, icon)
-  SELECT new_tenant_id, c.id, 'Classic Cheeseburger', 'Flame-grilled beef patty, cheddar, pickles, house sauce', 290.00, '🍔'
-  FROM public.categories c WHERE c.tenant_id = new_tenant_id AND c.name = 'Burgers';
-
-  INSERT INTO public.menu_items (tenant_id, category_id, name, description, price, icon)
-  SELECT new_tenant_id, c.id, 'Margherita Pizza', 'Fresh mozzarella, tomato sauce, basil, olive oil', 310.00, '🍕'
-  FROM public.categories c WHERE c.tenant_id = new_tenant_id AND c.name = 'Pizza';
-
-  INSERT INTO public.menu_items (tenant_id, category_id, name, description, price, icon)
-  SELECT new_tenant_id, c.id, 'Coca Cola', 'Chilled soft drink (330ml)', 45.00, '🥤'
-  FROM public.categories c WHERE c.tenant_id = new_tenant_id AND c.name = 'Drinks';
-
-  INSERT INTO public.menu_items (tenant_id, category_id, name, description, price, icon)
-  SELECT new_tenant_id, c.id, 'Chocolate Fudge Cake', 'Rich chocolate cake with fudge icing', 150.00, '🍰'
-  FROM public.categories c WHERE c.tenant_id = new_tenant_id AND c.name = 'Desserts';
-
-  -- 10. Update user profile to be ADMIN and link to the new tenant
+  -- 7. Update user profile to be ADMIN and link to the new tenant (Clean workspace initialized)
   UPDATE public.users
   SET 
     tenant_id = new_tenant_id,

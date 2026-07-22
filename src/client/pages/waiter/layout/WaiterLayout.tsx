@@ -5,6 +5,7 @@ import { WaiterHeader } from './WaiterHeader';
 import { ValoSaaSBackground } from '../../../components/layout/ValoSaaSBackground';
 import { LayoutDashboard, MonitorSmartphone, Armchair, Receipt } from 'lucide-react';
 import { cn } from '../../../lib/utils';
+import { InstallPromptBanner } from '../../../components/ui/InstallPromptBanner';
 
 export const WaiterLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -54,6 +55,8 @@ export const WaiterLayout = () => {
           </NavLink>
         ))}
       </nav>
+
+      <InstallPromptBanner />
     </div>
   );
 };

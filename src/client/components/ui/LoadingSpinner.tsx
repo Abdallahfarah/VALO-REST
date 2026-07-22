@@ -1,4 +1,5 @@
-import { cn } from '../../../lib/utils';
+import { cn } from '../../lib/utils';
+import { DhadhanLoadingScreen } from './DhadhanLoadingScreen';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -30,10 +31,21 @@ export const LoadingSpinner = ({ size = 'md', className, label }: LoadingSpinner
 
 interface PageLoaderProps {
   label?: string;
+  isReady?: boolean;
+  variant?: 'dhadhan' | 'minimal';
 }
 
-export const PageLoader = ({ label = 'Loading...' }: PageLoaderProps) => (
-  <div className="flex-1 flex items-center justify-center min-h-[400px]">
-    <LoadingSpinner size="lg" label={label} />
-  </div>
-);
+export const PageLoader = ({ label = 'Loading your restaurant workspace...', isReady = true, variant = 'dhadhan' }: PageLoaderProps) => {
+  if (variant === 'minimal') {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner size="lg" label={label} />
+      </div>
+    );
+  }
+
+  return <DhadhanLoadingScreen label={label} isReady={isReady} />;
+};
+
+export { DhadhanLoadingScreen };
+

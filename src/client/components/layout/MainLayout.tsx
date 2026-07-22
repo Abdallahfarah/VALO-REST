@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ValoSaaSBackground } from './ValoSaaSBackground';
+import { InstallPromptBanner } from '../ui/InstallPromptBanner';
 
 export const MainLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -19,6 +20,7 @@ export const MainLayout = () => {
           </div>
         </main>
       </div>
+      <InstallPromptBanner />
     </div>
   );
 };

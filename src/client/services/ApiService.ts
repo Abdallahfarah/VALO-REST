@@ -1556,7 +1556,7 @@ export const NotificationService = {
 
 // ─── MessagingService ───
 export const MessagingService = {
-  async getConversations(_tenantId: string, userId: string) {
+  async getConversations(tenantId: string, userId: string) {
     const { data, error } = await supabase
       .from('conversation_participants')
       .select('*, conversations(*, messages(*, users(first_name, last_name)))')
@@ -1564,7 +1564,9 @@ export const MessagingService = {
       .order('joined_at', { ascending: false });
 
     if (error) throw error;
-    return (data || []).map((cp: any) => {
+    return (data || [])
+      .filter((cp: any) => !tenantId || cp.conversations?.tenant_id === tenantId)
+      .map((cp: any) => {
       const conv = cp.conversations;
       const lastMsg = conv?.messages?.sort((a: any, b: any) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()

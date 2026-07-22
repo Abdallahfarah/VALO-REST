@@ -104,7 +104,11 @@ export const ProtectedRoute = ({ children, allowedRoles }: { children: React.Rea
   const { tenant, loading: tenantLoading, error: tenantError } = useTenant();
   const location = useLocation();
 
-  if (authLoading) return <PageLoader label="Authenticating..." />;
+  const isPlatformOwnerRoute = location.pathname.startsWith('/platform') || role === 'SUPER_ADMIN';
+
+  if (authLoading) {
+    return <PageLoader label="Authenticating..." variant={isPlatformOwnerRoute ? 'minimal' : 'dhadhan'} isReady={false} />;
+  }
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
@@ -116,7 +120,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: { children: React.Rea
 
   // Skip tenant loading check for Platform Owner (SUPER_ADMIN)
   if (role !== 'SUPER_ADMIN' && tenantLoading) {
-    return <PageLoader label="Loading Workspace..." />;
+    return <PageLoader label="Loading your restaurant workspace..." variant="dhadhan" isReady={false} />;
   }
 
   const isSuperAdmin = role === 'SUPER_ADMIN';
@@ -143,11 +147,15 @@ export const ProtectedRoute = ({ children, allowedRoles }: { children: React.Rea
 const RoleRedirect = () => {
   const { user, role, loading: authLoading } = useAuth();
   const { tenant, loading: tenantLoading, error: tenantError } = useTenant();
-  if (authLoading) return <PageLoader label="Authenticating..." />;
+  const location = useLocation();
+
+  const isPlatformOwner = role === 'SUPER_ADMIN' || location.pathname.startsWith('/platform');
+
+  if (authLoading) return <PageLoader label="Authenticating..." variant={isPlatformOwner ? 'minimal' : 'dhadhan'} isReady={false} />;
   if (!user) return <Navigate to="/login" replace />;
   if (tenantError) return <Navigate to="/login" replace />;
   if (role !== 'SUPER_ADMIN' && tenantLoading) {
-    return <PageLoader label="Loading Workspace..." />;
+    return <PageLoader label="Loading your restaurant workspace..." variant="dhadhan" isReady={false} />;
   }
   if (role !== 'SUPER_ADMIN' && !tenant) {
     return <Navigate to="/onboarding" replace />;
@@ -202,6 +210,12 @@ const ScrollPersistenceManager = () => {
   return null;
 };
 
+const SmartSuspenseFallback = () => {
+  const location = useLocation();
+  const isPlatformOwner = location.pathname.startsWith('/platform');
+  return <PageLoader variant={isPlatformOwner ? 'minimal' : 'dhadhan'} label={isPlatformOwner ? 'Loading...' : 'Loading your restaurant workspace...'} />;
+};
+
 export const App = () => {
   return (
     <ErrorBoundary>
@@ -212,7 +226,7 @@ export const App = () => {
             <TenantProvider>
               <ScrollPersistenceManager />
               <ImpersonationBanner />
-              <Suspense fallback={<PageLoader />}>
+              <Suspense fallback={<SmartSuspenseFallback />}>
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/login" element={<Login />} />
