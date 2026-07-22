@@ -1154,35 +1154,184 @@ export const ReceiptService = {
 // ─── SuperAdminService ───
 export const SuperAdminService = {
   async getOverviewStats() {
-    const { count: tenantCount, error: tenantErr } = await supabase
+    // 1. Total Tenants & Active Tenants
+    const { data: tenants, error: tenantErr } = await supabase
       .from('tenants')
-      .select('*', { count: 'exact', head: true });
+      .select('id, is_active, name');
     
     if (tenantErr) throw tenantErr;
+    const tenantCount = tenants?.length || 0;
+    const activeTenantCount = (tenants || []).filter((t: any) => t.is_active).length;
 
+    // 2. Global Registered Staff & Users
     const { count: userCount, error: userErr } = await supabase
       .from('users')
       .select('*', { count: 'exact', head: true });
 
     if (userErr) throw userErr;
 
+    // 3. Global Customers Count (from orders table)
+    const { data: customerOrders } = await supabase
+      .from('orders')
+      .select('customer_name')
+      .not('customer_name', 'is', null);
+
+    const customerCount = new Set((customerOrders || []).map((o: any) => o.customer_name).filter(Boolean)).size;
+
+    // 4. Subscriptions & Plan Revenue
     const { data: subs, error: subsErr } = await supabase
       .from('subscriptions')
       .select('*, plans(*)');
 
     if (subsErr) throw subsErr;
 
-    const activeSubsCount = subs.filter((s: any) => s.status === 'ACTIVE' || s.status === 'TRIAL').length;
-    const totalRev = subs
+    const activeSubsCount = (subs || []).filter((s: any) => s.status === 'ACTIVE' || s.status === 'TRIAL').length;
+    const expiredSubsCount = (subs || []).filter((s: any) => s.status === 'EXPIRED' || s.status === 'SUSPENDED').length;
+    const subscriptionRev = (subs || [])
       .filter((s: any) => s.status === 'ACTIVE')
       .reduce((acc: number, s: any) => acc + Number(s.plans?.price || 0), 0);
 
+    // 5. Live Orders Telemetry (Orders Today & This Month)
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+    const { count: ordersTodayCount } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', startOfToday);
+
+    const { count: ordersMonthCount } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', startOfMonth);
+
+    // 6. Live Receipts & Gross Platform GMV Revenue
+    const { data: receipts, error: receiptsErr } = await supabase
+      .from('receipts')
+      .select('total_amount, payment_status, created_at');
+
+    if (receiptsErr) console.warn('[SuperAdminService] Receipts query warning:', receiptsErr);
+
+    const totalGmv = (receipts || [])
+      .filter((r: any) => r.payment_status !== 'REFUNDED')
+      .reduce((acc: number, r: any) => acc + Number(r.total_amount || 0), 0);
+
+    // Platform revenue = Subscription revenue + 15% platform cut of GMV
+    const platformRevenue = subscriptionRev + totalGmv * 0.15;
+
+    // 7. Pending Unsettled Orders Amount
+    const { data: pendingOrders } = await supabase
+      .from('orders')
+      .select('total_amount')
+      .neq('status', 'COMPLETED')
+      .neq('status', 'CANCELED');
+
+    const pendingPayments = (pendingOrders || []).reduce((acc: number, o: any) => acc + Number(o.total_amount || 0), 0);
+
     return {
-      tenantCount: tenantCount || 0,
+      tenantCount,
+      activeTenantCount,
       userCount: userCount || 0,
+      customerCount: customerCount || 0,
+      ordersTodayCount: ordersTodayCount || 0,
+      ordersMonthCount: ordersMonthCount || 0,
       activeSubsCount,
-      totalRevenue: totalRev
+      expiredSubsCount,
+      subscriptionRev,
+      totalGmv,
+      platformRevenue,
+      pendingPayments
     };
+  },
+
+  async getTopRestaurants() {
+    const { data: tenants, error: tErr } = await supabase
+      .from('tenants')
+      .select('id, name, slug, logo, is_active');
+
+    if (tErr) throw tErr;
+
+    const { data: receipts } = await supabase
+      .from('receipts')
+      .select('tenant_id, total_amount, payment_status');
+
+    const { data: orders } = await supabase
+      .from('orders')
+      .select('tenant_id');
+
+    return (tenants || []).map((t: any) => {
+      const tenantReceipts = (receipts || []).filter((r: any) => r.tenant_id === t.id && r.payment_status !== 'REFUNDED');
+      const tenantOrders = (orders || []).filter((o: any) => o.tenant_id === t.id);
+      const grossRevenue = tenantReceipts.reduce((acc: number, r: any) => acc + Number(r.total_amount || 0), 0);
+
+      return {
+        id: t.id,
+        name: t.name,
+        slug: t.slug,
+        logo: t.logo,
+        isActive: t.is_active,
+        ordersCount: tenantOrders.length,
+        grossRevenue,
+        platformCut: grossRevenue * 0.15
+      };
+    }).sort((a: any, b: any) => b.grossRevenue - a.grossRevenue);
+  },
+
+  async getPlatformReports(filters: {
+    tenantId?: string;
+    dateRange?: string;
+    startDate?: string;
+    endDate?: string;
+    status?: string;
+    plan?: string;
+  }) {
+    let receiptsQuery = supabase
+      .from('receipts')
+      .select('*, tenants(name, slug), orders(order_number, table_number, customer_name, waiter_id), cashier:users!receipts_cashier_id_fkey(first_name, last_name, email)')
+      .order('created_at', { ascending: false });
+
+    if (filters.tenantId && filters.tenantId !== 'ALL') {
+      receiptsQuery = receiptsQuery.eq('tenant_id', filters.tenantId);
+    }
+
+    if (filters.dateRange) {
+      const now = new Date();
+      let start: Date | null = null;
+      if (filters.dateRange === 'TODAY') {
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      } else if (filters.dateRange === 'YESTERDAY') {
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      } else if (filters.dateRange === 'THIS_WEEK') {
+        start = new Date(now.setDate(now.getDate() - now.getDay()));
+      } else if (filters.dateRange === 'THIS_MONTH') {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+      } else if (filters.dateRange === 'THIS_YEAR') {
+        start = new Date(now.getFullYear(), 0, 1);
+      }
+
+      if (start) {
+        receiptsQuery = receiptsQuery.gte('created_at', start.toISOString());
+      }
+    }
+
+    const { data: receipts, error } = await receiptsQuery;
+    if (error) throw error;
+
+    return (receipts || []).map((r: any) => ({
+      id: r.id,
+      receiptNumber: r.receipt_number,
+      tenantId: r.tenant_id,
+      restaurantName: r.tenants?.name || 'Unknown Restaurant',
+      orderNumber: r.orders?.order_number || 'N/A',
+      tableNumber: r.orders?.table_number ? `Table ${r.orders.table_number}` : 'N/A',
+      customerName: r.orders?.customer_name || 'Walk-in',
+      cashierName: r.cashier ? `${r.cashier.first_name} ${r.cashier.last_name}` : 'Staff',
+      paymentMethod: r.payment_method,
+      totalAmount: Number(r.total_amount),
+      status: r.payment_status || 'PAID',
+      createdAt: r.created_at
+    }));
   },
 
   async getTenantsList() {

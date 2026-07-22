@@ -21,7 +21,9 @@ import { OrderService, SettingService } from '../../services/ApiService';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../services/CurrencyService';
-import { DetailedReceipt, getItemModifiersAndNotes } from '../../components/layout/DetailedReceipt';
+import { DetailedReceipt } from '../../components/layout/DetailedReceipt';
+import { exportReceiptPdf } from '../../lib/export-utils';
+import { toast } from '../../lib/toast-store';
 
 export const MyOrders = () => {
   const { tenant } = useTenant();
@@ -113,50 +115,33 @@ export const MyOrders = () => {
 
   const handleDownloadReceipt = () => {
     if (!selectedOrder || !orderReceipt) return;
-    const itemsText = (selectedOrder.items || []).map((item: any) => {
-      const itemName = item.menuItem?.name || 'Item';
-      const { modifiers, notes } = getItemModifiersAndNotes(itemName);
-      let detailsText = ` - ${item.quantity}x ${itemName} @ ${format(item.unitPrice)} = ${format(item.price)}`;
-      if (modifiers.length > 0) {
-        detailsText += '\n' + modifiers.map(m => `    • ${m.name} ${m.price > 0 ? `(+${m.price})` : ''}`).join('\n');
-      }
-      if (notes || item.notes) {
-        detailsText += `\n    Note: ${item.notes || notes}`;
-      }
-      return detailsText;
-    }).join('\n');
-
-    const content = `
-=========================================
-          ${tenant?.name || 'DHADHAN BISTRO'}
-=========================================
-Receipt No:     ${orderReceipt.receipt_number}
-Date:           ${new Date(orderReceipt.created_at).toLocaleString()}
-Table:          Table ${selectedOrder.table?.number || 'N/A'}
-Waiter:         ${selectedOrder.waiterName || user?.email?.split('@')[0]}
------------------------------------------
-Items:
-${itemsText}
------------------------------------------
-Subtotal:       ${format(Number(orderReceipt.subtotal))}
-Tax (15%):      ${format(Number(orderReceipt.tax_amount))}
-Grand Total:    ${format(Number(orderReceipt.total_amount))}
------------------------------------------
-Payment Method: ${orderReceipt.payment_method}
-Amount Tendered:${format(Number(orderReceipt.amount_received ?? orderReceipt.total_amount))}
-Change:         ${format(Number(orderReceipt.change_amount ?? 0))}
-Notes:          ${orderReceipt.notes || 'None'}
------------------------------------------
-      Thank you for dining with us!
-=========================================
-    `;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Receipt_${orderReceipt.receipt_number}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      exportReceiptPdf({
+        receiptNumber: orderReceipt.receipt_number,
+        orderNumber: selectedOrder.orderNumber,
+        tableNumber: selectedOrder.table?.number || 'N/A',
+        waiterName: selectedOrder.waiterName || user?.email?.split('@')[0],
+        restaurantName: tenant?.name || 'DHADHAN BISTRO',
+        date: new Date(orderReceipt.created_at).toLocaleString(),
+        paymentMethod: orderReceipt.payment_method,
+        currency: tenant?.currencyCode || 'ETB',
+        items: (selectedOrder.items || []).map((item: any) => ({
+          name: item.menuItem?.name || 'Item',
+          quantity: item.quantity,
+          unitPrice: Number(item.unitPrice),
+          totalPrice: Number(item.price)
+        })),
+        subtotal: Number(orderReceipt.subtotal),
+        taxAmount: Number(orderReceipt.tax_amount),
+        totalAmount: Number(orderReceipt.total_amount),
+        amountReceived: Number(orderReceipt.amount_received ?? orderReceipt.total_amount),
+        changeAmount: Number(orderReceipt.change_amount ?? 0)
+      });
+      toast.success('Receipt Exported', 'Receipt PDF downloaded successfully.');
+    } catch (err: any) {
+      console.error('[handleDownloadReceipt] Failed to export receipt PDF:', err);
+      toast.error('Export Failed', 'Could not generate receipt PDF.');
+    }
   };
 
   return (

@@ -1,5 +1,7 @@
 import { ShieldCheck, Search, Filter, Download, Info, CheckCircle2, Clock, FileText } from 'lucide-react';
 import { Card } from '../../components/ui/card';
+import { exportToExcel } from '../../lib/export-utils';
+import { toast } from '../../lib/toast-store';
 
 const auditEntries = [
   { time: '11:37:18 PM', date: '06/15/2026', action: 'RESTAURANT_LIFECYCLE_UPDATE', entity: 'RESTAURANT', segment: 'f7e9e2a4-b', user: 'DHADHAN Platform Owner', role: 'OPS' },
@@ -11,6 +13,28 @@ const auditEntries = [
 ];
 
 export const AuditLogs = () => {
+  const handleExportLedger = () => {
+    try {
+      exportToExcel({
+        title: 'Global Audit Trace Ledger',
+        subtitle: 'Platform Owner Audit Logs',
+        headers: ['Execution Time', 'Date', 'Protocol Action', 'Entity Segment', 'Orchestrator', 'Role'],
+        rows: auditEntries.map(e => [
+          e.time,
+          e.date,
+          e.action,
+          e.segment,
+          e.user,
+          e.role
+        ]),
+        filename: `audit_trace_ledger_${new Date().toISOString().slice(0, 10)}.xlsx`
+      });
+      toast.success('Ledger Exported', 'Audit trace ledger downloaded as Excel workbook.');
+    } catch (err: any) {
+      toast.error('Export Failed', err.message || 'Could not export audit ledger.');
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-[1500px]">
       <div className="flex items-center justify-between">
@@ -76,7 +100,10 @@ export const AuditLogs = () => {
             <Filter size={14} /> Filters <span className="bg-[#0B1630] text-white text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center ml-1">7</span>
           </button>
         </div>
-        <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-[#0B1630] hover:bg-slate-50 transition-colors">
+        <button 
+          onClick={handleExportLedger}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-[#0B1630] hover:bg-slate-50 transition-colors cursor-pointer"
+        >
           <Download size={16} /> Export Ledger
         </button>
       </div>

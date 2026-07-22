@@ -1,34 +1,25 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp, 
   FileText, 
   Users,
   DollarSign,
-  ShoppingCart,
-  Calendar,
   Clock,
-  ArrowUpRight,
-  ArrowDownRight,
   Search,
   Filter,
   Receipt,
   FileSpreadsheet,
-  AlertTriangle,
-  RotateCcw,
-  Sparkles,
-  Smile,
-  CheckCircle,
-  Printer,
-  ChevronDown
+  AlertTriangle
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { OrderService, StaffService, ReceiptService, ActivityLogService } from '../services/ApiService';
+import { OrderService, ReceiptService, ActivityLogService } from '../services/ApiService';
 import { useTenant } from '../context/TenantContext';
 import { useCurrency } from '../services/CurrencyService';
 import { supabase } from '../../lib/supabase';
 import { toast } from '../lib/toast-store';
+import { exportToPdf, exportToExcel, exportToCsv } from '../lib/export-utils';
 
 type DateRangeType = 'TODAY' | 'YESTERDAY' | 'WEEK' | 'MONTH' | 'CUSTOM';
 
@@ -154,7 +145,6 @@ export const Reports = () => {
 
   // 3. Payment Summary metrics
   const summaryMetrics = useMemo(() => {
-    const now = new Date();
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
@@ -404,9 +394,9 @@ export const Reports = () => {
 
   // Export handlers respecting active filters
   const handleExport = (formatType: 'PDF' | 'EXCEL' | 'CSV') => {
-    toast.success('Generating export', `Exporting active dashboard records as ${formatType}...`);
-    
-    setTimeout(() => {
+    try {
+      toast.success('Generating export', `Exporting active dashboard records as ${formatType}...`);
+      
       const headers = ['Time', 'Receipt No.', 'Order No.', 'Table', 'Customer', 'Waiter', 'Cashier', 'Method', 'Amount', 'Status'];
       const rows = filteredRegistry.map((r: any) => [
         new Date(r.createdAt).toLocaleString(),
@@ -421,27 +411,35 @@ export const Reports = () => {
         r.status || 'PAID'
       ]);
 
-      let content = '';
-      let filename = `financial_report_${dateRange.toLowerCase()}_${new Date().toISOString().slice(0, 10)}`;
+      const symbol = tenant?.currencySymbol || tenant?.currencyCode || 'ETB';
+      const options = {
+        title: 'Financial Operations Report',
+        subtitle: 'Real-time payment journal auditing & sales records',
+        restaurantName: tenant?.name || 'DHADHAN HQ',
+        dateRange: dateRange,
+        headers,
+        rows,
+        summaryMetrics: [
+          { label: 'Net Revenue', value: `${symbol} ${summaryMetrics.netRevenue.toFixed(2)}` },
+          { label: 'Today Revenue', value: `${symbol} ${summaryMetrics.todayRevenue.toFixed(2)}` },
+          { label: 'Pending Payments', value: `${symbol} ${summaryMetrics.pendingPayments.toFixed(2)}` },
+          { label: 'Completed Receipts', value: summaryMetrics.completedPaymentsCount },
+          { label: 'Refunded Amount', value: `${symbol} ${summaryMetrics.refundedAmount.toFixed(2)}` },
+        ],
+        filename: `financial_report_${dateRange.toLowerCase()}_${new Date().toISOString().slice(0, 10)}`
+      };
 
-      if (formatType === 'CSV' || formatType === 'EXCEL') {
-        content = [headers.join(','), ...rows.map(e => e.map(val => `"${val}"`).join(','))].join('\n');
-        filename += formatType === 'CSV' ? '.csv' : '.xlsx';
-      } else {
-        // PDF Simulation content
-        content = `DHADHAN FINANCIAL REPORT\nExport Range: ${dateRange}\nRecords Count: ${rows.length}\nTotal Net Revenue: ${summaryMetrics.netRevenue}\n\n`;
-        content += rows.map(r => r.join(' | ')).join('\n');
-        filename += '.pdf';
+      if (formatType === 'PDF') {
+        exportToPdf(options);
+      } else if (formatType === 'EXCEL') {
+        exportToExcel(options);
+      } else if (formatType === 'CSV') {
+        exportToCsv(options);
       }
-
-      const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
-      const element = document.createElement("a");
-      element.href = URL.createObjectURL(blob);
-      element.download = filename;
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
-    }, 1200);
+    } catch (err: any) {
+      console.error('[handleExport] Export failed:', err);
+      toast.error('Export Failed', err.message || 'Could not generate report export.');
+    }
   };
 
   return (

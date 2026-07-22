@@ -9,6 +9,7 @@ import { useAuth } from '../../../context/AuthContext';
 
 const navItems = [
   { name: 'Platform Overview', path: '/platform/overview', icon: LayoutDashboard },
+  { name: 'Platform Reports', path: '/platform/reports', icon: LineChart },
   { name: 'Restaurants', path: '/platform/restaurants', icon: Store },
   { name: 'Subscriptions', path: '/platform/subscriptions', icon: CreditCard },
   { name: 'User Provisioning', path: '/platform/provisioning', icon: UserPlus },

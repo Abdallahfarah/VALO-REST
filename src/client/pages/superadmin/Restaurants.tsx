@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SuperAdminService } from '../../services/ApiService';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../lib/toast-store';
+import { exportRestaurantPackage } from '../../lib/export-restaurant-package';
 
 const filters = ['ALL', 'ACTIVE', 'TRIAL', 'EXPIRED', 'SUSPENDED'];
 
@@ -22,6 +23,7 @@ export const Restaurants = () => {
   // Modal states
   const [activePanel, setActivePanel] = useState<'DETAILS' | 'EDIT' | 'STAFF' | 'ADD_STAFF' | 'SUBSCRIPTION' | 'UPGRADE' | 'EXTEND' | 'LOGS' | 'DELETE' | null>(null);
   const [selectedTenant, setSelectedTenant] = useState<any>(null);
+  const [exportModalTenant, setExportModalTenant] = useState<any>(null);
 
   const queryClient = useQueryClient();
   const { setImpersonatedTenantId } = useAuth();
@@ -386,7 +388,10 @@ export const Restaurants = () => {
                           {/* Logs / Data */}
                           <div className="px-3 py-1 text-[9px] font-black text-[#94A3B8] uppercase tracking-widest">Data Management</div>
                           <button 
-                            onClick={() => { setOpenMenuTenantId(null); toast.info('Coming Soon', 'This service has not been implemented yet.'); }}
+                            onClick={() => { 
+                              setOpenMenuTenantId(null);
+                              setExportModalTenant(r);
+                            }}
                             className="w-full px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                           >
                             <Download size={13} /> Export Restaurant Data
@@ -430,6 +435,85 @@ export const Restaurants = () => {
           {activePanel === 'EXTEND' && <ExtendPanel tenant={selectedTenant} onClose={() => { setActivePanel(null); refetch(); }} />}
           {activePanel === 'LOGS' && <LogsPanel tenant={selectedTenant} />}
           {activePanel === 'DELETE' && <DeletePanel tenant={selectedTenant} onClose={() => { setActivePanel(null); refetch(); }} />}
+        </ModalWrapper>
+      )}
+
+      {/* --- EXPORT FORMAT SELECTION MODAL --- */}
+      {exportModalTenant && (
+        <ModalWrapper 
+          title={`Export Reports Package — ${exportModalTenant.name}`} 
+          onClose={() => setExportModalTenant(null)}
+        >
+          <div className="space-y-6 p-2">
+            <p className="text-xs text-[#64748B] font-medium">
+              Select your desired report format to compile live operations data for <strong className="text-[#0B1630]">{exportModalTenant.name}</strong>.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* PDF BUTTON */}
+              <button
+                onClick={() => {
+                  const target = exportModalTenant;
+                  setExportModalTenant(null);
+                  exportRestaurantPackage(target, 'PDF');
+                }}
+                className="p-5 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all cursor-pointer group"
+              >
+                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-rose-600 shadow-sm group-hover:scale-105 transition-transform">
+                  <Download size={24} />
+                </div>
+                <div className="text-center">
+                  <h4 className="font-bold text-sm text-[#0B1630]">PDF Report</h4>
+                  <p className="text-[10px] text-[#64748B] font-medium mt-0.5">Formal Print Package</p>
+                </div>
+              </button>
+
+              {/* EXCEL BUTTON */}
+              <button
+                onClick={() => {
+                  const target = exportModalTenant;
+                  setExportModalTenant(null);
+                  exportRestaurantPackage(target, 'EXCEL');
+                }}
+                className="p-5 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all cursor-pointer group"
+              >
+                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-emerald-600 shadow-sm group-hover:scale-105 transition-transform">
+                  <Download size={24} />
+                </div>
+                <div className="text-center">
+                  <h4 className="font-bold text-sm text-[#0B1630]">Excel (.xlsx)</h4>
+                  <p className="text-[10px] text-[#64748B] font-medium mt-0.5">Spreadsheet Data</p>
+                </div>
+              </button>
+
+              {/* CSV BUTTON */}
+              <button
+                onClick={() => {
+                  const target = exportModalTenant;
+                  setExportModalTenant(null);
+                  exportRestaurantPackage(target, 'CSV');
+                }}
+                className="p-5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all cursor-pointer group"
+              >
+                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-slate-700 shadow-sm group-hover:scale-105 transition-transform">
+                  <Download size={24} />
+                </div>
+                <div className="text-center">
+                  <h4 className="font-bold text-sm text-[#0B1630]">CSV Data</h4>
+                  <p className="text-[10px] text-[#64748B] font-medium mt-0.5">UTF-8 Raw Data</p>
+                </div>
+              </button>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+              <button
+                onClick={() => setExportModalTenant(null)}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-[#0B1630] font-bold text-xs rounded-xl uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </ModalWrapper>
       )}
     </div>

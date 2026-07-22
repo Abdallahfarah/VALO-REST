@@ -21,9 +21,10 @@ import { cn } from '../../../lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MenuService, OrderService, TableService, ActivityLogService, SettingService, formatOrderNumber } from '../../services/ApiService';
 import { DetailedReceipt } from '../../components/layout/DetailedReceipt';
-import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
+import { useTenant } from '../../context/TenantContext';
 import { toast } from '../../lib/toast-store';
+import { exportReceiptPdf } from '../../lib/export-utils';
 import { useCurrency } from '../../services/CurrencyService';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
@@ -322,37 +323,32 @@ export const WaiterPOS = () => {
 
   const handleDownloadReceipt = () => {
     if (!settledReceipt) return;
-    const content = `
-=========================================
-          ${tenant?.name || 'DHADHAN BISTRO'}
-=========================================
-Receipt No:     ${settledReceipt.receipt_number}
-Date:           ${new Date(settledReceipt.created_at).toLocaleString()}
-Table:          Table ${tables.find((t: any) => t.id === activeOrder?.table_id)?.number || 'N/A'}
-    Waiter:         ${user?.email ? user.email.split('@')[0] : 'Waiter'}
------------------------------------------
-Items:
-${cart.map(item => ` - ${item.quantity}x ${item.name} @ ${format(item.price)} = ${format(item.price * item.quantity)}`).join('\n')}
------------------------------------------
-Subtotal:       ${format(settledReceipt.subtotal)}
-Tax (15%):      ${format(settledReceipt.tax_amount)}
-Grand Total:    ${format(settledReceipt.total_amount)}
------------------------------------------
-Payment Method: ${settledReceipt.payment_method}
-Amount Tendered:${format(settledReceipt.amount_received)}
-Change:         ${format(settledReceipt.change_amount)}
-Notes:          ${settledReceipt.notes || 'None'}
------------------------------------------
-      Thank you for dining with us!
-=========================================
-    `;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Receipt_${settledReceipt.receipt_number}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      exportReceiptPdf({
+        receiptNumber: settledReceipt.receipt_number,
+        tableNumber: tables.find((t: any) => t.id === activeOrder?.table_id)?.number || 'N/A',
+        waiterName: user?.email ? user.email.split('@')[0] : 'Waiter',
+        restaurantName: tenant?.name || 'DHADHAN BISTRO',
+        date: new Date(settledReceipt.created_at).toLocaleString(),
+        paymentMethod: settledReceipt.payment_method,
+        currency: tenant?.currencyCode || 'ETB',
+        items: cart.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: Number(item.price),
+          totalPrice: Number(item.price) * item.quantity
+        })),
+        subtotal: Number(settledReceipt.subtotal),
+        taxAmount: Number(settledReceipt.tax_amount),
+        totalAmount: Number(settledReceipt.total_amount),
+        amountReceived: Number(settledReceipt.amount_received || settledReceipt.total_amount),
+        changeAmount: Number(settledReceipt.change_amount || 0)
+      });
+      toast.success('Receipt Exported', 'Receipt PDF downloaded successfully.');
+    } catch (err: any) {
+      console.error('[handleDownloadReceipt] Failed to export receipt PDF:', err);
+      toast.error('Export Failed', 'Could not generate receipt PDF.');
+    }
   };
 
   const subtotal = cart.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0);

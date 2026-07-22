@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  X, CheckSquare, ShoppingCart, CreditCard, Users, 
-  Settings, AlertTriangle, XCircle, Armchair, Sparkles, 
-  Info, Trash2, ChefHat, Coffee, Bell, CheckSquare as CheckIcon
+  X, ShoppingCart, CreditCard, Users, 
+  Settings, AlertTriangle, Armchair, Sparkles, 
+  Trash2, ChefHat, Coffee, Bell, CheckSquare as CheckIcon
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { NotificationService } from '../services/ApiService';

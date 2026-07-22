@@ -9,11 +9,7 @@ const pgClient = new pg.Client({ connectionString, ssl: true });
 const TENANT_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
 const usersToCreate = [
-  { email: 'admin@valo.rest',      password: 'Admin@123',    role: 'ADMIN',         first: 'John',  last: 'Owner' },
-  { email: 'waiter@valo.rest',     password: 'Waiter@123',   role: 'WAITER',        first: 'Alex',  last: 'Turner' },
-  { email: 'kitchen@valo.rest',    password: 'Kitchen@123',  role: 'KITCHEN_STAFF', first: 'Chef',  last: 'Pierre' },
-  { email: 'cashier@valo.rest',    password: 'Cashier@123',  role: 'CASHIER',       first: 'Sarah', last: 'Register' },
-  { email: 'superadmin@valo.rest', password: 'Super@123',    role: 'SUPER_ADMIN',   first: 'Nexus', last: 'Platform' },
+  { email: 'Abdallaha.f1572@gmail.com', password: '0707937647', role: 'SUPER_ADMIN', first: 'Abdallah', last: 'Farah' },
 ];
 
 const logLines = [];

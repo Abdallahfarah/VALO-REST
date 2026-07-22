@@ -1,5 +1,7 @@
 import { DollarSign, TrendingUp, Download, Users, Zap, ShieldCheck } from 'lucide-react';
 import { Card } from '../../components/ui/card';
+import { exportToExcel } from '../../lib/export-utils';
+import { toast } from '../../lib/toast-store';
 
 export const PlatformRevenue = () => {
   return (
@@ -88,7 +90,26 @@ export const PlatformRevenue = () => {
                 </div>
               </div>
             </div>
-            <button className="w-full py-3 border border-slate-200 rounded-xl text-sm font-bold text-[#0B1630] flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors mt-4">
+            <button 
+              onClick={() => {
+                try {
+                  exportToExcel({
+                    title: 'Platform Fiscal Revenue Ledger',
+                    headers: ['Tenant Node', 'Plan', 'Billing Period', 'Gross Yield (ETB)', 'Net Share (85%)', 'Platform Cut (15%)', 'Status'],
+                    rows: [
+                      ['VALO Bistro (Main)', 'PRO Plan', '30 Days', 3450.00, 2932.50, 517.50, 'SETTLED'],
+                      ['Le Jardin Restaurant', 'PRO Plan', '30 Days', 4890.00, 4156.50, 733.50, 'SETTLED'],
+                      ['Cafe Italia', 'PRO Plan', '30 Days', 2900.00, 2465.00, 435.00, 'SETTLED']
+                    ],
+                    filename: `platform_revenue_ledger_${new Date().toISOString().slice(0, 10)}.xlsx`
+                  });
+                  toast.success('Revenue Ledger Exported', 'Downloaded as Excel workbook.');
+                } catch (err: any) {
+                  toast.error('Export Failed', err.message || 'Could not export ledger.');
+                }
+              }}
+              className="w-full py-3 border border-slate-200 rounded-xl text-sm font-bold text-[#0B1630] flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors mt-4 cursor-pointer"
+            >
               <Download size={16} /> Export Ledger
             </button>
           </div>

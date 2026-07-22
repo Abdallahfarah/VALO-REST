@@ -60,7 +60,7 @@ export const Subscriptions = () => {
             <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500"><CreditCard size={22} /></div>
             <div>
               <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Platform MRR</p>
-              <h3 className="text-3xl font-bold text-[#0B1630]">${(stats?.totalRevenue ?? 0).toFixed(2)}</h3>
+              <h3 className="text-3xl font-bold text-[#0B1630]">ETB {(stats?.platformRevenue ?? 0).toFixed(2)}</h3>
             </div>
           </div>
           <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mt-4 z-10 relative">Live Revenue</p>

@@ -57,6 +57,7 @@ const Receipts = React.lazy(() => import('./pages/cashier/Receipts').then(m => (
 // SuperAdmin pages
 const Restaurants = React.lazy(() => import('./pages/superadmin/Restaurants').then(m => ({ default: m.Restaurants })));
 const Overview = React.lazy(() => import('./pages/superadmin/Overview').then(m => ({ default: m.Overview })));
+const PlatformReports = React.lazy(() => import('./pages/superadmin/PlatformReports').then(m => ({ default: m.PlatformReports })));
 const Subscriptions = React.lazy(() => import('./pages/superadmin/Subscriptions').then(m => ({ default: m.Subscriptions })));
 const UserProvisioning = React.lazy(() => import('./pages/superadmin/UserProvisioning').then(m => ({ default: m.UserProvisioning })));
 const PlatformRevenue = React.lazy(() => import('./pages/superadmin/PlatformRevenue').then(m => ({ default: m.PlatformRevenue })));
@@ -304,6 +305,7 @@ export const App = () => {
                     </ProtectedRoute>
                   }>
                     <Route path="overview" element={<Overview />} />
+                    <Route path="reports" element={<PlatformReports />} />
                     <Route path="restaurants" element={<Restaurants />} />
                     <Route path="subscriptions" element={<Subscriptions />} />
                     <Route path="provisioning" element={<UserProvisioning />} />

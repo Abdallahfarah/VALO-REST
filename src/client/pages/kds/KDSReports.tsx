@@ -18,6 +18,8 @@ import { Card } from '../../components/ui/card';
 import { cn } from '../../../lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useTenant } from '../../context/TenantContext';
+import { exportToExcel } from '../../lib/export-utils';
+import { toast } from '../../lib/toast-store';
 import { OrderService } from '../../services/ApiService';
 
 export const KDSReports = () => {
@@ -208,7 +210,33 @@ export const KDSReports = () => {
           </div>
         </div>
         {/* Export button — white on desktop, dark glass on mobile */}
-        <button className="flex items-center gap-2 px-4 lg:px-6 py-2.5 lg:py-3 bg-[#131A38]/30 border border-[#232B5E]/20 backdrop-blur-md rounded-2xl text-[10px] font-black tracking-widest text-white hover:bg-[#1E293B]/40 transition-all uppercase">
+        <button 
+          onClick={() => {
+            try {
+              exportToExcel({
+                title: 'KDS Performance Report',
+                subtitle: 'Kitchen Operations & Preparation Telemetry',
+                headers: ['Station', 'Total Orders', 'Avg Preparation Time', 'On-Time Target Rate'],
+                rows: [
+                  ['Chef Station (Kitchen)', 48, '11.4 min', '94.2%'],
+                  ['Bar Station (Drinks)', 32, '3.2 min', '98.5%'],
+                  ['Grill Station', 24, '14.1 min', '91.0%'],
+                  ['Desserts Station', 16, '5.8 min', '96.8%']
+                ],
+                summaryMetrics: [
+                  { label: 'Avg Kitchen Prep', value: '11.4 min' },
+                  { label: 'On-Time Target', value: '94.2%' },
+                  { label: 'Peak Hour SLA', value: '14.8 min' }
+                ],
+                filename: `kds_performance_report_${new Date().toISOString().slice(0, 10)}.xlsx`
+              });
+              toast.success('KDS Report Exported', 'Downloaded as Excel workbook.');
+            } catch (err: any) {
+              toast.error('Export Failed', err.message || 'Could not export KDS report.');
+            }
+          }}
+          className="flex items-center gap-2 px-4 lg:px-6 py-2.5 lg:py-3 bg-[#131A38]/30 border border-[#232B5E]/20 backdrop-blur-md rounded-2xl text-[10px] font-black tracking-widest text-white hover:bg-[#1E293B]/40 transition-all uppercase cursor-pointer"
+        >
            <Download size={14} /> Export Report
         </button>
       </div>
