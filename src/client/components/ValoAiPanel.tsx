@@ -77,10 +77,12 @@ export const ValoAiPanel: React.FC<ValoAiPanelProps> = ({ onClose }) => {
   };
 
   const quickPrompts = [
-    { label: 'Split Table 3', query: 'Split Table 3 bill by 2 people' },
-    { label: 'Sales Today', query: 'Show today\'s revenue' },
-    { label: 'VAT for 1500', query: 'Calculate VAT for 1500' },
-    { label: 'Refund Policy', query: 'Explain refund policy' }
+    { label: 'Sales Today', query: 'What are today\'s total sales?' },
+    { label: 'Cash vs Card', query: 'Show today\'s cash vs card payments' },
+    { label: 'Top Item', query: 'Which menu item sold the most this week?' },
+    { label: 'Unpaid Orders', query: 'List unpaid orders' },
+    { label: 'Top Waiter', query: 'Which waiter handled the most orders today?' },
+    { label: 'Tax Today', query: 'How much tax was collected today?' }
   ];
 
   return (

@@ -8,40 +8,240 @@ export interface AiResponse {
 
 export const ValoAiService = {
   /**
-   * Main entry point to process a cashier prompt with real restaurant context.
+   * Main entry point to process a cashier prompt with strict restaurant isolation.
    */
   async processMessage(query: string, tenantId: string): Promise<AiResponse> {
     const q = query.toLowerCase().trim();
 
+    if (!tenantId) {
+      return {
+        message: 'No active restaurant workspace context detected. Please ensure you are logged into a valid restaurant account.',
+        type: 'text'
+      };
+    }
+
+    // ─── 0. SECURITY GUARD: REJECT CROSS-TENANT & PLATFORM-WIDE QUERIES ───
+    const forbiddenKeywords = [
+      'other restaurant', 'another restaurant', 'all restaurants', 
+      'entire platform', 'platform revenue', 'platform earned', 
+      'which restaurant earned', 'how many restaurants exist', 
+      'show another restaurant', 'top restaurant', 'platform stats',
+      'other tenant', 'another tenant'
+    ];
+
+    if (forbiddenKeywords.some(keyword => q.includes(keyword))) {
+      return {
+        message: '🔒 **Access Restricted**: This information is outside the Cashier role\'s permissions. I can only access and assist with operational records from your current restaurant workspace.',
+        type: 'text'
+      };
+    }
+
     try {
-      // Fetch tenant settings for currency formatting
+      // Fetch tenant info & currency formatting
       const { data: tenantData } = await supabase
         .from('tenants')
-        .select('currency_code')
+        .select('name, currency_code, currency_symbol')
         .eq('id', tenantId)
         .maybeSingle();
 
-      const currency = tenantData?.currency_code || 'ETB';
+      const currency = tenantData?.currency_symbol || tenantData?.currency_code || 'ETB';
+      const restaurantName = tenantData?.name || 'this restaurant';
 
-      // 1. Fetch live orders & receipts for today to feed context calculations
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // Timestamps for date filtering
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-      // Fetch active/recent orders
-      const { data: orders = [] } = await supabase
-        .from('orders')
-        .select('*, items:order_items(*, menuItem:menu_items(*))')
-        .eq('tenant_id', tenantId)
-        .gte('created_at', today.toISOString());
+      // ─── 1. PAYMENT METHOD BREAKDOWN (CASH, CARD, MOBILE) ───
+      if (q.includes('cash') || q.includes('card') || q.includes('mobile') || q.includes('payment method')) {
+        const { data: receipts } = await supabase
+          .from('receipts')
+          .select('payment_method, total_amount, payment_status, created_at')
+          .eq('tenant_id', tenantId)
+          .gte('created_at', startOfToday.toISOString());
 
-      // Fetch active receipts
-      const { data: receipts = [] } = await supabase
-        .from('receipts')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .gte('created_at', today.toISOString());
+        const validReceipts = (receipts || []).filter((r: any) => r.payment_status !== 'REFUNDED');
+        const cashTotal = validReceipts.filter((r: any) => r.payment_method === 'Cash').reduce((acc: number, r: any) => acc + Number(r.total_amount), 0);
+        const cardTotal = validReceipts.filter((r: any) => r.payment_method === 'Card' || r.payment_method === 'CREDIT_CARD').reduce((acc: number, r: any) => acc + Number(r.total_amount), 0);
+        const mobileTotal = validReceipts.filter((r: any) => r.payment_method === 'Mobile Money').reduce((acc: number, r: any) => acc + Number(r.total_amount), 0);
+        const bankTotal = validReceipts.filter((r: any) => r.payment_method === 'Bank Transfer').reduce((acc: number, r: any) => acc + Number(r.total_amount), 0);
 
-      // ─── CASE A: BILL CALCULATIONS & SPLITS ───
+        return {
+          message: `### Payment Methods Breakdown — Today (${restaurantName})\n` +
+            `- **Cash Payments**: ${currency} ${cashTotal.toFixed(2)}\n` +
+            `- **Card Payments**: ${currency} ${cardTotal.toFixed(2)}\n` +
+            `- **Mobile Money**: ${currency} ${mobileTotal.toFixed(2)}\n` +
+            `- **Bank Transfer**: ${currency} ${bankTotal.toFixed(2)}\n\n` +
+            `*Total Receipts Settled Today*: **${validReceipts.length}**`,
+          type: 'text'
+        };
+      }
+
+      // ─── 2. TOP SELLING MENU ITEMS ───
+      if (q.includes('top') || q.includes('most sold') || q.includes('menu item') || q.includes('popular')) {
+        const { data: orderItems } = await supabase
+          .from('order_items')
+          .select('quantity, price, menu_items(name)')
+          .eq('tenant_id', tenantId);
+
+        const itemMap: Record<string, { name: string; qty: number; total: number }> = {};
+        (orderItems || []).forEach((item: any) => {
+          const name = item.menu_items?.name || 'Item';
+          if (!itemMap[name]) itemMap[name] = { name, qty: 0, total: 0 };
+          itemMap[name].qty += item.quantity || 1;
+          itemMap[name].total += (item.quantity || 1) * Number(item.price || 0);
+        });
+
+        const topList = Object.values(itemMap).sort((a, b) => b.qty - a.qty).slice(0, 5);
+
+        if (topList.length === 0) {
+          return {
+            message: `No item sales recorded yet for **${restaurantName}**.`,
+            type: 'text'
+          };
+        }
+
+        const lines = topList.map((item, idx) => `${idx + 1}. **${item.name}** — ${item.qty} sold (${currency} ${item.total.toFixed(2)})`).join('\n');
+        return {
+          message: `### Top Selling Menu Items (${restaurantName})\n${lines}`,
+          type: 'text'
+        };
+      }
+
+      // ─── 3. WAITER / STAFF PERFORMANCE ───
+      if (q.includes('waiter') || q.includes('staff') || q.includes('server')) {
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('waiter_id, total_amount, status, created_at, waiter:users!orders_waiter_id_fkey(first_name, last_name)')
+          .eq('tenant_id', tenantId)
+          .gte('created_at', startOfToday.toISOString());
+
+        const waiterMap: Record<string, { name: string; count: number; sales: number }> = {};
+        (orders || []).forEach((o: any) => {
+          const name = o.waiter ? `${o.waiter.first_name} ${o.waiter.last_name}` : 'Staff';
+          if (!waiterMap[name]) waiterMap[name] = { name, count: 0, sales: 0 };
+          waiterMap[name].count += 1;
+          if (o.status === 'COMPLETED') waiterMap[name].sales += Number(o.total_amount || 0);
+        });
+
+        const topWaiters = Object.values(waiterMap).sort((a, b) => b.count - a.count);
+
+        if (topWaiters.length === 0) {
+          return {
+            message: `No order activity logged for waiters today at **${restaurantName}**.`,
+            type: 'text'
+          };
+        }
+
+        const lines = topWaiters.map((w, idx) => `${idx + 1}. **${w.name}** — ${w.count} orders handled (${currency} ${w.sales.toFixed(2)} completed)`).join('\n');
+        return {
+          message: `### Waiter Performance Leaderboard — Today (${restaurantName})\n${lines}`,
+          type: 'text'
+        };
+      }
+
+      // ─── 4. TAX COLLECTED TODAY ───
+      if (q.includes('tax') || q.includes('vat')) {
+        const { data: receipts } = await supabase
+          .from('receipts')
+          .select('tax_amount, total_amount, payment_status')
+          .eq('tenant_id', tenantId)
+          .gte('created_at', startOfToday.toISOString());
+
+        const validReceipts = (receipts || []).filter((r: any) => r.payment_status !== 'REFUNDED');
+        const taxTotal = validReceipts.reduce((acc: number, r: any) => acc + Number(r.tax_amount || 0), 0);
+        const totalSales = validReceipts.reduce((acc: number, r: any) => acc + Number(r.total_amount || 0), 0);
+
+        return {
+          message: `### Tax Telemetry — Today (${restaurantName})\n` +
+            `- **Total Tax Collected (15% VAT)**: **${currency} ${taxTotal.toFixed(2)}**\n` +
+            `- **Gross Receipts Subject to Tax**: ${currency} ${totalSales.toFixed(2)}`,
+          type: 'text'
+        };
+      }
+
+      // ─── 5. CUSTOMERS LIST & COUNT ───
+      if (q.includes('customer') || q.includes('guest') || q.includes('diner')) {
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('customer_name, table_number, created_at, status')
+          .eq('tenant_id', tenantId)
+          .gte('created_at', startOfToday.toISOString());
+
+        const customers = Array.from(new Set((orders || []).map((o: any) => o.customer_name).filter(Boolean)));
+
+        return {
+          message: `### Today's Customer Activity (${restaurantName})\n` +
+            `- **Unique Customers Logged**: **${customers.length}**\n` +
+            `- **Total Table Checks Opened**: ${(orders || []).length}\n\n` +
+            (customers.length > 0 ? `*Recent Diners*: ${customers.join(', ')}` : '*No customer names specified on walk-in checks.*'),
+          type: 'text'
+        };
+      }
+
+      // ─── 6. UNPAID & PENDING ORDERS QUEUE ───
+      if (q.includes('unpaid') || q.includes('pending') || q.includes('open order')) {
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('id, order_number, table_number, total_amount, status, created_at')
+          .eq('tenant_id', tenantId)
+          .neq('status', 'COMPLETED')
+          .neq('status', 'CANCELED');
+
+        const unpaid = orders || [];
+        if (unpaid.length === 0) {
+          return {
+            message: `Great news! There are **no unpaid active orders** currently open for **${restaurantName}**. All orders are settled.`,
+            type: 'text'
+          };
+        }
+
+        return {
+          message: `Found **${unpaid.length}** open/unpaid orders for **${restaurantName}**:`,
+          type: 'card',
+          data: {
+            title: `Unpaid Orders Queue (${restaurantName})`,
+            ordersList: unpaid.map((o: any) => ({
+              id: o.order_number || `#${o.id.slice(0, 8)}`,
+              status: o.status,
+              total: Number(o.total_amount),
+              table: o.table_number ? `Table ${o.table_number}` : 'N/A'
+            }))
+          }
+        };
+      }
+
+      // ─── 7. RESTAURANT REVENUE & SALES STATS ───
+      if (q.includes('revenue') || q.includes('sales') || q.includes('earned') || q.includes('today')) {
+        const { data: receipts } = await supabase
+          .from('receipts')
+          .select('total_amount, payment_status')
+          .eq('tenant_id', tenantId)
+          .gte('created_at', startOfToday.toISOString());
+
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('status, total_amount')
+          .eq('tenant_id', tenantId)
+          .gte('created_at', startOfToday.toISOString());
+
+        const validReceipts = (receipts || []).filter((r: any) => r.payment_status !== 'REFUNDED');
+        const todayTotalSales = validReceipts.reduce((acc: number, r: any) => acc + Number(r.total_amount), 0);
+        const compCount = (orders || []).filter((o: any) => o.status === 'COMPLETED').length;
+        const pendCount = (orders || []).filter((o: any) => ['PENDING', 'PREPARING', 'READY'].includes(o.status)).length;
+
+        return {
+          message: `Here is today's real-time operational dashboard summary for **${restaurantName}**:`,
+          type: 'insight',
+          data: {
+            revenue: todayTotalSales,
+            completedOrders: compCount,
+            pendingOrders: pendCount,
+            activeTables: Array.from(new Set((orders || []).filter((o: any) => o.status !== 'COMPLETED' && o.status !== 'CANCELED').map((o: any) => o.table_number))).length
+          }
+        };
+      }
+
+      // ─── 8. BILL SPLITS & CALCULATOR ───
       if (q.includes('split') || q.includes('divide')) {
         const tableMatch = q.match(/table\s+(\d+)/);
         const splitMatch = q.match(/(?:by|between|into)\s+(\d+)/) || q.match(/(\d+)\s+people/);
@@ -50,25 +250,29 @@ export const ValoAiService = {
           const tableNo = tableMatch[1];
           const divisor = splitMatch ? parseInt(splitMatch[1], 10) : 2;
 
-          // Find unpaid order for table
-          const activeOrder = orders?.find(
-            (o: any) => o.table_number === tableNo && o.status !== 'COMPLETED' && o.status !== 'CANCELLED'
-          );
+          const { data: activeOrder } = await supabase
+            .from('orders')
+            .select('*, items:order_items(*, menuItem:menu_items(*))')
+            .eq('tenant_id', tenantId)
+            .eq('table_number', tableNo)
+            .neq('status', 'COMPLETED')
+            .neq('status', 'CANCELED')
+            .maybeSingle();
 
           if (!activeOrder) {
             return {
-              message: `I couldn't find any unpaid active orders for **Table ${tableNo}**. Please check the active orders list.`,
+              message: `I couldn't find any unpaid active orders for **Table ${tableNo}** at ${restaurantName}.`,
               type: 'text'
             };
           }
 
           const total = Number(activeOrder.total_amount);
           const splitAmount = total / divisor;
-          const tax = total * 0.15; // 15% VAT
+          const tax = total * 0.15;
           const subtotal = total - tax;
 
           return {
-            message: `Here is the bill split details for **Table ${tableNo}** split between **${divisor}** guests:`,
+            message: `Here is the bill split breakdown for **Table ${tableNo}** split between **${divisor}** guests:`,
             type: 'card',
             data: {
               title: `Bill Split — Table ${tableNo}`,
@@ -85,146 +289,11 @@ export const ValoAiService = {
             }
           };
         }
-
-        // Generic value split (e.g. split 500 by 3)
-        const valueMatch = q.match(/(?:split|divide)\s+(\d+)(?:\s+by\s+(\d+))?/);
-        if (valueMatch) {
-          const totalVal = parseFloat(valueMatch[1]);
-          const divisor = valueMatch[2] ? parseInt(valueMatch[2], 10) : 2;
-          return {
-            message: `Here is the split breakdown for **${currency} ${totalVal}** split by **${divisor}**:`,
-            type: 'card',
-            data: {
-              title: `Quick Calculator Split`,
-              divisor,
-              total: totalVal,
-              perPerson: totalVal / divisor
-            }
-          };
-        }
-      }
-
-      // ─── CASE B: VERIFY / CALCULATE TAX AND VAT ───
-      if (q.includes('tax') || q.includes('vat') || q.includes('calculate')) {
-        const valMatch = q.match(/(?:tax|vat|calculate)\s+(?:for\s+)?(?:etb\s+)?(\d+)/) || q.match(/(\d+)\s+(?:tax|vat)/);
-        if (valMatch) {
-          const val = parseFloat(valMatch[1]);
-          const vatRate = 0.15; // 15% VAT default
-          const taxAmount = val * vatRate;
-          const totalWithTax = val + taxAmount;
-
-          return {
-            message: `VAT calculation breakdown (15% rate) for base amount **${currency} ${val}**:`,
-            type: 'card',
-            data: {
-              title: `VAT Calculation`,
-              subtotal: val,
-              tax: taxAmount,
-              total: totalWithTax
-            }
-          };
-        }
-      }
-
-      // ─── CASE C: RESTAURANT REVENUE & STATS INSIGHTS ───
-      if (q.includes('revenue') || q.includes('sales') || q.includes('insights') || q.includes('total earned')) {
-        const totalSales = receipts?.reduce((acc: number, r: any) => acc + Number(r.total_amount), 0) || 0;
-        const compCount = orders?.filter((o: any) => o.status === 'COMPLETED').length || 0;
-        const pendCount = orders?.filter((o: any) => ['PENDING', 'PREPARING', 'READY'].includes(o.status)).length || 0;
-
-        return {
-          message: `Here is today's real-time operational dashboard summary:`,
-          type: 'insight',
-          data: {
-            revenue: totalSales,
-            completedOrders: compCount,
-            pendingOrders: pendCount,
-            activeTables: Array.from(new Set(orders?.filter((o: any) => o.status !== 'COMPLETED' && o.status !== 'CANCELLED').map((o: any) => o.table_number))).length
-          }
-        };
-      }
-
-      // ─── CASE D: LOCATE / SEARCH ORDERS ───
-      if (q.includes('order') || q.includes('table') || q.includes('find')) {
-        // Search by table number
-        const tableMatch = q.match(/table\s+(\d+)/);
-        if (tableMatch) {
-          const tableNo = tableMatch[1];
-          const tableOrders = orders?.filter((o: any) => o.table_number === tableNo);
-
-          if (!tableOrders || tableOrders.length === 0) {
-            return {
-              message: `There are currently no active orders logged for **Table ${tableNo}** today.`,
-              type: 'text'
-            };
-          }
-
-          return {
-            message: `Found **${tableOrders.length}** order(s) for **Table ${tableNo}**:`,
-            type: 'card',
-            data: {
-              title: `Orders — Table ${tableNo}`,
-              ordersList: tableOrders.map((o: any) => ({
-                id: o.id.slice(0, 8),
-                status: o.status,
-                total: Number(o.total_amount),
-                time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              }))
-            }
-          };
-        }
-
-        // Unpaid orders count
-        if (q.includes('unpaid') || q.includes('pending')) {
-          const unpaid = orders?.filter((o: any) => o.status !== 'COMPLETED' && o.status !== 'CANCELLED') || [];
-          if (unpaid.length === 0) {
-            return {
-              message: `Great news! There are **no unpaid orders** currently. All orders are settled.`,
-              type: 'text'
-            };
-          }
-
-          return {
-            message: `There are **${unpaid.length}** unpaid active orders in the workspace:`,
-            type: 'card',
-            data: {
-              title: `Unpaid Orders Queue`,
-              ordersList: unpaid.map((o: any) => ({
-                id: o.id.slice(0, 8),
-                status: o.status,
-                total: Number(o.total_amount),
-                table: o.table_number
-              }))
-            }
-          };
-        }
-      }
-
-      // ─── CASE E: STAFF ASSISTANCE WORKFLOWS ───
-      if (q.includes('refund') || q.includes('policy')) {
-        return {
-          message: `### DHADHAN Refund Procedures\n1. Refunds must be processed within **24 hours** of order completion.\n2. Tap the target receipt in the **Receipts** tab, click **Void / Refund**.\n3. Type a clear reason (e.g. "Wrong item entered") and confirm.\n\n*Note: Deleted or finalized cash drawer audits cannot be refunded without admin approval.*`,
-          type: 'text'
-        };
-      }
-
-      if (q.includes('discount')) {
-        return {
-          message: `### DHADHAN Discount Guidelines\n- **Staff discount**: 15% off food items (code: \`STAFF15\`).\n- **VIP / Promo discount**: Managed via supervisor keys.\n- Apply the discount factor inside the POS billing screen before clicking the settle checkout button.`,
-          type: 'text'
-        };
-      }
-
-      if (q.includes('payment') || q.includes('cash') || q.includes('card')) {
-        return {
-          message: `### Settle Checkout Instructions\n- We support **Cash**, **Card** (terminal), and **Mobile Money** payments.\n- Ensure the payment total matches exactly to avoid cash register discrepancies.\n- For overpayments (change due), the change card will calculate how much change is owed.`,
-          type: 'text'
-        };
       }
 
       // Default conversational fallback
       return {
-        message: `Hello! I am your **DHADHAN AI Operations Assistant**. I can help you verify invoice calculations, split table bills, look up active orders, check today's sales revenue, and explain staff workflows.\n\nTry asking me: \n- *Show today's revenue*\n- *Split Table 3 bill by 2 people*\n- *Calculate VAT for 1200*\n- *How to process a refund?*`,
+        message: `Hello! I am your **DHADHAN AI Cashier Assistant** for **${restaurantName}**.\n\nI can answer questions using records from this restaurant only:\n- *What are today's total sales?*\n- *Show today's cash vs card payments*\n- *Which menu item sold the most this week?*\n- *List unpaid orders*\n- *Which waiter handled the most orders today?*\n- *How much tax was collected today?*`,
         type: 'text'
       };
 
