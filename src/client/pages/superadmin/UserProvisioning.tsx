@@ -1,5 +1,7 @@
-import { Server, Zap, Globe, ShieldCheck, Copy, ChevronRight, TrendingUp, BarChart } from 'lucide-react';
+import { useState } from 'react';
+import { Server, Zap, Globe, ShieldCheck, Copy, ChevronRight, TrendingUp, BarChart, X, Plus } from 'lucide-react';
 import { Card } from '../../components/ui/card';
+import { toast } from '../../lib/toast-store';
 
 const provisioningNodes = [
   { name: 'US-EAST-CENTRAL-01', tier: 'PRO TIER', status: 'RUNNING', vitality: '98%', color: 'emerald' },
@@ -9,6 +11,27 @@ const provisioningNodes = [
 ];
 
 export const UserProvisioning = () => {
+  const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
+  const [nodeName, setNodeName] = useState('');
+  const [tier, setTier] = useState('PRO');
+  const [region, setRegion] = useState('US-EAST');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleDeploy = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nodeName.trim()) {
+      toast.warning('Input Required', 'Please enter a cluster node identifier.');
+      return;
+    }
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsDeployModalOpen(false);
+      toast.success('Cluster Initialized', `Successfully deployed node ${nodeName} (${tier} TIER).`);
+      setNodeName('');
+    }, 1000);
+  };
+
   return (
     <div className="space-y-6 max-w-[1500px]">
       <div className="flex items-center justify-between">
@@ -16,9 +39,17 @@ export const UserProvisioning = () => {
           <h1 className="text-3xl font-bold text-[#0B1630]">Orchestration Center</h1>
           <p className="text-[#64748B] mt-1 text-sm font-medium">Real-time cluster deployment and provisioning pipeline</p>
         </div>
-        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> PROTOCOL: ACTIVE
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> PROTOCOL: ACTIVE
+          </span>
+          <button
+            onClick={() => setIsDeployModalOpen(true)}
+            className="bg-[#0B1630] text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-[#1A2A52] transition-all cursor-pointer shadow-sm uppercase tracking-wider"
+          >
+            <Plus size={14} /> Provision Node
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -90,7 +121,10 @@ export const UserProvisioning = () => {
             <div className="flex items-center gap-2 text-xs text-[#94A3B8] font-bold uppercase tracking-wider">
               <ShieldCheck size={14} className="text-rose-400" /> Hard-Sync Protocol Active
             </div>
-            <button className="bg-[#0B1630] text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-[#1A2A52] transition-colors shadow-sm uppercase tracking-wider">
+            <button 
+              onClick={() => setIsDeployModalOpen(true)}
+              className="bg-[#0B1630] text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-[#1A2A52] transition-colors shadow-sm uppercase tracking-wider cursor-pointer"
+            >
               <Zap size={14} /> Initialize Deploy
             </button>
           </div>
@@ -143,6 +177,89 @@ export const UserProvisioning = () => {
           </Card>
         </div>
       </div>
+
+      {/* Super Admin Provision Node Modal */}
+      {isDeployModalOpen && (
+        <div className="fixed inset-0 z-50 bg-[#0B1630]/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-2xl w-full max-w-md p-6 space-y-6 animate-scale-in">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#0B1630] text-white flex items-center justify-center font-bold text-xs">
+                  <Server size={16} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-[#0B1630]">Provision Cluster Node</h3>
+                  <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Super Admin Cluster Orchestration</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsDeployModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleDeploy} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-[#0B1630] uppercase tracking-wider">Cluster Identifier</label>
+                <input
+                  type="text"
+                  placeholder="e.g. US-EAST-CENTRAL-05"
+                  value={nodeName}
+                  onChange={(e) => setNodeName(e.target.value)}
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-xs font-bold text-[#0B1630] focus:outline-none focus:border-[#0B1630]"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-[#0B1630] uppercase tracking-wider">Tier Allocation</label>
+                <select
+                  value={tier}
+                  onChange={(e) => setTier(e.target.value)}
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200 text-xs font-bold text-[#0B1630] focus:outline-none focus:border-[#0B1630] cursor-pointer"
+                >
+                  <option value="PRO">PRO TIER</option>
+                  <option value="ENTERPRISE">ENTERPRISE TIER</option>
+                  <option value="TRIAL">TRIAL NODE</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-[#0B1630] uppercase tracking-wider">Region Zone</label>
+                <select
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200 text-xs font-bold text-[#0B1630] focus:outline-none focus:border-[#0B1630] cursor-pointer"
+                >
+                  <option value="US-EAST">US-EAST (N. Virginia)</option>
+                  <option value="EU-WEST">EU-WEST (Ireland)</option>
+                  <option value="AP-SOUTH">AP-SOUTH (Mumbai)</option>
+                  <option value="SA-EAST">SA-EAST (São Paulo)</option>
+                </select>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsDeployModalOpen(false)}
+                  className="flex-1 h-11 bg-slate-100 text-[#0B1630] hover:bg-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 h-11 bg-[#0B1630] hover:bg-[#1A2A52] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Deploying...' : 'Deploy Node'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

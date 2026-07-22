@@ -7,7 +7,6 @@ import {
   ChefHat, 
   Smartphone,
   ChevronDown,
-  UserPlus,
   User,
   ArrowRight,
   ArrowLeft,
@@ -18,6 +17,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../../services/AuthService';
 import { cn } from '../../lib/utils';
 import { supabase } from '../../../lib/supabase';
+import valoLogo from '../../../../Docs/valo-logo.webp';
 
 const animationStyles = `
 @keyframes fadeDown {
@@ -415,11 +415,21 @@ export const Register = () => {
          {/* Form Card */}
          <div className="w-full max-w-lg bg-[#FFFFFF] rounded-[24px] border border-[#E5E7EB] p-6 sm:p-10 md:p-12 shadow-sm animate-scale-in flex flex-col mx-auto my-auto justify-center">
             
-            {/* Center Registration Icon */}
-            <div className="mb-4 flex justify-center animate-fade-down">
-               <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center text-[#F97316]">
-                  <UserPlus size={22} />
-               </div>
+            {/* Center Logo */}
+            <div className="mb-6 flex justify-center animate-fade-down">
+               <img 
+                  src={valoLogo} 
+                  alt="Dhadhan HUB Logo" 
+                  className="h-10 w-auto object-contain"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  width={50}
+                  height={40}
+                  onError={(e) => {
+                     e.currentTarget.style.display = 'none';
+                  }}
+               />
             </div>
 
             <div className="mb-6 flex flex-col items-center justify-center">
