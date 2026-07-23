@@ -128,6 +128,22 @@ export const OrderService = {
     const waiterId = payload.waiterId || waiterIdRes.data?.waiter_id || null;
 
     let orderId = '';
+    let newOrderNumber = 1;
+
+    if (!activeOrder) {
+      // Get highest order number for this tenant
+      const { data: latestOrder } = await supabase
+        .from('orders')
+        .select('order_number')
+        .eq('tenant_id', payload.tenantId)
+        .order('order_number', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (latestOrder && latestOrder.order_number) {
+        newOrderNumber = Number(latestOrder.order_number) + 1;
+      }
+    }
 
     if (activeOrder) {
       orderId = activeOrder.id;
@@ -171,6 +187,7 @@ export const OrderService = {
           customer_name: payload.customerName || null,
           status: 'PENDING',
           total_amount: payload.totalAmount,
+          order_number: newOrderNumber,
         })
         .select('*')
         .single();

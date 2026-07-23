@@ -100,12 +100,17 @@ export const DetailedReceipt: React.FC<DetailedReceiptProps> = ({
   const formattedTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   // Defensive Order Number extraction
-  const rawOrderVal = 
+  let rawOrderVal = 
     getSafeString(receipt?.orderNumber) ||
     getSafeString(receipt?.order_number) ||
     getSafeString(order?.orderNumber) || 
-    getSafeString(order?.order_number) || 
-    (order?.id ? `ORD-${getSafeString(order.id).slice(0, 6).toUpperCase()}` : 'ORD-LOCAL');
+    getSafeString(order?.order_number);
+  
+  if (rawOrderVal && !isNaN(Number(rawOrderVal))) {
+    rawOrderVal = `ORDER-${String(rawOrderVal).padStart(4, '0')}`;
+  } else if (!rawOrderVal) {
+    rawOrderVal = (order?.id ? `ORD-${getSafeString(order.id).slice(0, 6).toUpperCase()}` : 'ORD-LOCAL');
+  }
 
   const rawOrderNum = getSafeString(rawOrderVal) || 'ORD-LOCAL';
   const orderNum = rawOrderNum.startsWith('#') ? rawOrderNum : `#${rawOrderNum}`;

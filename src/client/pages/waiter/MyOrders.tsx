@@ -208,7 +208,9 @@ export const MyOrders = () => {
               {searchedOrders.map((order: any) => (
                 <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4">
-                    <span className="text-xs font-black text-[#0B1630]">#{order.id.slice(0, 8)}</span>
+                    <span className="text-xs font-black text-[#0B1630]">
+                      {order.order_number ? `#ORDER-${String(order.order_number).padStart(4, '0')}` : `#${order.id.slice(0, 8).toUpperCase()}`}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
@@ -288,7 +290,9 @@ export const MyOrders = () => {
               className="p-4 bg-[#131A38]/70 border border-[#232B5E]/50 shadow-2xl flex flex-col gap-4"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-white">#{order.id.slice(0, 8)}</span>
+                <span className="text-xs font-black text-white">
+                  {order.order_number ? `#ORDER-${String(order.order_number).padStart(4, '0')}` : `#${order.id.slice(0, 8).toUpperCase()}`}
+                </span>
                 <span className="text-[10px] text-[#94A3B8]">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
               
@@ -362,10 +366,10 @@ export const MyOrders = () => {
              </button>
              <div>
                  <h3 className="text-xl font-black lg:text-[#0B1630] text-white">Order Details</h3>
-                 <p className="text-xs lg:text-[#64748B] text-[#94A3B8] font-medium">Order ID: #{selectedOrder.id}</p>
+                 <p className="text-xs lg:text-[#64748B] text-[#94A3B8] font-medium">Order ID: {selectedOrder.order_number ? `ORDER-${String(selectedOrder.order_number).padStart(4, '0')}` : `#${selectedOrder.id.slice(0, 8).toUpperCase()}`}</p>
              </div>
 
-             <div className="grid grid-cols-2 gap-4 text-xs font-bold lg:text-[#64748B] text-[#94A3B8] lg:bg-slate-50 bg-[#1E293B]/70 p-4 rounded-xl lg:border lg:border-slate-100 border border-[#232B5E]/30">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold lg:text-[#64748B] text-[#94A3B8] lg:bg-slate-50 bg-[#1E293B]/70 p-4 rounded-xl lg:border lg:border-slate-100 border border-[#232B5E]/30">
                 <div className="space-y-1">
                    <span>Table</span>
                    <p className="text-sm font-black lg:text-[#0B1630] text-white">Table {selectedOrder.table?.number || 'N/A'}</p>
