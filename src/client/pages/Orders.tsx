@@ -7,7 +7,8 @@ import {
   Clock,
   CheckCircle2,
   Receipt,
-  X
+  X,
+  ArrowLeft
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
@@ -46,11 +47,11 @@ const OrderRow = React.memo(({ order, isSelected, onSelect, getStatusStyle, getT
         isSelected && "bg-orange-50/30"
       )}
     >
-      <td className="px-6 py-4 text-sm font-bold text-[#0B1630]">{order.orderNumber || `#${order.id.slice(0, 8).toUpperCase()}`}</td>
-      <td className="px-6 py-4">
+      <td className="px-6 py-4 text-sm font-bold text-[#0B1630] whitespace-nowrap">{order.orderNumber || `#${order.id.slice(0, 8).toUpperCase()}`}</td>
+      <td className="px-6 py-4 whitespace-nowrap">
         <p className="text-xs font-bold text-[#0B1630]">Table {order.table?.number || 'N/A'}</p>
       </td>
-      <td className="px-6 py-4">
+      <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex flex-col">
           <p className="text-xs font-bold text-[#0B1630]">{order.waiterName || 'Unassigned'}</p>
           {(!order.waiterId || order.waiterName === 'Self Service') && (
@@ -58,10 +59,10 @@ const OrderRow = React.memo(({ order, isSelected, onSelect, getStatusStyle, getT
           )}
         </div>
       </td>
-      <td className="px-6 py-4">
+      <td className="px-6 py-4 whitespace-nowrap">
         <span className="text-xs font-bold text-[#64748B]">{order.items?.length || 0} items</span>
       </td>
-      <td className="px-6 py-4">
+      <td className="px-6 py-4 whitespace-nowrap">
         <span className={cn(
           "text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 w-fit",
           style.bg
@@ -70,14 +71,14 @@ const OrderRow = React.memo(({ order, isSelected, onSelect, getStatusStyle, getT
           {style.label}
         </span>
       </td>
-      <td className="px-6 py-4 text-sm font-bold text-[#0B1630]">{formatPrice(Number(order.totalAmount))}</td>
-      <td className="px-6 py-4">
+      <td className="px-6 py-4 text-sm font-bold text-[#0B1630] whitespace-nowrap">{formatPrice(Number(order.totalAmount))}</td>
+      <td className="px-6 py-4 whitespace-nowrap">
          <p className="text-xs font-bold text-[#0B1630]">{getTimeLabel(order.createdAt)}</p>
          <p className="text-[10px] text-[#94A3B8] font-medium uppercase tracking-wider">
            {new Date(order.createdAt).toLocaleDateString()}
          </p>
       </td>
-      <td className="px-6 py-4 text-right">
+      <td className="px-6 py-4 text-right whitespace-nowrap">
         <button className="p-1.5 rounded-lg border border-slate-200 text-[#94A3B8] hover:text-[#0B1630] hover:bg-slate-50 transition-colors cursor-pointer">
           <MoreHorizontal size={14} />
         </button>
@@ -94,6 +95,7 @@ export const Orders = () => {
   const { format: formatPrice } = useCurrency();
   const [activeTab, setActiveTab] = useState('All Orders');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [showMobileDetail, setShowMobileDetail] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   // ─── Realtime ───
@@ -148,10 +150,12 @@ export const Orders = () => {
     return matchesTab && matchesSearch;
   });
 
-  // Auto-select first order
+  // Auto-select first order on desktop only
   useEffect(() => {
     if (filteredOrders.length > 0 && (!selectedOrder || !filteredOrders.find((o: any) => o.id === selectedOrder?.id))) {
-      setSelectedOrder(filteredOrders[0]);
+      if (window.innerWidth >= 1024) {
+        setSelectedOrder(filteredOrders[0]);
+      }
     }
   }, [filteredOrders]);
 
@@ -189,7 +193,7 @@ export const Orders = () => {
   };
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-140px)]">
+    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)] relative">
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 space-y-6">
         <div>
@@ -198,8 +202,8 @@ export const Orders = () => {
         </div>
 
         {/* Filters and Search */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 overflow-x-auto">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 overflow-x-auto w-full md:w-auto hide-scrollbar">
             {tabs.map((tab) => (
               <button
                 key={tab.name}
@@ -224,12 +228,12 @@ export const Orders = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-[#0B1630]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center justify-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-[#0B1630] shrink-0">
               <Calendar size={16} className="text-[#94A3B8]" />
               {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </div>
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
               <input 
                 value={searchQuery}
@@ -248,46 +252,24 @@ export const Orders = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-slate-50/50">
-                  <th className="px-6 py-3 text-left text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Order ID</th>
-                  <th className="px-6 py-3 text-left text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Table</th>
-                  <th className="px-6 py-3 text-left text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Waiter</th>
-                  <th className="px-6 py-3 text-left text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Items</th>
-                  <th className="px-6 py-3 text-left text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Total</th>
-                  <th className="px-6 py-3 text-left text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Time</th>
-                  <th className="px-6 py-3 text-right text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[#64748B] uppercase tracking-wider whitespace-nowrap">Order ID</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[#64748B] uppercase tracking-wider whitespace-nowrap">Table</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[#64748B] uppercase tracking-wider whitespace-nowrap">Waiter</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[#64748B] uppercase tracking-wider whitespace-nowrap">Items</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[#64748B] uppercase tracking-wider whitespace-nowrap">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[#64748B] uppercase tracking-wider whitespace-nowrap">Amount</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[#64748B] uppercase tracking-wider whitespace-nowrap">Time</th>
+                  <th className="px-6 py-4"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {isLoading ? (
-                  Array.from({ length: 5 }).map((_, idx) => (
-                    <tr key={idx} className="animate-pulse">
-                      <td className="px-6 py-4">
-                        <div className="h-4 bg-slate-100 rounded w-16" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-4 bg-slate-100 rounded w-16" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-4 bg-slate-100 rounded w-12" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-5 bg-slate-100 rounded w-20" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-4 bg-slate-100 rounded w-16" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-4 bg-slate-100 rounded w-12" />
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="h-4 bg-slate-100 rounded w-4 ml-auto" />
-                      </td>
-                    </tr>
-                  ))
+                  <tr>
+                    <td colSpan={8} className="px-6 py-12 text-center text-sm text-[#94A3B8] font-medium">Loading orders...</td>
+                  </tr>
                 ) : filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-8 text-xs text-slate-400 font-bold uppercase tracking-wider">No orders found</td>
+                    <td colSpan={8} className="px-6 py-12 text-center text-sm text-[#94A3B8] font-medium">No orders found</td>
                   </tr>
                 ) : (
                   filteredOrders.map((order: any) => (
@@ -295,7 +277,10 @@ export const Orders = () => {
                       key={order.id}
                       order={order}
                       isSelected={selectedOrder?.id === order.id}
-                      onSelect={setSelectedOrder}
+                      onSelect={(o) => {
+                        setSelectedOrder(o);
+                        setShowMobileDetail(true);
+                      }}
                       getStatusStyle={getStatusStyle}
                       getTimeLabel={getTimeLabel}
                       formatPrice={formatPrice}
@@ -311,22 +296,34 @@ export const Orders = () => {
         </Card>
       </div>
 
-      {/* Right Detail Panel */}
-      <Card className="w-[380px] shrink-0 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex flex-col overflow-hidden bg-white">
+      {/* Right Detail Panel (Conditional overlay on mobile) */}
+      <Card className={cn(
+        "w-[380px] shrink-0 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex flex-col overflow-hidden bg-white",
+        "fixed inset-0 z-50 w-full h-full rounded-none lg:relative lg:z-auto lg:w-[380px] lg:rounded-xl",
+        showMobileDetail ? "flex" : "hidden lg:flex"
+      )}>
         {selectedOrder ? (
           <>
-            <div className="p-5 border-b border-slate-50 flex items-center justify-between">
-               <div>
-                  <h3 className="font-bold text-[#0B1630] text-lg">{selectedOrder.orderNumber || `Order #${selectedOrder.id.slice(0, 8).toUpperCase()}`}</h3>
-                  <p className={cn(
-                    "text-[10px] font-bold uppercase tracking-widest mt-0.5",
-                    selectedOrder.status === 'PENDING' ? "text-orange-500" :
-                    selectedOrder.status === 'PREPARING' ? "text-blue-500 animate-pulse" :
-                    selectedOrder.status === 'READY' ? "text-emerald-500" :
-                    "text-slate-400"
-                  )}>
-                    {statusMap[selectedOrder.status]?.label || selectedOrder.status}
-                  </p>
+            <div className="p-5 border-b border-slate-50 flex items-center justify-between shrink-0">
+               <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => setShowMobileDetail(false)} 
+                    className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-[#0B1630] transition-colors rounded-lg hover:bg-slate-50"
+                  >
+                    <ArrowLeft size={20} />
+                  </button>
+                  <div>
+                    <h3 className="font-bold text-[#0B1630] text-lg">{selectedOrder.orderNumber || `Order #${selectedOrder.id.slice(0, 8).toUpperCase()}`}</h3>
+                    <p className={cn(
+                      "text-[10px] font-bold uppercase tracking-widest mt-0.5",
+                      selectedOrder.status === 'PENDING' ? "text-orange-500" :
+                      selectedOrder.status === 'PREPARING' ? "text-blue-500 animate-pulse" :
+                      selectedOrder.status === 'READY' ? "text-emerald-500" :
+                      "text-slate-400"
+                    )}>
+                      {statusMap[selectedOrder.status]?.label || selectedOrder.status}
+                    </p>
+                  </div>
                </div>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-8">
