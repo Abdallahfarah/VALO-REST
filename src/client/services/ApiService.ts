@@ -1916,3 +1916,36 @@ export const ActivityLogService = {
     }));
   }
 };
+
+// ─── SystemHealthService ───
+export const SystemHealthService = {
+  async getHealthMetrics() {
+    const start = performance.now();
+    const { data, error } = await supabase.rpc('get_system_health_metrics');
+    const latency = performance.now() - start;
+
+    if (error) throw error;
+    return {
+      ...data,
+      latency_ms: latency,
+    };
+  },
+
+  async getRecentAuditEvents(limit = 10) {
+    const { data, error } = await supabase
+      .from('activity_logs')
+      .select('*, users(first_name, last_name, role)')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return (data || []).map((log: any) => ({
+      id: log.id,
+      action: log.action,
+      entity: log.entity,
+      userName: log.users ? `${log.users.first_name} ${log.users.last_name}` : 'System',
+      role: log.users?.role || 'SYSTEM',
+      createdAt: log.created_at,
+    }));
+  }
+};

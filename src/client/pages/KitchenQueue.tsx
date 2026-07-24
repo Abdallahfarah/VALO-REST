@@ -86,20 +86,20 @@ export const KitchenQueue = () => {
         <h1 className="text-3xl font-bold text-[#0B1630]">Kitchen Performance Queue</h1>
         <p className="text-[#64748B] mt-1 text-sm font-medium">Monitor and manage live kitchen operations in real-time.</p>
       </div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-bold text-emerald-600">LIVE OPERATIONS</span>
-          <span className="text-[#94A3B8] font-medium ml-2">{kitchenOrders.length} ACTIVE TICKETS</span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span className="font-bold text-emerald-600 whitespace-nowrap">LIVE OPERATIONS</span>
+          <span className="text-[#94A3B8] font-medium ml-1 sm:ml-2 whitespace-nowrap">{kitchenOrders.length} ACTIVE TICKETS</span>
         </div>
-        <div className="flex items-center gap-1 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-sm w-full md:w-auto">
           {filters.map((f) => (
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
               className={cn(
-                "px-3 py-1.5 rounded-md font-semibold text-xs cursor-pointer transition-colors",
-                filter === f.key ? "text-[#0B1630] bg-slate-100" : "text-[#94A3B8] hover:text-[#0B1630]"
+                "px-3 py-1.5 rounded-md font-semibold text-xs cursor-pointer transition-colors whitespace-nowrap flex-1 sm:flex-none",
+                filter === f.key ? "text-[#0B1630] bg-slate-100" : "text-[#94A3B8] hover:text-[#0B1630] bg-slate-50 md:bg-transparent"
               )}
             >
               {f.label}
