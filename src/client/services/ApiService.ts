@@ -1949,3 +1949,57 @@ export const SystemHealthService = {
     }));
   }
 };
+
+// ─── KdsService ───
+export const KdsService = {
+  async getKdsMetrics(tenantId: string) {
+    // 1. Get active orders
+    const { data: activeOrders, error: ordersErr } = await supabase
+      .from('orders')
+      .select('id, status, created_at, order_items(id, status, menu_items(preparation_station))')
+      .eq('tenant_id', tenantId)
+      .in('status', ['PENDING', 'PREPARING']);
+
+    if (ordersErr) throw ordersErr;
+
+    let totalActiveOrders = activeOrders?.length || 0;
+    let delayedOrders = 0;
+    let totalPrepTimeMs = 0;
+    let completedOrdersCount = 0; // Ideally from past 24h, but calculating from active
+    
+    const stationWorkload: Record<string, number> = {};
+    const now = Date.now();
+
+    (activeOrders || []).forEach(order => {
+      const createdTime = new Date(order.created_at).getTime();
+      const elapsedMs = now - createdTime;
+      
+      // Consider delayed if > 20 mins (1200000 ms)
+      if (elapsedMs > 1200000) delayedOrders++;
+
+      if (order.status === 'PREPARING') {
+        totalPrepTimeMs += elapsedMs;
+        completedOrdersCount++;
+      }
+
+      // Count items per station
+      order.order_items?.forEach((item: any) => {
+        if (item.status !== 'READY') {
+          const station = item.menu_items?.preparation_station || 'Chef';
+          stationWorkload[station] = (stationWorkload[station] || 0) + 1;
+        }
+      });
+    });
+
+    const avgPrepTimeMins = completedOrdersCount > 0 
+      ? Math.floor((totalPrepTimeMs / completedOrdersCount) / 60000) 
+      : 0;
+
+    return {
+      totalActiveOrders,
+      delayedOrders,
+      avgPrepTimeMins,
+      stationWorkload
+    };
+  }
+};
