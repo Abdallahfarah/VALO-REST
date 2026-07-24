@@ -8,6 +8,7 @@ import { useSessionStore } from './lib/session-store';
 import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { ToastContainer } from './components/ui/toast';
 import { PageLoader } from './components/ui/LoadingSpinner';
+import { InstallPromptBanner } from './components/ui/InstallPromptBanner';
 import { toast } from './lib/toast-store';
 import { ValoAiPanel } from './components/ValoAiPanel';
 
@@ -226,6 +227,7 @@ export const App = () => {
           <AuthProvider>
             <TenantProvider>
               <ScrollPersistenceManager />
+              <InstallPromptBanner />
               <ImpersonationBanner />
               <Suspense fallback={<SmartSuspenseFallback />}>
                 <Routes>

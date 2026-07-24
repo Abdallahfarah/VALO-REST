@@ -19,6 +19,14 @@
   <!-- Preconnect to Supabase database API for faster networking -->
   <link rel="preconnect" href="https://lyisewdjlkyahtvrgerj.supabase.co" crossorigin />
   <link rel="dns-prefetch" href="https://lyisewdjlkyahtvrgerj.supabase.co" />
+  
+  <script>
+    // Synchronously block the native PWA install prompt before React even loads
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      console.log('[PWA] Native install prompt intercepted and suppressed.');
+    });
+  </script>
 </head>
 
 <body>
