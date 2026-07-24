@@ -385,7 +385,7 @@ export const Settings = () => {
                        <MapPin size={18} />
                     </div>
                     <div className="flex-1">
-                       <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">Address</p>
+                       <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">City</p>
                        {isEditingProfile ? (
                          <input 
                            type="text" 

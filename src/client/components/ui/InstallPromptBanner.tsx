@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Smartphone, Check, X, Download, Share } from 'lucide-react';
 
 export const InstallPromptBanner: React.FC = () => {
+  // Temporarily disabled due to compatibility errors on some devices
+  return null;
+
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);

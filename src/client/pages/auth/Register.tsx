@@ -11,8 +11,7 @@ import {
   User,
   ArrowRight,
   ArrowLeft,
-  Check,
-  Phone
+  Check
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../../services/AuthService';
@@ -20,9 +19,19 @@ import { cn } from '../../lib/utils';
 import { supabase } from '../../../lib/supabase';
 import { AuthLayout, FeatureCardItem } from '../../components/layout/AuthLayout';
 
+const phoneCodes = [
+  { code: '+251', country: 'ET' },
+  { code: '+252', country: 'SO' },
+  { code: '+253', country: 'DJ' },
+  { code: '+254', country: 'KE' },
+  { code: '+256', country: 'UG' },
+  { code: '+211', country: 'SS' },
+  { code: '+291', country: 'ER' }
+];
+
 const getPhonePrefix = (country: string) => {
-  if (country === 'ET') return '+251';
-  return '+252';
+  const pc = phoneCodes.find(p => p.country === country);
+  return pc ? pc.code : '+252';
 };
 
 const featureCards: FeatureCardItem[] = [
@@ -60,6 +69,7 @@ export const Register = () => {
     fullName: '',
     email: '',
     phoneNumber: '+251',
+    city: '',
     password: '',
     confirmPassword: '',
     planName: 'PRO',
@@ -78,6 +88,7 @@ export const Register = () => {
       fullName: '',
       email: '',
       phoneNumber: '+251',
+      city: '',
       password: '',
       confirmPassword: '',
       planName: 'PRO',
@@ -117,36 +128,27 @@ export const Register = () => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const countryVal = e.target.value;
-    const oldPrefix = getPhonePrefix(formData.country);
-    const newPrefix = getPhonePrefix(countryVal);
-    const currencyVal = countryVal === 'ET' ? 'ETB' : 'USD';
+  const handlePhoneCodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newPrefix = e.target.value;
+    const pc = phoneCodes.find(p => p.code === newPrefix);
+    if (!pc) return;
 
-    let newPhone = newPrefix;
-    if (formData.phoneNumber.startsWith(oldPrefix)) {
-      const suffix = formData.phoneNumber.slice(oldPrefix.length);
-      newPhone = newPrefix + suffix;
-    }
+    const oldPrefix = getPhonePrefix(formData.country);
+    const suffix = formData.phoneNumber.slice(oldPrefix.length);
+    const currencyVal = pc.country === 'ET' ? 'ETB' : 'USD';
 
     setFormData(prev => ({ 
       ...prev, 
-      country: countryVal, 
+      country: pc.country, 
       currency: currencyVal,
-      phoneNumber: newPhone
+      phoneNumber: newPrefix + suffix
     }));
   };
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoneDigitsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const prefix = getPhonePrefix(formData.country);
-    const val = e.target.value;
-    
-    if (!val.startsWith(prefix)) {
-      setFormData(prev => ({ ...prev, phoneNumber: prefix }));
-    } else {
-      const suffix = val.slice(prefix.length).replace(/[^\d]/g, '');
-      setFormData(prev => ({ ...prev, phoneNumber: prefix + suffix }));
-    }
+    const digits = e.target.value.replace(/[^\d]/g, '');
+    setFormData(prev => ({ ...prev, phoneNumber: prefix + digits }));
   };
 
   const nextStep = () => {
@@ -167,12 +169,19 @@ export const Register = () => {
       }
       
       const prefix = getPhonePrefix(formData.country);
-      if (formData.phoneNumber && formData.phoneNumber !== prefix) {
-        const suffix = formData.phoneNumber.slice(prefix.length);
-        if (suffix.length !== 9) {
-          setError(`Phone number must contain exactly 9 digits after the country code (${prefix} XXXXXXXXX)`);
-          return;
-        }
+      if (!formData.phoneNumber || formData.phoneNumber === prefix) {
+        setError('Phone number is required');
+        return;
+      }
+      const suffix = formData.phoneNumber.slice(prefix.length);
+      if (suffix.length !== 9) {
+        setError(`Phone number must contain exactly 9 digits after the country code (${prefix} XXXXXXXXX)`);
+        return;
+      }
+
+      if (!formData.city.trim()) {
+        setError('City is required');
+        return;
       }
     }
     setStep(prev => prev + 1);
@@ -260,10 +269,13 @@ export const Register = () => {
             }
 
             const prefix = getPhonePrefix(formData.country);
-            if (formData.phoneNumber && formData.phoneNumber !== prefix) {
+            if ((formData.phoneNumber && formData.phoneNumber !== prefix) || formData.city) {
               await supabase
                 .from('tenants')
-                .update({ phone: formData.phoneNumber })
+                .update({ 
+                  phone: formData.phoneNumber !== prefix ? formData.phoneNumber : null,
+                  address: formData.city
+                })
                 .eq('id', tenantId);
             }
           }
@@ -355,23 +367,7 @@ export const Register = () => {
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Country</label>
-              <div className="relative">
-                <select 
-                  className="w-full h-12 pl-4 pr-10 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#F97316] transition-all appearance-none cursor-pointer" 
-                  name="country"
-                  value={formData.country}
-                  onChange={handleCountryChange}
-                  required
-                >
-                  <option value="ET">🇪🇹 Ethiopia (ET)</option>
-                  <option value="SO">🇸🇴 Somalia (SO)</option>
-                  <option value="SL">🏳️ Somaliland (SL)</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none" />
-              </div>
-            </div>
+
 
             {/* 14-Day Trial Checkbox */}
             <div className="flex items-center gap-3 pt-2">
@@ -438,15 +434,42 @@ export const Register = () => {
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Phone Number</label>
-              <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+              <div className="flex rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] h-12 focus-within:border-[#F97316] transition-all overflow-hidden relative">
+                <div className="relative flex items-center border-r border-[#E5E7EB] bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                  <select
+                    className="h-full pl-4 pr-8 bg-transparent text-xs font-bold text-[#0F172A] focus:outline-none appearance-none cursor-pointer"
+                    value={getPhonePrefix(formData.country)}
+                    onChange={handlePhoneCodeChange}
+                  >
+                    {phoneCodes.map(pc => (
+                      <option key={pc.code} value={pc.code}>{pc.code}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 w-4 h-4 text-[#64748B] pointer-events-none" />
+                </div>
                 <input 
-                  className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#64748B] transition-all" 
-                  placeholder="Enter phone number (optional)" 
+                  className="flex-1 h-full px-4 text-xs focus:outline-none placeholder:text-[#64748B] bg-transparent" 
+                  placeholder="Enter phone number" 
                   type="tel"
                   name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handlePhoneChange}
+                  value={formData.phoneNumber.slice(getPhonePrefix(formData.country).length)}
+                  onChange={handlePhoneDigitsChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">City *</label>
+              <div className="relative">
+                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+                <input 
+                  className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-xs focus:outline-none focus:border-[#F97316] placeholder:text-[#64748B] transition-all" 
+                  placeholder="Enter your city" 
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  required
                 />
               </div>
             </div>

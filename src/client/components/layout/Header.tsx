@@ -1,4 +1,4 @@
-import { Search, Menu, Download } from 'lucide-react';
+import { Search, Menu } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import { NotificationBell } from '../NotificationBell';
 import { UserProfileHeaderSection } from './UserProfileHeaderSection';
@@ -10,10 +10,12 @@ export interface HeaderProps {
 export const Header = ({ onToggleSidebar }: HeaderProps) => {
   const { tenant } = useTenant();
 
+  /* Temporarily disabled
   const handleManualInstall = () => {
     localStorage.removeItem('dhadhan_install_dismissed');
     window.dispatchEvent(new Event('beforeinstallprompt'));
   };
+  */
 
   return (
     <header className="h-[76px] bg-white border-b border-[#E5E7EB] flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30 shrink-0">
@@ -52,7 +54,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-        {/* Install App Quick Action */}
+        {/* Install App Quick Action (Temporarily disabled)
         <button 
           onClick={handleManualInstall}
           title="Install Dhadhan Hub App"
@@ -61,6 +63,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
           <Download size={14} strokeWidth={2.5} />
           <span>Install App</span>
         </button>
+        */}
 
         <button className="text-[#64748B] hover:text-[#0B1630] hover:bg-slate-50 p-2 rounded-xl transition-all">
           <Search className="w-5 h-5" />
