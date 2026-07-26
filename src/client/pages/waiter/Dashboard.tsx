@@ -4,7 +4,6 @@ import {
   ShoppingCart, 
   Armchair, 
   Receipt, 
-  MessageSquare, 
   Clock,
   TrendingUp,
   LayoutGrid,
@@ -256,7 +255,6 @@ export const WaiterDashboard = () => {
                      { label: 'New Order', icon: Plus, sub: 'Create new order', bg: 'lg:bg-indigo-50 bg-indigo-500/10', color: 'text-indigo-500', path: '/waiter/tables' },
                      { label: 'Tables', icon: LayoutGrid, sub: 'View all tables', bg: 'lg:bg-emerald-50 bg-emerald-500/10', color: 'text-emerald-500', path: '/waiter/tables' },
                      { label: 'My Orders', icon: Receipt, sub: 'View my active', bg: 'lg:bg-orange-50 bg-orange-500/10', color: 'text-orange-500', path: '/waiter/orders' },
-                     { label: 'Messages', icon: MessageSquare, sub: 'Team messages', bg: 'lg:bg-red-50 bg-red-500/10', color: 'text-red-500', path: '/waiter/messages' },
                   ].map((action, i) => (
                      <div key={i} onClick={() => navigate(action.path)} className="p-4 rounded-2xl lg:bg-white bg-[#1E293B]/45 lg:border lg:border-slate-100 border border-[#232B5E]/30 shadow-sm flex flex-col gap-3 cursor-pointer hover:border-[#F97316] transition-all">
                         <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", action.bg, action.color)}>

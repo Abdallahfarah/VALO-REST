@@ -21,6 +21,7 @@ import { useTenant } from '../../context/TenantContext';
 import { exportToExcel } from '../../lib/export-utils';
 import { toast } from '../../lib/toast-store';
 import { OrderService } from '../../services/ApiService';
+import { CurrencyService } from '../../services/CurrencyService';
 
 export const KDSReports = () => {
   const { tenant } = useTenant();
@@ -62,7 +63,7 @@ export const KDSReports = () => {
         finishedAt: o.createdAt ? new Date(o.createdAt).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A',
         prepTime: `${prepMinutes}m`,
         status: 'Done',
-        total: `$${Number(o.totalAmount || 0).toFixed(2)}`,
+        total: CurrencyService.format(Number(o.totalAmount || 0), tenant?.currencyCode || 'ETB'),
         raw: o
       };
     });

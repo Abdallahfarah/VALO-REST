@@ -62,6 +62,13 @@ export const MyOrders = () => {
           queryClient.invalidateQueries({ queryKey: ['orders'] });
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_items' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['orders'] });
+        }
+      )
       .subscribe();
 
     return () => {

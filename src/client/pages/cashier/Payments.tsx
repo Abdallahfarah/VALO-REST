@@ -57,6 +57,13 @@ export const Payments = () => {
           queryClient.invalidateQueries({ queryKey: ['orders', tenant.id] });
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_items' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['orders', tenant.id] });
+        }
+      )
       .subscribe();
 
     return () => {
@@ -102,6 +109,31 @@ export const Payments = () => {
 
   const settleOrderMutation = useMutation({
     mutationFn: (paymentData: any) => OrderService.settleOrder(selectedOrderId || '', paymentData),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['orders'] });
+      const previousOrders = queryClient.getQueryData(['orders']);
+      
+      queryClient.setQueriesData({ queryKey: ['orders'] }, (old: any) => {
+        if (!old) return old;
+        return old.map((order: any) => {
+          if (order.id === selectedOrderId) {
+            return { ...order, status: 'COMPLETED' };
+          }
+          return order;
+        });
+      });
+      
+      return { previousOrders };
+    },
+    onError: (error: any, variables, context) => {
+      if (context?.previousOrders) {
+        queryClient.setQueriesData({ queryKey: ['orders'] }, context.previousOrders);
+      }
+      toast.error('Payment failed', error?.message || 'Please try again.');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
     onSuccess: (_data, variables) => {
       ActivityLogService.log({
         tenantId: tenant?.id || '',
@@ -112,11 +144,7 @@ export const Payments = () => {
         details: `Settled order with total ${finalGrandTotal.toFixed(2)} using ${variables.method}`,
       });
       setSelectedOrderId(null);
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      toast.success('Payment collected', 'Order has been settled successfully');
-    },
-    onError: (error: any) => {
-      toast.error('Payment failed', error?.message || 'Please try again.');
+      // Suppress toast for optimistic feel
     }
   });
 

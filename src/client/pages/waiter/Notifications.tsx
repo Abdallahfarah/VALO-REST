@@ -4,7 +4,6 @@ import {
   Armchair, 
   AlertCircle,
   CheckCircle2,
-  MessageSquare,
   Info
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
@@ -18,7 +17,6 @@ import { supabase } from '../../../lib/supabase';
 const typeIcons: Record<string, any> = {
   ORDER_READY: ChefHat,
   TABLE_REQUEST: Armchair,
-  MESSAGE: MessageSquare,
   DELAY: AlertCircle,
   SYSTEM: Info,
 };
@@ -26,7 +24,6 @@ const typeIcons: Record<string, any> = {
 const typeColors: Record<string, { color: string, bg: string }> = {
   ORDER_READY: { color: 'text-emerald-500', bg: 'bg-emerald-50' },
   TABLE_REQUEST: { color: 'text-indigo-500', bg: 'bg-indigo-50' },
-  MESSAGE: { color: 'text-orange-500', bg: 'bg-orange-50' },
   DELAY: { color: 'text-red-500', bg: 'bg-red-50' },
   SYSTEM: { color: 'text-blue-500', bg: 'bg-blue-50' },
 };

@@ -24,9 +24,43 @@ export const StationKDSView = ({
   const updateStationItemsMutation = useMutation({
     mutationFn: ({ orderId, station, status }: { orderId: string; station: string; status: string }) =>
       OrderService.updateStationItemsStatus(orderId, station, status),
-    onSuccess: () => {
+    onMutate: async ({ orderId, station, status }) => {
+      await queryClient.cancelQueries({ queryKey: ['orders'] });
+      const previousOrders = queryClient.getQueryData(['orders']);
+
+      queryClient.setQueriesData({ queryKey: ['orders'] }, (old: any) => {
+        if (!old) return old;
+        return old.map((order: any) => {
+          if (order.id === orderId) {
+            return {
+              ...order,
+              items: order.items.map((item: any) => {
+                const itemStation = item.menuItem?.preparationStation || 'Chef';
+                // Only update items for this specific station
+                if (itemStation === station) {
+                  return { ...item, status };
+                }
+                return item;
+              })
+            };
+          }
+          return order;
+        });
+      });
+
+      return { previousOrders };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousOrders) {
+        queryClient.setQueriesData({ queryKey: ['orders'] }, context.previousOrders);
+      }
+      toast.error('Failed to update station items');
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
-      toast.success('Station items updated');
+    },
+    onSuccess: () => {
+      // toast.success('Station items updated'); // Suppress to make it feel completely instantaneous without noise
     },
   });
 

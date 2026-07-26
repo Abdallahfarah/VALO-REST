@@ -4,12 +4,11 @@ import { KDSSidebar } from './KDSSidebar';
 import { KDSHeader } from './KDSHeader';
 import { ValoSaaSBackground } from '../../../components/layout/ValoSaaSBackground';
 import { cn } from '../../../lib/utils';
-import { Receipt, BarChart2, MessageSquare, MoreHorizontal } from 'lucide-react';
+import { Receipt, BarChart2, MoreHorizontal } from 'lucide-react';
 
 const bottomNavItems = [
   { name: 'My Orders', path: '/kds', icon: Receipt },
   { name: 'Reports',   path: '/kds/reports', icon: BarChart2 },
-  { name: 'Messages',  path: '/kds/messages', icon: MessageSquare },
   { name: 'More',      path: '/kds/more', icon: MoreHorizontal },
 ];
 
@@ -83,7 +82,7 @@ export const KDSLayout = () => {
               }}
               className={
                 cn(
-                  "flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 py-1 px-3 rounded-xl",
+                  "flex flex-col items-center justify-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider transition-all duration-200 py-1 px-2.5 rounded-xl shrink-0",
                   isActive
                     ? "text-[#F97316]"
                     : "text-[#94A3B8] hover:text-white"
@@ -91,7 +90,7 @@ export const KDSLayout = () => {
               }
             >
               <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
-              <span>{item.name}</span>
+              <span className="whitespace-nowrap">{item.name}</span>
             </NavLink>
           );
         })}

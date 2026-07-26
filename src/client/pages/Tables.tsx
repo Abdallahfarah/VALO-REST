@@ -241,6 +241,26 @@ export const Tables = () => {
 
   const updateTableMutation = useMutation({
     mutationFn: ({ id, data }: { id: string, data: any }) => TableService.updateTable(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['tables', tenant?.id] });
+      const previousTables = queryClient.getQueryData(['tables', tenant?.id]);
+      
+      queryClient.setQueryData(['tables', tenant?.id], (old: any) => {
+        if (!old) return old;
+        return old.map((t: any) => t.id === id ? { ...t, ...data } : t);
+      });
+      
+      return { previousTables };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousTables) {
+        queryClient.setQueryData(['tables', tenant?.id], context.previousTables);
+      }
+      toast.error('Failed to update table');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables', tenant?.id] });
+    },
     onSuccess: (_data, variables) => {
       ActivityLogService.log({
         tenantId: tenant?.id || '',
@@ -250,10 +270,9 @@ export const Tables = () => {
         entityId: variables.id,
         details: `Updated table number: ${variables.data.number || ''} ${variables.data.waiterId ? 'waiter assigned' : ''}`,
       });
-      queryClient.invalidateQueries({ queryKey: ['tables', tenant?.id] });
       setIsModalOpen(false);
       resetForm();
-      toast.success('Table updated', 'Table updated successfully!');
+      // Suppressed toast for optimistic feel
     },
   });
 

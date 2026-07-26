@@ -3,7 +3,7 @@ import { Outlet, NavLink } from 'react-router-dom';
 import { CashierSidebar } from './CashierSidebar';
 import { CashierHeader } from './CashierHeader';
 import { ValoAiPanel } from '../../../components/ValoAiPanel';
-import { Sparkles, CreditCard, Receipt, MessageSquare } from 'lucide-react';
+import { Sparkles, CreditCard, Receipt } from 'lucide-react';
 import { ValoSaaSBackground } from '../../../components/layout/ValoSaaSBackground';
 import { cn } from '../../../lib/utils';
 
@@ -14,7 +14,6 @@ export const CashierLayout = () => {
   const bottomNavItems = [
     { name: 'Payments', path: '/cashier', icon: CreditCard },
     { name: 'Receipts', path: '/cashier/receipts', icon: Receipt },
-    { name: 'Messages', path: '/cashier/messages', icon: MessageSquare },
     { name: 'AI Copilot', path: '/cashier/ai', icon: Sparkles },
   ];
 

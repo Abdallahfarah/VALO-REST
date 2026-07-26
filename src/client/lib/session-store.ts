@@ -16,7 +16,6 @@ export interface TenantState {
 }
 
 export interface GlobalState {
-  activeConversationId: string | null;
   openDialogId: string | null;
   expandedSections: string[];
   scrollPositions: Record<string, number>;
@@ -29,7 +28,6 @@ export interface SessionStoreState extends GlobalState {
   clearTenantState: (tenantId: string) => void;
   
   // Global actions
-  setActiveConversationId: (id: string | null) => void;
   setOpenDialogId: (id: string | null) => void;
   toggleExpandedSection: (sectionId: string) => void;
   setScrollPosition: (path: string, position: number) => void;
@@ -54,7 +52,6 @@ export const useSessionStore = create<SessionStoreState>()(
   persist(
     (set, get) => ({
       tenants: {},
-      activeConversationId: null,
       openDialogId: null,
       expandedSections: [],
       scrollPositions: {},
@@ -88,7 +85,6 @@ export const useSessionStore = create<SessionStoreState>()(
         });
       },
 
-      setActiveConversationId: (id) => set({ activeConversationId: id }),
       setOpenDialogId: (id) => set({ openDialogId: id }),
       toggleExpandedSection: (sectionId) =>
         set((state) => {
@@ -108,7 +104,6 @@ export const useSessionStore = create<SessionStoreState>()(
         })),
       clearGlobalState: () =>
         set({
-          activeConversationId: null,
           openDialogId: null,
           expandedSections: [],
           scrollPositions: {},

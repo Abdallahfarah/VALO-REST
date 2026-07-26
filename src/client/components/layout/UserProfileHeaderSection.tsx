@@ -123,19 +123,16 @@ export const UserProfileHeaderSection = () => {
       case 'WAITER':
         return [
           { label: 'Notifications', icon: Bell, to: '/waiter/notifications' },
-          { label: 'Help', icon: HelpCircle, to: '/waiter/messages' },
         ];
       case 'CASHIER':
         return [
           { label: 'My Transactions', icon: Receipt, to: '/cashier/receipts' },
           { label: 'Notifications', icon: Bell, to: '/cashier/payments' },
-          { label: 'Help', icon: HelpCircle, to: '/cashier/messages' },
         ];
       case 'KITCHEN_STAFF':
         return [
           { label: 'Kitchen Status', icon: ChefHat, to: '/kds' },
           { label: 'Notifications', icon: Bell, to: '/kds' },
-          { label: 'Help', icon: HelpCircle, to: '/kds/messages' },
         ];
       default:
         return [];

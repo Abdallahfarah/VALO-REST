@@ -19,6 +19,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { OrderService } from '../../services/ApiService';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../services/CurrencyService';
 import { supabase } from '../../../lib/supabase';
 import { toast } from '../../lib/toast-store';
 
@@ -41,6 +42,7 @@ interface CancellationDialogProps {
 }
 
 const CancellationDialog = ({ order, onConfirm, onClose, isPending }: CancellationDialogProps) => {
+  const { format } = useCurrency();
   const [selected, setSelected] = useState('');
   const [custom, setCustom] = useState('');
 
@@ -86,7 +88,7 @@ const CancellationDialog = ({ order, onConfirm, onClose, isPending }: Cancellati
             </div>
             <div className="flex justify-between text-[11px] font-bold text-[#94A3B8]">
               <span>Total</span>
-              <span className="text-[#F97316] font-black">${Number(order.totalAmount || 0).toFixed(2)}</span>
+              <span className="text-[#F97316] font-black">{format(Number(order.totalAmount || 0))}</span>
             </div>
             <div className="flex justify-between text-[11px] font-bold text-[#94A3B8]">
               <span>Current Status</span>
@@ -177,6 +179,7 @@ interface OrderDetailsDialogProps {
 }
 
 const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdating, activeStation }: OrderDetailsDialogProps) => {
+  const { format } = useCurrency();
   const stationItems = (order.items || []).filter((item: any) => {
     const itemStation = item.menuItem?.preparationStation || 'Chef';
     return itemStation === activeStation;
@@ -231,7 +234,7 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
               <DollarSign size={16} className="text-[#94A3B8]" />
               <div>
                 <p className="text-[9px] font-bold text-[#94A3B8] uppercase">Total Amount</p>
-                <p className="text-xs font-black text-[#F97316]">${Number(order.totalAmount || 0).toFixed(2)}</p>
+                <p className="text-xs font-black text-[#F97316]">{format(Number(order.totalAmount || 0))}</p>
               </div>
             </div>
           </div>
@@ -244,7 +247,7 @@ const OrderDetailsDialog = ({ order, onClose, onStatusUpdate, onCancel, isUpdati
                 <div key={idx} className="flex justify-between items-center bg-[#131A38]/10 border border-[#232B5E]/10 px-4 py-3 rounded-xl">
                   <div>
                     <p className="text-xs font-bold text-white">{item.quantity}x {item.menuItem?.name}</p>
-                    <p className="text-[9px] font-medium text-[#94A3B8]">Unit Price: ${item.unitPrice?.toFixed(2)}</p>
+                    <p className="text-[9px] font-medium text-[#94A3B8]">Unit Price: {format(Number(item.unitPrice || 0))}</p>
                   </div>
                   <span className={cn(
                     "text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider",
@@ -339,6 +342,7 @@ const ViewAllOrdersDialog = ({
   isUpdating,
   activeStation
 }: ViewAllOrdersDialogProps) => {
+  const { format } = useCurrency();
   
   const getStationOrderStatus = (order: any) => {
     if (order.status === 'CANCELED') return 'CANCELED';
@@ -396,7 +400,7 @@ const ViewAllOrdersDialog = ({
                     <span className="text-[9px] font-bold text-[#94A3B8]">Table {order.table?.number || 'N/A'}</span>
                   </div>
                   <p className="text-[10px] text-[#94A3B8] font-medium">
-                    {order.stationItems?.length || 0} station items · ${Number(order.totalAmount).toFixed(2)}
+                    {order.stationItems?.length || 0} station items · {format(Number(order.totalAmount || 0))}
                   </p>
                 </div>
                 <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
@@ -443,6 +447,7 @@ const ViewAllOrdersDialog = ({
 export const OrdersMonitor = () => {
   const { tenant } = useTenant();
   const { user, role, preparationStation } = useAuth();
+  const { format } = useCurrency();
   const queryClient = useQueryClient();
 
   // Accordion open state for mobile sections
@@ -594,8 +599,11 @@ export const OrdersMonitor = () => {
     },
   });
 
+  // Filter active orders for kitchen (exclude COMPLETED orders from active KDS production monitor)
+  const activeKitchenOrders = (orders || []).filter((o: any) => o.status !== 'COMPLETED');
+
   // Filter orders and map stationItems
-  const filteredOrdersForStation = orders.map((order: any) => {
+  const filteredOrdersForStation = activeKitchenOrders.map((order: any) => {
     const stationItems = (order.items || []).filter((item: any) => {
       const itemStation = item.menuItem?.preparationStation || 'Chef';
       return itemStation === activeStation;
@@ -655,34 +663,7 @@ export const OrdersMonitor = () => {
 
   const isCancellable = (status: string) => status === 'PENDING' || status === 'PREPARING';
 
-  // Average preparation time calculation
-  const readyOrders = filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'READY');
-  const avgPrepTime = readyOrders.length > 0
-    ? Math.round(readyOrders.reduce((acc: number, o: any) => {
-        const diff = new Date(o.updatedAt).getTime() - new Date(o.createdAt).getTime();
-        return acc + (diff / 60000);
-      }, 0) / readyOrders.length)
-    : 0; // default fallback if no orders prepared yet
 
-  const kpis = [
-    { label: 'New Orders', value: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'PENDING').length.toString(), sub: 'Start', icon: Receipt, color: 'text-indigo-500', bg: 'bg-indigo-50', darkBg: 'bg-indigo-500/10', darkColor: 'text-indigo-400' },
-    { label: 'Preparing', value: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'PREPARING').length.toString(), sub: 'In Progress', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', darkBg: 'bg-orange-500/10', darkColor: 'text-orange-400' },
-    { label: 'Ready', value: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'READY').length.toString(), sub: 'Finished Cooking', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50', darkBg: 'bg-emerald-500/10', darkColor: 'text-emerald-400' },
-    { label: 'Canceled', value: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'CANCELED').length.toString(), sub: 'Canceled Orders', icon: XCircle, color: 'text-red-500', bg: 'bg-red-50', darkBg: 'bg-red-500/10', darkColor: 'text-red-400' },
-  ];
-
-  if (activeStation === 'Chef') {
-    kpis.push({
-      label: 'Avg Prep Time',
-      value: `${avgPrepTime} min`,
-      sub: "Today's average",
-      icon: Clock,
-      color: 'text-purple-500',
-      bg: 'bg-purple-50',
-      darkBg: 'bg-purple-500/10',
-      darkColor: 'text-purple-400'
-    });
-  }
 
   const columns = [
     {
@@ -802,13 +783,22 @@ export const OrdersMonitor = () => {
     );
   };
 
+  const formatStationName = (stationName: string) => {
+    if (!stationName) return 'Chief';
+    const s = stationName.trim().toUpperCase();
+    if (s === 'CHEF' || s === 'CHIEF') return 'Chief';
+    if (s === 'BARISTA') return 'Barista';
+    if (s === 'KITCHEN_STAFF' || s === 'KITCHEN STAFF' || s === 'KITCHEN') return 'Kitchen Staff';
+    return stationName.charAt(0).toUpperCase() + stationName.slice(1).toLowerCase();
+  };
+
   return (
     <div className="h-[calc(100vh-160px)] flex flex-col gap-8 overflow-hidden">
       {/* ── Page title & station switcher ── */}
       <div className="flex items-center justify-between shrink-0 flex-wrap gap-4">
         <div className="flex items-center gap-4">
            <h1 className="text-3xl font-bold text-white">
-             {activeStation} Dashboard
+             {formatStationName(activeStation)} Dashboard
            </h1>
            <div className="flex items-center gap-2">
              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -837,47 +827,9 @@ export const OrdersMonitor = () => {
         )}
       </div>
 
-      {/* ── KPI Row — Desktop (lg+) ── */}
-      <div className={cn(
-        "hidden lg:grid gap-6 shrink-0",
-        activeStation === 'Chef' ? "grid-cols-5" : "grid-cols-4"
-      )}>
-        {kpis.map((kpi, i) => (
-          <Card key={i} className="p-4 bg-[#0C0F24]/65 border border-[#232B5E]/20 shadow-[0_4px_20px_rgba(0,0,0,0.15)] flex items-center gap-4">
-             <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm", kpi.darkBg, kpi.darkColor)}>
-                <kpi.icon size={24} />
-             </div>
-             <div>
-               <h3 className="text-2xl font-black text-white leading-none mb-1">{kpi.value}</h3>
-               <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-white/95 uppercase tracking-wider">{kpi.label}</span>
-                  <span className="text-[9px] text-[#94A3B8] font-medium leading-none">{kpi.sub}</span>
-               </div>
-             </div>
-          </Card>
-        ))}
-      </div>
 
-      {/* ── KPI Row — Mobile/Tablet (below lg) ── */}
-      <div className={cn(
-        "lg:hidden grid gap-3 shrink-0",
-        activeStation === 'Chef' ? "grid-cols-3" : "grid-cols-2"
-      )}>
-        {kpis.map((kpi, i) => (
-          <div key={i} className={cn(
-            "bg-[#131A38]/70 backdrop-blur-md border border-[#232B5E]/50 rounded-2xl p-3 flex items-center gap-3",
-          )}>
-            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", kpi.darkBg, kpi.darkColor)}>
-              <kpi.icon size={20} />
-            </div>
-            <div>
-              <h3 className={cn("text-xl font-black leading-none mb-0.5", kpi.darkColor)}>{kpi.value}</h3>
-              <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider block">{kpi.label}</span>
-              <span className="text-[9px] text-[#94A3B8] font-medium">{kpi.sub}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+
+
 
       {/* ── DESKTOP Kanban Board (lg+) ── */}
       <div className="hidden lg:flex flex-1 overflow-x-auto overflow-y-hidden pb-4">
@@ -900,7 +852,7 @@ export const OrdersMonitor = () => {
                            </div>
                            <div className="flex items-center justify-between text-[10px] font-bold text-[#94A3B8] mb-2">
                               <span>Table {order.table?.number || 'N/A'} • {order.stationItems?.length || 0} Items</span>
-                              <span className="text-[#F97316] font-black">${Number(order.totalAmount).toFixed(2)}</span>
+                              <span className="text-[#F97316] font-black">{format(Number(order.totalAmount || 0))}</span>
                            </div>
                            <div className="text-[10px] font-bold text-indigo-400 mb-4">
                               🧑‍🍳 {order.waiterName || 'Unassigned'}
@@ -1010,7 +962,7 @@ export const OrdersMonitor = () => {
                         {/* Table / amount / waiter */}
                         <div className="flex items-center justify-between text-[10px] font-bold">
                           <span className="text-[#94A3B8]">Table {order.table?.number || 'N/A'} • {order.stationItems?.length || 0} Items</span>
-                          <span className="text-[#F97316]">${Number(order.totalAmount).toFixed(2)}</span>
+                          <span className="text-[#F97316]">{format(Number(order.totalAmount || 0))}</span>
                         </div>
                         <div className="text-[10px] font-bold text-indigo-400">
                           🧑‍🍳 {order.waiterName || 'Unassigned'}
@@ -1071,22 +1023,22 @@ export const OrdersMonitor = () => {
       </div>
 
       {/* ── Tip Bar ── */}
-      <div className="bg-[#0C0F24]/50 backdrop-blur-md border-t border-[#232B5E]/20 p-4 px-8 flex items-center justify-between shrink-0 rounded-2xl lg:rounded-none">
-         <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center">
-               <Lightbulb size={18} />
+      <div className="bg-[#0C0F24]/60 backdrop-blur-md border-t border-[#232B5E]/30 p-2.5 px-4 lg:p-4 lg:px-8 flex items-center justify-between shrink-0 rounded-xl lg:rounded-none">
+         <div className="flex items-center gap-2 lg:gap-4 min-w-0 flex-1 mr-2">
+            <div className="w-6 h-6 lg:w-8 lg:h-8 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center shrink-0">
+               <Lightbulb size={13} className="lg:w-[18px] lg:h-[18px]" />
             </div>
-            <p className="text-xs font-medium text-[#94A3B8]">
-               <span className="font-bold text-white uppercase text-[10px] mr-2">TIP</span>
+            <p className="text-[10px] lg:text-xs font-medium text-[#94A3B8] truncate leading-tight">
+               <span className="font-bold text-white uppercase text-[9px] lg:text-[10px] mr-1.5 shrink-0">TIP</span>
                Focus on orders by priority and preparation time to improve kitchen efficiency.
             </p>
          </div>
-         <div className="flex items-center gap-4 text-[#94A3B8] text-xs font-mono font-bold">
-            <div className="flex items-center gap-2">
-             <Clock size={14} /> {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-             </div>
-             <div className="border-l border-[#232B5E]/20 pl-4 h-4" />
-             <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+         <div className="flex items-center gap-2 lg:gap-4 text-[#94A3B8] text-[9px] lg:text-xs font-mono font-bold shrink-0">
+            <div className="flex items-center gap-1 lg:gap-2 whitespace-nowrap">
+              <Clock size={12} className="lg:w-3.5 lg:h-3.5" /> {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            <div className="hidden sm:block border-l border-[#232B5E]/20 pl-2 lg:pl-4 h-3 lg:h-4" />
+            <span className="hidden sm:inline whitespace-nowrap">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
          </div>
       </div>
 
