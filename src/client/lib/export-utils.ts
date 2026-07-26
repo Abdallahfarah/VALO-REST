@@ -22,8 +22,10 @@ export interface ReceiptExportData {
   waiterName?: string;
   restaurantName?: string;
   restaurantAddress?: string;
+  restaurantCity?: string;
   restaurantPhone?: string;
   restaurantEmail?: string;
+  businessRegNumber?: string;
   date: string;
   paymentMethod: string;
   currency?: string;
@@ -282,25 +284,38 @@ export const exportReceiptPdf = (receipt: ReceiptExportData) => {
     const pageWidth = 80;
 
     // Restaurant Header Info
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(receipt.restaurantName || 'Dhadhan Restaurant', pageWidth / 2, 10, { align: 'center' });
+    let y = 10;
+    if (receipt.restaurantName) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(receipt.restaurantName, pageWidth / 2, y, { align: 'center' });
+      y += 4.5;
+    }
 
     doc.setFontSize(7.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(50, 50, 50);
-    let y = 14;
+
     if (receipt.restaurantAddress) {
       doc.text(receipt.restaurantAddress, pageWidth / 2, y, { align: 'center' });
       y += 4;
     }
+    if (receipt.restaurantCity) {
+      doc.text(receipt.restaurantCity, pageWidth / 2, y, { align: 'center' });
+      y += 4;
+    }
     if (receipt.restaurantPhone) {
-      doc.text(receipt.restaurantPhone, pageWidth / 2, y, { align: 'center' });
+      doc.text(`Tel: ${receipt.restaurantPhone}`, pageWidth / 2, y, { align: 'center' });
       y += 4;
     }
     if (receipt.restaurantEmail) {
       doc.text(receipt.restaurantEmail, pageWidth / 2, y, { align: 'center' });
+      y += 4;
+    }
+
+    if (receipt.businessRegNumber) {
+      doc.text(`Reg No: ${receipt.businessRegNumber}`, pageWidth / 2, y, { align: 'center' });
       y += 4;
     }
 

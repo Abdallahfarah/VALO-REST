@@ -985,6 +985,11 @@ const mapRestaurantSettings = (row: any) => ({
     sat_sun: '09:00 AM - 11:00 PM'
   },
   tableAssignmentMode: row.table_assignment_mode || 'OPEN',
+  receiptHeaderName: row.receipt_header_name,
+  receiptAddressLocation: row.receipt_address_location,
+  receiptHeaderPhone: row.receipt_header_phone,
+  businessRegNumber: row.business_reg_number,
+  receiptPaymentInfo: row.receipt_payment_info,
 });
 
 export const SettingService = {
@@ -1038,6 +1043,11 @@ export const SettingService = {
         secondary_color: settings.secondaryColor,
         business_hours: settings.businessHours,
         table_assignment_mode: settings.tableAssignmentMode || 'OPEN',
+        receipt_header_name: settings.receiptHeaderName,
+        receipt_address_location: settings.receiptAddressLocation,
+        receipt_header_phone: settings.receiptHeaderPhone,
+        business_reg_number: settings.businessRegNumber,
+        receipt_payment_info: settings.receiptPaymentInfo,
         updated_at: new Date().toISOString(),
       })
       .eq('tenant_id', tenantId)

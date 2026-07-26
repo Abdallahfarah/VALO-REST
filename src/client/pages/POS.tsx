@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Send, Trash2 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
@@ -8,6 +8,7 @@ import { useTenant } from '../context/TenantContext';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency } from '../services/CurrencyService';
 import { toast } from '../lib/toast-store';
+import { supabase } from '../../lib/supabase';
 
 import { useSessionStore } from '../lib/session-store';
 
@@ -56,6 +57,52 @@ export const POS = () => {
     enabled: !!tenant?.id,
   });
 
+  const { data: activeOrder, refetch: refetchActiveOrder } = useQuery({
+    queryKey: ['activeOrder', selectedTable],
+    queryFn: async () => {
+      if (!selectedTable) return null;
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*, order_items(*, menu_items(*))')
+        .eq('table_id', selectedTable)
+        .not('status', 'in', '("COMPLETED","CANCELED")')
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedTable
+  });
+
+  const [openedOrderId, setOpenedOrderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedTable) {
+      if (activeOrder) {
+        if (openedOrderId !== activeOrder.id) {
+          toast.info('Active Order Found', 'This table already has an active order. Opening the existing order.');
+          setOpenedOrderId(activeOrder.id);
+        }
+        const mapped = (activeOrder.order_items || []).map((oi: any) => ({
+          id: oi.menu_items?.id || oi.menu_item_id,
+          name: oi.menu_items?.name || 'Item',
+          price: Number(oi.unit_price),
+          icon: oi.menu_items?.icon || '🍔',
+          quantity: oi.quantity,
+          sent: true,
+          orderItemId: oi.id,
+          status: oi.status || 'PENDING',
+          preparationStation: oi.menu_items?.preparation_station || 'Chef'
+        }));
+        setCart(mapped);
+      } else {
+        setOpenedOrderId(null);
+        setCart([]);
+      }
+    } else {
+      setOpenedOrderId(null);
+    }
+  }, [activeOrder, selectedTable]);
+
   const availableTables = tables.filter((t: any) => t.status === 'AVAILABLE' || t.status === 'OCCUPIED');
 
   const createOrderMutation = useMutation({
@@ -63,9 +110,8 @@ export const POS = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['tables'] });
-      setCart([]);
-      setSelectedTable('');
-      toast.success('Order placed', 'Order sent to kitchen successfully');
+      refetchActiveOrder();
+      toast.success('Order placed', 'Items sent to kitchen successfully');
     },
   });
 
@@ -75,7 +121,7 @@ export const POS = () => {
     if (existing) {
       setCart(cart.map((c) => c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c));
     } else {
-      setCart([...cart, { ...item, quantity: 1 }]);
+      setCart([...cart, { ...item, quantity: 1, sent: false }]);
     }
   };
 
@@ -99,23 +145,35 @@ export const POS = () => {
   const total = subtotal + tax;
 
   const handlePlaceOrder = () => {
-    if (cart.length === 0 || !selectedTable) return;
+    if (!selectedTable) {
+      toast.warning('No Table', 'Please select a table');
+      return;
+    }
+    const newItems = cart.filter(item => !item.sent);
+    if (newItems.length === 0) {
+      toast.warning('No New Items', 'There are no new items to send to the kitchen.');
+      return;
+    }
+
     const tableObj = tables.find((t: any) => t.id === selectedTable);
     const resolvedWaiterId = tableObj?.waiterId || user?.id || null;
+
+    const newSubtotal = newItems.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0);
+    const newTotal = newSubtotal * 1.15;
 
     createOrderMutation.mutate({
       tenantId: tenant?.id,
       tableId: selectedTable,
       tableNumber: tableObj?.number,
       waiterId: resolvedWaiterId,
-      items: cart.map((c) => ({ 
+      items: newItems.map((c) => ({ 
         menuItemId: c.id, 
         quantity: c.quantity, 
         price: c.price,
         name: c.name,
         preparationStation: c.preparationStation || 'Chef'
       })),
-      totalAmount: total,
+      totalAmount: newTotal,
       status: 'PENDING',
     });
   };

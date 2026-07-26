@@ -252,7 +252,7 @@ export const Tables = () => {
       
       return { previousTables };
     },
-    onError: (err, variables, context) => {
+    onError: (_err, _variables, context) => {
       if (context?.previousTables) {
         queryClient.setQueryData(['tables', tenant?.id], context.previousTables);
       }

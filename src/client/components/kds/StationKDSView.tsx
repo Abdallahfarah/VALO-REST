@@ -50,7 +50,7 @@ export const StationKDSView = ({
 
       return { previousOrders };
     },
-    onError: (err, variables, context) => {
+    onError: (_err, _variables, context) => {
       if (context?.previousOrders) {
         queryClient.setQueriesData({ queryKey: ['orders'] }, context.previousOrders);
       }

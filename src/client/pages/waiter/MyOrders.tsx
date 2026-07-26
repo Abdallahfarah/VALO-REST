@@ -128,7 +128,11 @@ export const MyOrders = () => {
         orderNumber: selectedOrder.orderNumber,
         tableNumber: selectedOrder.table?.number || 'N/A',
         waiterName: selectedOrder.waiterName || user?.email?.split('@')[0],
-        restaurantName: tenant?.name || 'DHADHAN BISTRO',
+        restaurantName: settings?.receiptHeaderName || tenant?.name,
+        restaurantAddress: settings?.receiptAddressLocation || tenant?.address,
+        restaurantPhone: settings?.receiptHeaderPhone || tenant?.phone,
+
+        businessRegNumber: settings?.businessRegNumber,
         date: new Date(orderReceipt.created_at).toLocaleString(),
         paymentMethod: orderReceipt.payment_method,
         currency: tenant?.currencyCode || 'ETB',

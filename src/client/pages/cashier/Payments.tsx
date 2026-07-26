@@ -125,7 +125,7 @@ export const Payments = () => {
       
       return { previousOrders };
     },
-    onError: (error: any, variables, context) => {
+    onError: (error: any, _variables, context) => {
       if (context?.previousOrders) {
         queryClient.setQueriesData({ queryKey: ['orders'] }, context.previousOrders);
       }

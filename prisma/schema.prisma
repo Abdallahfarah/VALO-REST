@@ -271,9 +271,15 @@ model restaurant_settings {
   primary_color   String?   @default("#F97316") @db.VarChar(50)
   secondary_color String?   @default("#0B1630") @db.VarChar(50)
   business_hours  Json?     @default("{\"mon_fri\": \"08:00 AM - 10:00 PM\", \"sat_sun\": \"09:00 AM - 11:00 PM\"}")
-  created_at      DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime? @default(now()) @db.Timestamptz(6)
-  tenants         tenants   @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  receipt_header_name        String?
+  receipt_address_location   String?
+  receipt_header_phone       String?
+  tax_number                 String?
+  business_reg_number        String?
+  receipt_payment_info       String?
+  created_at                 DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime? @default(now()) @db.Timestamptz(6)
+  tenants                tenants   @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([tenant_id], map: "idx_restaurant_settings_tenant")
 }

@@ -31,6 +31,7 @@ export const DetailedReceipt: React.FC<DetailedReceiptProps> = ({
   order,
   cart,
   tenant,
+  settings,
   paperWidth = '80mm',
   type
 }) => {
@@ -139,6 +140,15 @@ export const DetailedReceipt: React.FC<DetailedReceiptProps> = ({
   const changeAmount = receipt ? Number(receipt.changeAmount || receipt.change_amount || 0) : 0;
   const paymentMethod = receipt?.paymentMethod || receipt?.payment_method || 'Cash';
 
+  const receiptName = settings?.receiptHeaderName || settings?.receipt_header_name || tenant?.name;
+  const receiptAddress = settings?.receiptHeaderAddress || settings?.receipt_header_address || tenant?.address;
+  const receiptCity = settings?.receiptHeaderCity || settings?.receipt_header_city;
+  const receiptPhone = settings?.receiptHeaderPhone || settings?.receipt_header_phone || tenant?.phone;
+  const receiptEmail = settings?.receiptHeaderEmail || settings?.receipt_header_email || tenant?.email;
+  
+
+  const regNum = settings?.businessRegNumber || settings?.business_reg_number;
+
   return (
     <div 
       className={cn(
@@ -148,22 +158,36 @@ export const DetailedReceipt: React.FC<DetailedReceiptProps> = ({
       style={{ boxSizing: 'border-box', backgroundColor: '#ffffff', color: '#000000' }}
     >
       <div className="print-receipt-container text-black">
-        {/* --- RESTAURANT HEADER (Pure Restaurant Info) --- */}
+        {/* --- RESTAURANT HEADER (Dynamic Configurable Info) --- */}
         <div className="text-center font-sans space-y-0.5 mb-2">
-          <h2 className="text-base font-bold text-black tracking-tight leading-tight">
-            {tenant?.name || 'Dhadhan Restaurant'}
-          </h2>
-          <p className="text-[11px] text-gray-700 font-medium leading-tight">
-            {tenant?.address || 'Jigjiga, Somali Region, Ethiopia'}
-          </p>
-          {tenant?.phone && (
-            <p className="text-[11px] text-gray-700 font-medium">
-              {tenant.phone}
+          {receiptName && (
+            <h2 className="text-base font-bold text-black tracking-tight leading-tight">
+              {receiptName}
+            </h2>
+          )}
+          {receiptAddress && (
+            <p className="text-[11px] text-gray-700 font-medium leading-tight">
+              {receiptAddress}
             </p>
           )}
-          {tenant?.email && (
+          {receiptCity && (
+            <p className="text-[11px] text-gray-700 font-medium leading-tight">
+              {receiptCity}
+            </p>
+          )}
+          {receiptPhone && (
             <p className="text-[11px] text-gray-700 font-medium">
-              {tenant.email}
+              Tel: {receiptPhone}
+            </p>
+          )}
+          {receiptEmail && (
+            <p className="text-[11px] text-gray-700 font-medium">
+              {receiptEmail}
+            </p>
+          )}
+          {regNum && (
+            <p className="text-[11px] text-gray-700 font-medium">
+              Reg No: {regNum}
             </p>
           )}
         </div>

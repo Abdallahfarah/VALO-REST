@@ -129,10 +129,16 @@ export const WaiterPOS = () => {
     }
   }, [selectedTable, settings, tables, user]);
 
-  // Sync active order items with local cart state
+  // Sync active order items with local cart state and notify user
+  const [openedOrderId, setOpenedOrderId] = useState<string | null>(null);
+
   useEffect(() => {
     if (selectedTable) {
       if (activeOrder) {
+        if (openedOrderId !== activeOrder.id) {
+          toast.info('Active Order Found', 'This table already has an active order. Opening the existing order.');
+          setOpenedOrderId(activeOrder.id);
+        }
         const mapped = (activeOrder.order_items || []).map((oi: any) => ({
           id: oi.menu_items?.id || oi.menu_item_id,
           name: oi.menu_items?.name || 'Item',
@@ -147,8 +153,11 @@ export const WaiterPOS = () => {
         }));
         setCart(mapped);
       } else {
+        setOpenedOrderId(null);
         setCart([]);
       }
+    } else {
+      setOpenedOrderId(null);
     }
   }, [activeOrder, selectedTable]);
 
@@ -338,7 +347,12 @@ export const WaiterPOS = () => {
         receiptNumber: settledReceipt.receipt_number,
         tableNumber: tables.find((t: any) => t.id === activeOrder?.table_id)?.number || 'N/A',
         waiterName: user?.email ? user.email.split('@')[0] : 'Waiter',
-        restaurantName: tenant?.name || 'DHADHAN BISTRO',
+        restaurantName: settings?.receiptHeaderName || tenant?.name,
+        restaurantAddress: settings?.receiptHeaderAddress || tenant?.address,
+        restaurantCity: settings?.receiptHeaderCity,
+        restaurantPhone: settings?.receiptHeaderPhone || tenant?.phone,
+        restaurantEmail: settings?.receiptHeaderEmail || tenant?.email,
+        businessRegNumber: settings?.businessRegNumber,
         date: new Date(settledReceipt.created_at).toLocaleString(),
         paymentMethod: settledReceipt.payment_method,
         currency: tenant?.currencyCode || 'ETB',
