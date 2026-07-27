@@ -11,6 +11,45 @@ import { NotificationService, MenuService, OrderService } from '../services/ApiS
 import { toast } from '../lib/toast-store';
 import { ValoSaaSBackground } from '../components/layout/ValoSaaSBackground';
 
+export function getFriendlyErrorMessage(err: any): { title: string; message: string; iconType: string } {
+  const rawMsg = (typeof err === 'string' ? err : err?.message || err?.error || '').toLowerCase();
+
+  // 1. Connection Lost / Offline
+  if (!navigator.onLine || rawMsg.includes('failed to fetch') || rawMsg.includes('networkerror') || rawMsg.includes('offline') || rawMsg.includes('functionsfetcherror')) {
+    return {
+      title: '📶 Connection Lost',
+      message: 'Please check your internet connection and try again.',
+      iconType: 'offline'
+    };
+  }
+
+  // 2. Restaurant Inactive / Closed
+  if (rawMsg.includes('inactive') || rawMsg.includes('closed') || rawMsg.includes('restaurant is currently inactive') || rawMsg.includes('ordering offline')) {
+    return {
+      title: '🔒 Restaurant Closed',
+      message: 'Ordering is currently unavailable.',
+      iconType: 'closed'
+    };
+  }
+
+  // 3. Invalid Table / QR Code
+  if (rawMsg.includes('table not found') || rawMsg.includes('invalid qr') || rawMsg.includes('table is currently inactive')) {
+    return {
+      title: '❌ Invalid QR Code',
+      message: 'Please scan a valid table QR code.',
+      iconType: 'invalid_qr'
+    };
+  }
+
+  // 4. Default / Technical / Supabase / RLS / Database Issue
+  console.error('[QR Ordering Internal Technical Error Log]:', err);
+  return {
+    title: '⚠️ Unable to Place Order',
+    message: "We're having trouble processing your order right now. Please try again in a few seconds.",
+    iconType: 'unable'
+  };
+}
+
 export const CustomerQRMenu = () => {
   const { slug, tableNumber } = useParams<{ slug: string; tableNumber?: string }>();
   
@@ -143,7 +182,6 @@ export const CustomerQRMenu = () => {
         if (tenantErr || !tenantData) {
           throw new Error('Restaurant not found.');
         }
-
         setTenant(tenantData);
 
         // Extract QR settings
@@ -160,7 +198,6 @@ export const CustomerQRMenu = () => {
           setOnlinePayment(!!qrConfig.online_payment);
         }
 
-        // Query table if number provided
         if (tableNumber) {
           const { data: tableData } = await supabase
             .from('tables')
@@ -168,26 +205,26 @@ export const CustomerQRMenu = () => {
             .eq('tenant_id', tenantData.id)
             .eq('number', tableNumber)
             .maybeSingle();
-          
+
           if (tableData) setTable(tableData);
         }
 
-        // Query categories using the shared MenuService
-        const catData = await MenuService.getCategories(tenantData.id);
-
-        // Query menu items using the shared MenuService
-        const prodData = await MenuService.getMenuItems(tenantData.id, undefined, true);
+        const [catData, prodData] = await Promise.all([
+          MenuService.getCategories(tenantData.id),
+          MenuService.getMenuItems(tenantData.id, undefined, true)
+        ]);
 
         if (catData) setCategories(catData);
         if (prodData) setProducts(prodData);
       } catch (err: any) {
+        console.error('[loadMenuData] Internal Error:', err);
         setError(err.message || 'An error occurred while loading the menu.');
       } finally {
         setLoading(false);
       }
     };
 
-    loadMenuData();
+    if (slug) loadMenuData();
   }, [slug, tableNumber]);
 
   if (loading) {
@@ -200,13 +237,20 @@ export const CustomerQRMenu = () => {
   }
 
   if (error || !tenant) {
+    const friendlyErr = getFriendlyErrorMessage(error);
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-6">
+        <div className="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-6 shadow-md">
           <X size={32} />
         </div>
-        <h2 className="text-xl font-bold text-[#0B1630] mb-2">Menu Unavailable</h2>
-        <p className="text-sm text-slate-400 max-w-sm mb-6">{error || 'This QR Code URL is invalid or the restaurant could not be found.'}</p>
+        <h2 className="text-xl font-bold text-[#0B1630] mb-2">{friendlyErr.title}</h2>
+        <p className="text-sm text-slate-400 max-w-sm mb-6">{friendlyErr.message}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-6 py-3 bg-[#0B1630] text-white text-xs font-bold rounded-xl shadow-sm hover:bg-[#152549] transition-all cursor-pointer"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
@@ -214,11 +258,11 @@ export const CustomerQRMenu = () => {
   if (!qrEnabled) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-orange-50 text-[#F97316] flex items-center justify-center mb-6">
+        <div className="w-16 h-16 rounded-full bg-orange-50 text-[#F97316] flex items-center justify-center mb-6 shadow-md">
           <Info size={32} />
         </div>
-        <h2 className="text-xl font-bold text-[#0B1630] mb-2">Ordering Offline</h2>
-        <p className="text-sm text-slate-400 max-w-sm">QR Menu self-ordering is currently deactivated for {tenant.name}. Please order directly with our staff.</p>
+        <h2 className="text-xl font-bold text-[#0B1630] mb-2">🔒 Restaurant Closed</h2>
+        <p className="text-sm text-slate-400 max-w-sm">Ordering is currently unavailable for {tenant.name}. Please order directly with our staff.</p>
       </div>
     );
   }
@@ -316,21 +360,28 @@ export const CustomerQRMenu = () => {
         items: formattedItems
       });
 
-      // Post Notification to restaurant staff
-      const tableLabel = tableNumber ? `Table ${tableNumber}` : 'QR Mobile';
-      await NotificationService.createNotification({
-        tenantId: tenant.id,
-        role: null,
-        title: `New QR Order - ${tableLabel}`,
-        message: `Customer ${customerName.trim()} placed self-order of ${cart.length} items (Total: ${tenant.currency_symbol || 'ETB'} ${cartTotal.toFixed(2)}).`
-      });
+      if (!orderData || (!orderData.id && !orderData.orderNumber)) {
+        throw new Error('Order confirmation not received from server.');
+      }
 
-      setOrderPlaced(orderData);
+      // 1. Display friendly success toast
+      toast.success('✅ Order Placed Successfully!', 'Your order has been sent to the kitchen. Please wait while we prepare it.');
+
+      // 2. Clear cart and reset form inputs ONLY after backend confirmation
       setCart([]);
+      setCustomerName('');
+      setOrderNote('');
       setIsCartOpen(false);
-      toast.success('Order Submitted', 'Your order was sent to the kitchen.');
+
+      // 3. Display order confirmation screen with checkmark animation
+      setOrderPlaced(orderData);
     } catch (err: any) {
-      toast.error('Order Failed', err.message || 'An error occurred while placing your order.');
+      // Backend unconfirmed: Log technical details internally, show friendly message to customer
+      console.error('[CustomerQRMenu Technical Order Error]:', err);
+      const friendlyErr = getFriendlyErrorMessage(err);
+      toast.error(friendlyErr.title, friendlyErr.message);
+
+      // Cart items and entered info remain untouched so customer can retry
     } finally {
       setIsPlacingOrder(false);
     }
@@ -344,19 +395,25 @@ export const CustomerQRMenu = () => {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col justify-between p-6">
         <div className="my-auto flex flex-col items-center text-center max-w-sm mx-auto space-y-6">
-          <div className="w-20 h-20 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/10">
-            <Check size={44} className="stroke-[3]" />
+          <div className="w-24 h-24 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shadow-xl shadow-emerald-500/15 animate-bounce">
+            <Check size={52} className="stroke-[3] animate-pulse" />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-[#0B1630]">Order Received!</h2>
-            <p className="text-sm text-slate-400 mt-2">Your order is being sent to the kitchen. Thank you for dining with us!</p>
+            <span className="text-[10px] font-black text-emerald-600 bg-emerald-100/80 px-3 py-1 rounded-full uppercase tracking-wider">
+              Order Confirmed
+            </span>
+            <h2 className="text-2xl font-black text-[#0B1630] mt-3">✅ Order Placed Successfully!</h2>
+            <p className="text-sm text-slate-500 mt-2 font-medium">Your order has been sent to the kitchen. Please wait while we prepare it.</p>
           </div>
 
-          <Card className="w-full p-5 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] bg-white text-left space-y-3">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-50 pb-2">Order Details</p>
+          <Card className="w-full p-5 border-none shadow-[0_2px_16px_rgba(0,0,0,0.05)] bg-white text-left space-y-3 rounded-2xl">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-50 pb-2 flex items-center justify-between">
+              <span>Order Summary</span>
+              <span className="text-emerald-500 font-bold">Kitchen Telemetry Active</span>
+            </p>
             <div className="flex justify-between text-xs">
               <span className="text-slate-400 font-medium">Order Reference</span>
-              <span className="text-[#0B1630] font-black">{orderPlaced.order_number ? `ORDER-${String(orderPlaced.order_number).padStart(4, '0')}` : `#${orderPlaced.id.slice(0, 8).toUpperCase()}`}</span>
+              <span className="text-[#0B1630] font-black">{orderPlaced.order_number || orderPlaced.orderNumber ? `ORDER-${String(orderPlaced.order_number || orderPlaced.orderNumber).padStart(4, '0')}` : `#${String(orderPlaced.id || 'VALO').slice(0, 8).toUpperCase()}`}</span>
             </div>
             {tableNumber && (
               <div className="flex justify-between text-xs">
@@ -365,18 +422,18 @@ export const CustomerQRMenu = () => {
               </div>
             )}
             <div className="flex justify-between text-xs">
-              <span className="text-slate-400 font-medium">Estimated Time</span>
+              <span className="text-slate-400 font-medium">Estimated Preparation</span>
               <span className="text-[#F97316] font-black">15 - 20 Mins</span>
             </div>
             <div className="flex justify-between text-xs border-t border-slate-50 pt-2 font-bold text-sm">
-              <span className="text-[#0B1630] font-black">Total Paid/Due</span>
-              <span className="text-[#0B1630] font-black">{tenant.currency_symbol || 'ETB'} {Number(orderPlaced.total_amount).toFixed(2)}</span>
+              <span className="text-[#0B1630] font-black">Total Amount</span>
+              <span className="text-[#0B1630] font-black">{tenant.currency_symbol || 'ETB'} {Number(orderPlaced.total_amount || orderPlaced.totalAmount || 0).toFixed(2)}</span>
             </div>
           </Card>
 
           <button 
             onClick={() => setOrderPlaced(null)}
-            className="w-full h-14 rounded-2xl bg-[#0B1630] text-white font-bold text-sm hover:bg-[#152549] transition-all cursor-pointer"
+            className="w-full h-14 rounded-2xl bg-[#0B1630] text-white font-bold text-sm hover:bg-[#152549] transition-all cursor-pointer shadow-lg shadow-[#0B1630]/20"
           >
             Order Something Else
           </button>
