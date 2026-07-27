@@ -113,12 +113,14 @@ export const OrderService = {
       payload.tableId ? supabase
         .from('orders')
         .select('*')
+        .eq('tenant_id', payload.tenantId)
         .eq('table_id', payload.tableId)
         .not('status', 'in', '("COMPLETED","CANCELED")')
         .limit(1) : Promise.resolve({ data: null, error: null }),
       (!payload.waiterId && payload.tableId) ? supabase
         .from('tables')
         .select('waiter_id')
+        .eq('tenant_id', payload.tenantId)
         .eq('id', payload.tableId)
         .maybeSingle() : Promise.resolve({ data: null, error: null })
     ]);
@@ -153,10 +155,10 @@ export const OrderService = {
 
       const orderItems = payload.items.map((item: any) => ({
         order_id: orderId,
-        menu_item_id: item.menuItemId,
+        menu_item_id: item.menuItemId || item.id,
         quantity: item.quantity,
-        unit_price: item.price,
-        price: item.price * item.quantity,
+        unit_price: Number(item.price),
+        price: Number(item.price) * item.quantity,
         status: 'PENDING',
       }));
 
@@ -169,9 +171,10 @@ export const OrderService = {
             status: 'PENDING',
             updated_at: new Date().toISOString()
           })
+          .eq('tenant_id', payload.tenantId)
           .eq('id', orderId),
         supabase.from('order_items').insert(orderItems),
-        payload.tableId ? supabase.from('tables').update({ status: 'OCCUPIED' }).eq('id', payload.tableId) : Promise.resolve({ error: null })
+        payload.tableId ? supabase.from('tables').update({ status: 'OCCUPIED' }).eq('tenant_id', payload.tenantId).eq('id', payload.tableId) : Promise.resolve({ error: null })
       ]);
 
       if (orderUpdate.error) throw orderUpdate.error;
@@ -199,17 +202,17 @@ export const OrderService = {
 
       const orderItems = payload.items.map((item: any) => ({
         order_id: orderId,
-        menu_item_id: item.menuItemId,
+        menu_item_id: item.menuItemId || item.id,
         quantity: item.quantity,
-        unit_price: item.price,
-        price: item.price * item.quantity,
+        unit_price: Number(item.price),
+        price: Number(item.price) * item.quantity,
         status: 'PENDING',
       }));
 
       // Insert items and make table occupied in parallel
       const [itemsInsert, tableUpdate] = await Promise.all([
         supabase.from('order_items').insert(orderItems),
-        payload.tableId ? supabase.from('tables').update({ status: 'OCCUPIED' }).eq('id', payload.tableId) : Promise.resolve({ error: null })
+        payload.tableId ? supabase.from('tables').update({ status: 'OCCUPIED' }).eq('tenant_id', payload.tenantId).eq('id', payload.tableId) : Promise.resolve({ error: null })
       ]);
 
       if (itemsInsert.error) throw itemsInsert.error;

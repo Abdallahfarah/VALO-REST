@@ -7,7 +7,7 @@ import {
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
-import { NotificationService, MenuService } from '../services/ApiService';
+import { NotificationService, MenuService, OrderService } from '../services/ApiService';
 import { toast } from '../lib/toast-store';
 import { ValoSaaSBackground } from '../components/layout/ValoSaaSBackground';
 
@@ -297,37 +297,26 @@ export const CustomerQRMenu = () => {
     setIsPlacingOrder(true);
 
     try {
-      // 1. Create order record
-      const { data: orderData, error: orderErr } = await supabase
-        .from('orders')
-        .insert({
-          tenant_id: tenant.id,
-          table_id: table?.id || null,
-          customer_name: `${customerName.trim()} (QR${tableNumber ? ' Table ' + tableNumber : ''})`,
-          status: 'PENDING',
-          total_amount: cartTotal
-        })
-        .select('*')
-        .single();
-
-      if (orderErr || !orderData) throw orderErr;
-
-      // 2. Create order items records
-      const itemInserts = cart.map(item => ({
-        order_id: orderData.id,
-        menu_item_id: item.id,
+      const formattedItems = cart.map(item => ({
+        id: item.id,
+        menuItemId: item.id,
+        name: item.name,
+        price: Number(item.price),
         quantity: item.quantity,
-        unit_price: Number(item.price),
-        price: Number(item.price) * item.quantity
+        preparationStation: item.preparationStation || 'Chef'
       }));
 
-      const { error: itemsErr } = await supabase
-        .from('order_items')
-        .insert(itemInserts);
+      // Call OrderService.createOrder which handles active order merging intelligently
+      const orderData = await OrderService.createOrder({
+        tenantId: tenant.id,
+        tableId: table?.id || null,
+        tableNumber: tableNumber || table?.number || null,
+        customerName: `${customerName.trim()} (QR${tableNumber ? ' Table ' + tableNumber : ''})`,
+        totalAmount: cartTotal,
+        items: formattedItems
+      });
 
-      if (itemsErr) throw itemsErr;
-
-      // 3. Post Notification to restaurant staff
+      // Post Notification to restaurant staff
       const tableLabel = tableNumber ? `Table ${tableNumber}` : 'QR Mobile';
       await NotificationService.createNotification({
         tenantId: tenant.id,
