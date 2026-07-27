@@ -1,5 +1,4 @@
-import React from 'react';
-import { cn } from '../../../lib/utils';
+import { cn, stripRoleFromDisplayName } from '../../../lib/utils';
 
 export interface DetailedReceiptProps {
   receipt?: any;
@@ -120,7 +119,8 @@ export const DetailedReceipt: React.FC<DetailedReceiptProps> = ({
   const tableNum = rawTable ? `T-${rawTable}` : 'Dine In';
   const orderType = order?.type || (rawTable ? 'Dine In' : 'Takeaway');
   
-  const waiterName = order?.waiterName || order?.waiter?.name || order?.users?.name || 'Staff';
+  const rawWaiterName = order?.waiterName || order?.waiter?.name || order?.users?.name || 'Staff';
+  const waiterName = stripRoleFromDisplayName(rawWaiterName);
   const cashierName = receipt?.cashierName || receipt?.cashier?.name || 'Abdallah';
   const receiptNo = getSafeString(receipt?.receiptNumber || receipt?.receipt_number);
 

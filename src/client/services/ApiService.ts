@@ -4,6 +4,7 @@
 import { supabase } from '../../lib/supabase';
 import { CURRENCY_CONFIGS } from './CurrencyService';
 import { getEmojiForIconId } from '../lib/icon-library';
+import { formatDisplayName } from '../lib/utils';
 
 // ─── Helper: map snake_case DB rows to camelCase frontend shapes ───
 const mapCategory = (row: any) => ({
@@ -36,7 +37,7 @@ const mapTable = (row: any) => ({
   status: row.status ?? 'AVAILABLE',
   waiterId: row.waiter_id,
   guestCount: row.guest_count ?? 0,
-  waiter: row.users ? { id: row.users.id, name: `${row.users.first_name} ${row.users.last_name}`, email: row.users.email } : null,
+  waiter: row.users ? { id: row.users.id, name: formatDisplayName(row.users.first_name, row.users.last_name), email: row.users.email } : null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -71,7 +72,7 @@ const mapOrder = (row: any) => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at || row.created_at,
   table: row.tables ? { number: row.tables.number } : { number: 'N/A' },
-  waiterName: row.users ? `${row.users.first_name} ${row.users.last_name}` : 'Unassigned',
+  waiterName: row.users ? formatDisplayName(row.users.first_name, row.users.last_name) : 'Unassigned',
   items: (row.order_items || []).map(mapOrderItem),
   cancellationReason: row.cancellation_reason,
   cancelledBy: row.cancelled_by,
@@ -80,7 +81,7 @@ const mapOrder = (row: any) => ({
 
 const mapUser = (row: any) => ({
   id: row.id,
-  name: `${row.first_name} ${row.last_name}`,
+  name: formatDisplayName(row.first_name, row.last_name),
   email: row.email,
   role: row.role,
   section: row.preparation_station || '',
@@ -1108,7 +1109,7 @@ const mapReceipt = (row: any) => ({
   status: row.payment_status,
   createdAt: row.created_at,
   currency: row.currency || 'ETB',
-  cashierName: row.cashier ? `${row.cashier.first_name} ${row.cashier.last_name}` : 'Unknown',
+  cashierName: row.cashier ? formatDisplayName(row.cashier.first_name, row.cashier.last_name) : 'Unknown',
   amountReceived: Number(row.amount_received || row.total_amount),
   changeAmount: Number(row.change_amount || 0),
   notes: row.notes || null,
@@ -1117,7 +1118,7 @@ const mapReceipt = (row: any) => ({
     orderNumber: formatOrderNumber(row.orders.order_number),
     tableNumber: row.orders.tables?.number,
     customerName: row.orders.customer_name || 'Walk-in',
-    waiterName: row.orders.users ? `${row.orders.users.first_name} ${row.orders.users.last_name}` : 'Unknown',
+    waiterName: row.orders.users ? formatDisplayName(row.orders.users.first_name, row.orders.users.last_name) : 'Unknown',
     items: (row.orders.order_items || []).map(mapOrderItem)
   } : null
 });
@@ -1354,7 +1355,7 @@ export const SuperAdminService = {
       orderNumber: r.orders?.order_number || 'N/A',
       tableNumber: r.orders?.table_number ? `Table ${r.orders.table_number}` : 'N/A',
       customerName: r.orders?.customer_name || 'Walk-in',
-      cashierName: r.cashier ? `${r.cashier.first_name} ${r.cashier.last_name}` : 'Staff',
+      cashierName: r.cashier ? formatDisplayName(r.cashier.first_name, r.cashier.last_name) : 'Staff',
       paymentMethod: r.payment_method,
       totalAmount: Number(r.total_amount),
       status: r.payment_status || 'PAID',
@@ -1773,7 +1774,7 @@ export const ActivityLogService = {
       entity: log.entity,
       entityId: log.entity_id,
       details: log.details,
-      userName: log.users ? `${log.users.first_name} ${log.users.last_name}` : 'System',
+      userName: log.users ? formatDisplayName(log.users.first_name, log.users.last_name) : 'System',
       createdAt: log.created_at,
     }));
   }
@@ -1805,7 +1806,7 @@ export const SystemHealthService = {
       id: log.id,
       action: log.action,
       entity: log.entity,
-      userName: log.users ? `${log.users.first_name} ${log.users.last_name}` : 'System',
+      userName: log.users ? formatDisplayName(log.users.first_name, log.users.last_name) : 'System',
       role: log.users?.role || 'SYSTEM',
       createdAt: log.created_at,
     }));

@@ -14,7 +14,7 @@ import {
   Download
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
-import { cn } from '../../../lib/utils';
+import { cn, stripRoleFromDisplayName } from '../../../lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase';
 import { OrderService, SettingService } from '../../services/ApiService';
@@ -127,7 +127,7 @@ export const MyOrders = () => {
         receiptNumber: orderReceipt.receipt_number,
         orderNumber: selectedOrder.orderNumber,
         tableNumber: selectedOrder.table?.number || 'N/A',
-        waiterName: selectedOrder.waiterName || user?.email?.split('@')[0],
+        waiterName: stripRoleFromDisplayName(selectedOrder.waiterName || user?.email?.split('@')[0]),
         restaurantName: settings?.receiptHeaderName || tenant?.name,
         restaurantAddress: settings?.receiptAddressLocation || tenant?.address,
         restaurantPhone: settings?.receiptHeaderPhone || tenant?.phone,
@@ -395,7 +395,7 @@ export const MyOrders = () => {
                 </div>
                 <div className="space-y-1">
                    <span>Assigned Waiter</span>
-                   <p className="text-sm font-black lg:text-[#0B1630] text-white">{selectedOrder.waiterName || 'Unassigned'}</p>
+                    <p className="text-sm font-black lg:text-[#0B1630] text-white">{stripRoleFromDisplayName(selectedOrder.waiterName || 'Unassigned')}</p>
                 </div>
              </div>
 

@@ -12,7 +12,7 @@ import {
   ChefHat 
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { cn } from '../../lib/utils';
+import { cn, formatDisplayName, stripRoleFromDisplayName } from '../../lib/utils';
 
 export const UserProfileHeaderSection = () => {
   const { user, role, signOut } = useAuth();
@@ -24,10 +24,11 @@ export const UserProfileHeaderSection = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const fullName = user?.user_metadata?.full_name 
+  const rawFullName = user?.user_metadata?.full_name 
     || (user?.user_metadata?.first_name 
-      ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`
+      ? formatDisplayName(user.user_metadata.first_name, user.user_metadata.last_name)
       : user?.email?.split('@')[0] || 'User');
+  const fullName = stripRoleFromDisplayName(rawFullName);
   const email = user?.email || '';
   const displayRole = role === 'KITCHEN_STAFF' ? 'KITCHEN' : (role || '');
   const avatarChar = fullName.trim().charAt(0).toUpperCase();

@@ -17,7 +17,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
-import { cn } from '../../../lib/utils';
+import { cn, formatDisplayName, stripRoleFromDisplayName } from '../../../lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MenuService, OrderService, TableService, ActivityLogService, SettingService } from '../../services/ApiService';
 import { DetailedReceipt } from '../../components/layout/DetailedReceipt';
@@ -68,6 +68,9 @@ export const WaiterPOS = () => {
   const [paperWidth, setPaperWidth] = useState<'58mm' | '80mm'>('80mm');
   const [activeMobileTab, setActiveMobileTab] = useState<'menu' | 'cart'>('menu');
 
+  // Customer Count State & Sync
+  const [customerCount, setCustomerCount] = useState<number>(1);
+
   useEffect(() => {
     if (tableId) {
       setSelectedTable(tableId);
@@ -114,6 +117,33 @@ export const WaiterPOS = () => {
       return data;
     },
     enabled: !!selectedTable
+  });
+
+  // Sync customer count when selected table changes or tables update
+  useEffect(() => {
+    if (selectedTable) {
+      const tableObj = tables.find((t: any) => t.id === selectedTable);
+      if (tableObj) {
+        const count = tableObj.guestCount && tableObj.guestCount >= 1 ? tableObj.guestCount : 1;
+        setCustomerCount(count);
+      }
+    } else {
+      setCustomerCount(1);
+    }
+  }, [selectedTable, tables]);
+
+  // Mutation to update table guest_count
+  const updateGuestCountMutation = useMutation({
+    mutationFn: async ({ tableId, guestCount }: { tableId: string; guestCount: number }) => {
+      if (!tableId) return;
+      return TableService.updateTable(tableId, { guestCount });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables', tenant?.id] });
+    },
+    onError: () => {
+      toast.error('Update failed', 'Could not update customer count.');
+    }
   });
 
   // Handle Assigned Mode warning
@@ -346,7 +376,7 @@ export const WaiterPOS = () => {
       exportReceiptPdf({
         receiptNumber: settledReceipt.receipt_number,
         tableNumber: tables.find((t: any) => t.id === activeOrder?.table_id)?.number || 'N/A',
-        waiterName: user?.email ? user.email.split('@')[0] : 'Waiter',
+        waiterName: user?.user_metadata?.first_name ? formatDisplayName(user.user_metadata.first_name, user.user_metadata.last_name) : (user?.email ? stripRoleFromDisplayName(user.email.split('@')[0]) : 'Staff'),
         restaurantName: settings?.receiptHeaderName || tenant?.name,
         restaurantAddress: settings?.receiptAddressLocation || tenant?.address,
         restaurantPhone: settings?.receiptHeaderPhone || tenant?.phone,
@@ -498,14 +528,47 @@ export const WaiterPOS = () => {
                  </select>
               </div>
               <div className="flex items-center gap-2 bg-white px-3 py-1.5 lg:py-2 rounded-xl border border-slate-200">
-                 <Users size={14} className="text-[#94A3B8]" />
-                 <span className="text-xs font-bold text-[#0B1630]">
-                   {(() => {
-                     const tableObj = tables.find((t: any) => t.id === selectedTable);
-                     return `${tableObj?.guestCount || 0} GUESTS`;
-                   })()}
-                 </span>
-              </div>
+                  <Users size={14} className="text-[#94A3B8] shrink-0" />
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      disabled={!selectedTable}
+                      value={customerCount}
+                      onKeyDown={(e) => {
+                        if (['.', '-', 'e', 'E', '+'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === '') {
+                          setCustomerCount('' as any);
+                        } else {
+                          const parsed = parseInt(raw.replace(/[^0-9]/g, ''), 10);
+                          const validVal = isNaN(parsed) || parsed < 1 ? 1 : parsed;
+                          setCustomerCount(validVal);
+                          if (selectedTable) {
+                            updateGuestCountMutation.mutate({ tableId: selectedTable, guestCount: validVal });
+                          }
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!customerCount || Number(customerCount) < 1) {
+                          setCustomerCount(1);
+                          if (selectedTable) {
+                            updateGuestCountMutation.mutate({ tableId: selectedTable, guestCount: 1 });
+                          }
+                        }
+                      }}
+                      className="w-10 text-xs font-bold text-[#0B1630] outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <span className="text-[10px] font-bold text-[#94A3B8] uppercase">
+                      {Number(customerCount) === 1 ? 'CUST' : 'CUSTS'}
+                    </span>
+                  </div>
+               </div>
            </div>
         </div>
 
@@ -708,7 +771,7 @@ export const WaiterPOS = () => {
                       ...activeOrder,
                       tableNumber: tables.find((t: any) => t.id === selectedTable)?.number,
                       items: activeOrder?.items || cart,
-                      waiterName: user?.user_metadata?.first_name ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim() : (user?.email ? user.email.split('@')[0] : 'Staff')
+                      waiterName: user?.user_metadata?.first_name ? formatDisplayName(user.user_metadata.first_name, user.user_metadata.last_name) : (user?.email ? stripRoleFromDisplayName(user.email.split('@')[0]) : 'Staff')
                     }}
                     tenant={tenant}
                     settings={settings}
@@ -903,7 +966,7 @@ export const WaiterPOS = () => {
                       ...(settledOrderData || activeOrder),
                       tableNumber: tables.find((t: any) => t.id === (settledOrderData?.table_id || selectedTable))?.number || settledOrderData?.tables?.number,
                       items: settledOrderData?.order_items || activeOrder?.items || cart,
-                      waiterName: user?.user_metadata?.first_name ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim() : (user?.email ? user.email.split('@')[0] : 'Staff')
+                      waiterName: user?.user_metadata?.first_name ? formatDisplayName(user.user_metadata.first_name, user.user_metadata.last_name) : (user?.email ? stripRoleFromDisplayName(user.email.split('@')[0]) : 'Staff')
                     }}
                    tenant={tenant}
                    settings={settings}

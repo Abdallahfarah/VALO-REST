@@ -96,11 +96,22 @@ const TableRow = memo(({ table, waiters, onEdit, onDelete, onAssignWaiter, onUpd
           <Users size={14} className="text-[#94A3B8]" />
           <input
             type="number"
-            min="0"
+            min="1"
+            step="1"
             max={table.capacity}
-            value={table.guestCount || 0}
-            onChange={(e) => onUpdateGuestCount(table.id, Math.min(Number(e.target.value), table.capacity))}
-            className="w-14 h-8 text-center text-xs font-bold text-[#0B1630] bg-slate-50 border border-slate-100 rounded-lg focus:outline-none focus:border-[#F97316]"
+            value={table.guestCount && table.guestCount >= 1 ? table.guestCount : 1}
+            onKeyDown={(e) => {
+              if (['.', '-', 'e', 'E', '+'].includes(e.key)) {
+                e.preventDefault();
+              }
+            }}
+            onChange={(e) => {
+              const val = e.target.value;
+              const parsed = parseInt(val.replace(/[^0-9]/g, ''), 10);
+              const count = isNaN(parsed) || parsed < 1 ? 1 : Math.min(parsed, table.capacity || 100);
+              onUpdateGuestCount(table.id, count);
+            }}
+            className="w-14 h-8 text-center text-xs font-bold text-[#0B1630] bg-slate-50 border border-slate-100 rounded-lg focus:outline-none focus:border-[#F97316] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           <span className="text-[10px] text-[#94A3B8] font-medium">/ {table.capacity}</span>
         </div>
