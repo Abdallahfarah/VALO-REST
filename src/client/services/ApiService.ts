@@ -1307,6 +1307,268 @@ export const SuperAdminService = {
     }).sort((a: any, b: any) => b.grossRevenue - a.grossRevenue);
   },
 
+  async getPlatformAnalytics(filters: {
+    tenantId?: string;
+    dateRange?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const now = new Date();
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+
+    if (filters.dateRange === 'TODAY') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    } else if (filters.dateRange === 'YESTERDAY') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999);
+    } else if (filters.dateRange === 'THIS_WEEK' || filters.dateRange === 'LAST_7_DAYS') {
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      endDate = now;
+    } else if (filters.dateRange === 'LAST_30_DAYS') {
+      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      endDate = now;
+    } else if (filters.dateRange === 'THIS_MONTH') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = now;
+    } else if (filters.dateRange === 'LAST_MONTH') {
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    } else if (filters.dateRange === 'THIS_YEAR') {
+      startDate = new Date(now.getFullYear(), 0, 1);
+      endDate = now;
+    } else if (filters.dateRange === 'CUSTOM' && (filters.startDate || filters.endDate)) {
+      if (filters.startDate) startDate = new Date(filters.startDate);
+      if (filters.endDate) endDate = new Date(filters.endDate);
+    }
+
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+    const [
+      { data: tenantsRaw },
+      { data: usersRaw },
+      { data: ordersRaw },
+      { data: receiptsRaw },
+      { data: subsRaw }
+    ] = await Promise.all([
+      supabase.from('tenants').select('id, name, slug, logo, is_active, created_at'),
+      supabase.from('users').select('id, tenant_id, first_name, last_name, role, preparation_station, is_active, created_at'),
+      supabase.from('orders').select('id, tenant_id, status, total_amount, order_number, created_at'),
+      supabase.from('receipts').select('*, tenants(name, slug), orders(order_number, table_number, customer_name, waiter_id), cashier:users!receipts_cashier_id_fkey(first_name, last_name, email)').order('created_at', { ascending: false }),
+      supabase.from('subscriptions').select('id, tenant_id, status, plan_id, created_at, plans(name, price)')
+    ]);
+
+    const tenantFilterId = filters.tenantId && filters.tenantId !== 'ALL' ? filters.tenantId : null;
+
+    const tenants = (tenantsRaw || []).filter(t => !tenantFilterId || t.id === tenantFilterId);
+    const tenantIds = new Set(tenants.map(t => t.id));
+
+    const users = (usersRaw || []).filter(u => !tenantFilterId || (u.tenant_id && tenantIds.has(u.tenant_id)));
+    const allOrders = (ordersRaw || []).filter(o => !tenantFilterId || (o.tenant_id && tenantIds.has(o.tenant_id)));
+    const allReceipts = (receiptsRaw || []).filter(r => !tenantFilterId || (r.tenant_id && tenantIds.has(r.tenant_id)));
+    const allSubs = (subsRaw || []).filter(s => !tenantFilterId || (s.tenant_id && tenantIds.has(s.tenant_id)));
+
+    const inDateRange = (isoStr: string | null | undefined) => {
+      if (!isoStr) return false;
+      const d = new Date(isoStr);
+      if (startDate && d < startDate) return false;
+      if (endDate && d > endDate) return false;
+      return true;
+    };
+
+    const rangeOrders = startDate || endDate ? allOrders.filter(o => inDateRange(o.created_at)) : allOrders;
+    const rangeReceipts = startDate || endDate ? allReceipts.filter(r => inDateRange(r.created_at)) : allReceipts;
+
+    const totalRestaurants = tenants.length;
+    const activeRestaurants = tenants.filter(t => t.is_active).length;
+    const inactiveRestaurants = tenants.filter(t => !t.is_active).length;
+    
+    const trialTenantIds = new Set(
+      allSubs.filter(s => s.status === 'TRIAL').map(s => s.tenant_id)
+    );
+    const trialRestaurants = tenants.filter(t => 
+      trialTenantIds.has(t.id) || 
+      (t.created_at && (now.getTime() - new Date(t.created_at).getTime() < 14 * 24 * 60 * 60 * 1000))
+    ).length;
+
+    const totalOrders = rangeOrders.length;
+    const ordersToday = allOrders.filter(o => o.created_at && o.created_at >= startOfToday).length;
+    const ordersThisMonth = allOrders.filter(o => o.created_at && o.created_at >= startOfMonth).length;
+
+    const validReceipts = rangeReceipts.filter(r => r.payment_status !== 'REFUNDED');
+    const totalRevenue = validReceipts.reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
+    const platformShareCut = totalRevenue * 0.15;
+    const avgOrderValue = validReceipts.length > 0 ? totalRevenue / validReceipts.length : 0;
+
+    const todayReceipts = allReceipts.filter(r => r.payment_status !== 'REFUNDED' && r.created_at && r.created_at >= startOfToday);
+    const revenueToday = todayReceipts.reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
+
+    const monthReceipts = allReceipts.filter(r => r.payment_status !== 'REFUNDED' && r.created_at && r.created_at >= startOfMonth);
+    const revenueThisMonth = monthReceipts.reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
+
+    const totalUsers = users.length;
+    let totalAdmins = 0;
+    let totalWaiters = 0;
+    let totalCashiers = 0;
+    let totalKitchenStaff = 0;
+    let totalBaristas = 0;
+
+    users.forEach(u => {
+      const roleUpper = (u.role || '').toUpperCase();
+      if (roleUpper === 'ADMIN' || roleUpper === 'SUPER_ADMIN') {
+        totalAdmins++;
+      } else if (roleUpper === 'WAITER') {
+        totalWaiters++;
+      } else if (roleUpper === 'CASHIER') {
+        totalCashiers++;
+      } else if (roleUpper === 'KITCHEN_STAFF') {
+        if (u.preparation_station && ['Bar', 'Coffee', 'Beverages'].includes(u.preparation_station)) {
+          totalBaristas++;
+        } else {
+          totalKitchenStaff++;
+        }
+      }
+    });
+
+    const tenantMetricsMap = new Map<string, { id: string; name: string; slug: string; logo: string | null; isActive: boolean; ordersCount: number; grossRevenue: number; platformCut: number; createdAt: string }>();
+
+    tenants.forEach(t => {
+      tenantMetricsMap.set(t.id, {
+        id: t.id,
+        name: t.name || 'Unnamed Node',
+        slug: t.slug || t.id.slice(0, 8),
+        logo: t.logo || null,
+        isActive: !!t.is_active,
+        ordersCount: 0,
+        grossRevenue: 0,
+        platformCut: 0,
+        createdAt: t.created_at || new Date().toISOString()
+      });
+    });
+
+    rangeOrders.forEach(o => {
+      if (o.tenant_id && tenantMetricsMap.has(o.tenant_id)) {
+        tenantMetricsMap.get(o.tenant_id)!.ordersCount++;
+      }
+    });
+
+    validReceipts.forEach(r => {
+      if (r.tenant_id && tenantMetricsMap.has(r.tenant_id)) {
+        const item = tenantMetricsMap.get(r.tenant_id)!;
+        item.grossRevenue += Number(r.total_amount || 0);
+        item.platformCut = item.grossRevenue * 0.15;
+      }
+    });
+
+    const tenantList = Array.from(tenantMetricsMap.values());
+
+    const topByRevenue = [...tenantList].sort((a, b) => b.grossRevenue - a.grossRevenue);
+    const topByOrders = [...tenantList].sort((a, b) => b.ordersCount - a.ordersCount);
+    const lowestActivity = [...tenantList].sort((a, b) => a.ordersCount - b.ordersCount);
+    const newestRestaurants = [...tenantList].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const timeBucketsMap = new Map<string, { label: string; date: string; amount: number; count: number }>();
+    const bucketCount = 7;
+    const bucketSpan = startDate && endDate ? (endDate.getTime() - startDate.getTime()) / bucketCount : 7 * 24 * 60 * 60 * 1000 / bucketCount;
+    const baseTime = startDate ? startDate.getTime() : now.getTime() - 7 * 24 * 60 * 60 * 1000;
+
+    for (let i = 0; i < bucketCount; i++) {
+      const bucketDate = new Date(baseTime + i * bucketSpan);
+      const key = bucketDate.toISOString().slice(0, 10);
+      const label = bucketDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      timeBucketsMap.set(key, { label, date: key, amount: 0, count: 0 });
+    }
+
+    validReceipts.forEach(r => {
+      if (!r.created_at) return;
+      const key = new Date(r.created_at).toISOString().slice(0, 10);
+      if (timeBucketsMap.has(key)) {
+        const b = timeBucketsMap.get(key)!;
+        b.amount += Number(r.total_amount || 0);
+      }
+    });
+
+    rangeOrders.forEach(o => {
+      if (!o.created_at) return;
+      const key = new Date(o.created_at).toISOString().slice(0, 10);
+      if (timeBucketsMap.has(key)) {
+        const b = timeBucketsMap.get(key)!;
+        b.count++;
+      }
+    });
+
+    const timeBuckets = Array.from(timeBucketsMap.values());
+    const revenueOverTime = timeBuckets.map(b => ({ label: b.label, date: b.date, amount: b.amount }));
+    const ordersOverTime = timeBuckets.map(b => ({ label: b.label, date: b.date, count: b.count }));
+
+    const restaurantGrowth = newestRestaurants.slice(0, 7).map(t => ({
+      label: new Date(t.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      date: t.createdAt,
+      count: 1
+    }));
+
+    const roleDistribution = [
+      { role: 'Waiters', count: totalWaiters, color: '#3B82F6' },
+      { role: 'Cashiers', count: totalCashiers, color: '#10B981' },
+      { role: 'Kitchen Staff', count: totalKitchenStaff, color: '#F59E0B' },
+      { role: 'Baristas', count: totalBaristas, color: '#8B5CF6' },
+      { role: 'Restaurant Admins', count: totalAdmins, color: '#EC4899' },
+    ];
+
+    const transactions = (rangeReceipts || []).map((r: any) => ({
+      id: r.id,
+      receiptNumber: r.receipt_number,
+      tenantId: r.tenant_id,
+      restaurantName: r.tenants?.name || 'Unknown Restaurant',
+      orderNumber: r.orders?.order_number ? formatOrderNumber(r.orders.order_number) : 'N/A',
+      tableNumber: r.orders?.table_number ? `Table ${r.orders.table_number}` : 'N/A',
+      customerName: r.orders?.customer_name || 'Walk-in',
+      cashierName: r.cashier ? formatDisplayName(r.cashier.first_name, r.cashier.last_name) : 'Staff',
+      paymentMethod: r.payment_method,
+      totalAmount: Number(r.total_amount),
+      status: r.payment_status || 'PAID',
+      createdAt: r.created_at
+    }));
+
+    return {
+      summary: {
+        totalRestaurants,
+        activeRestaurants,
+        inactiveRestaurants,
+        trialRestaurants,
+        totalOrders,
+        ordersToday,
+        ordersThisMonth,
+        totalRevenue,
+        revenueToday,
+        revenueThisMonth,
+        platformShareCut,
+        avgOrderValue,
+        totalUsers,
+        totalAdmins,
+        totalWaiters,
+        totalCashiers,
+        totalKitchenStaff,
+        totalBaristas,
+      },
+      leaderboards: {
+        topByRevenue,
+        topByOrders,
+        lowestActivity,
+        newestRestaurants,
+      },
+      charts: {
+        revenueOverTime,
+        ordersOverTime,
+        restaurantGrowth,
+        roleDistribution,
+      },
+      transactions
+    };
+  },
+
   async getPlatformReports(filters: {
     tenantId?: string;
     dateRange?: string;
@@ -1331,8 +1593,8 @@ export const SuperAdminService = {
         start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       } else if (filters.dateRange === 'YESTERDAY') {
         start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-      } else if (filters.dateRange === 'THIS_WEEK') {
-        start = new Date(now.setDate(now.getDate() - now.getDay()));
+      } else if (filters.dateRange === 'THIS_WEEK' || filters.dateRange === 'LAST_7_DAYS') {
+        start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       } else if (filters.dateRange === 'THIS_MONTH') {
         start = new Date(now.getFullYear(), now.getMonth(), 1);
       } else if (filters.dateRange === 'THIS_YEAR') {
