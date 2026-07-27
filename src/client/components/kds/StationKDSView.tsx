@@ -86,6 +86,12 @@ export const StationKDSView = ({
     return 'PENDING';
   };
 
+  const pendingOrders = filteredOrders
+    .filter(o => getStationStatus(o.items) === 'PENDING')
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  const otherOrders = filteredOrders.filter(o => getStationStatus(o.items) !== 'PENDING');
+  const sortedDisplayOrders = [...pendingOrders, ...otherOrders];
+
   const handleAction = (orderId: string, items: any[]) => {
     const currentStatus = getStationStatus(items);
     let nextStatus = '';
@@ -102,7 +108,7 @@ export const StationKDSView = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {filteredOrders.map((order: any) => {
+      {sortedDisplayOrders.map((order: any) => {
         const elapsed = getElapsedMinutes(order.createdAt);
         const stationStatus = getStationStatus(order.items);
         const statusLabel = stationStatus === 'PENDING' ? 'New' : stationStatus === 'PREPARING' ? 'Cooking' : 'Ready';

@@ -363,6 +363,10 @@ const ViewAllOrdersDialog = ({
     return { ...o, stationItems };
   }).filter((o) => o.stationItems.length > 0 && getStationOrderStatus(o) === status);
 
+  if (status === 'PENDING') {
+    filtered.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  }
+
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-[#070913]/95 border border-[#232B5E]/30 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -477,6 +481,13 @@ export const OrdersMonitor = () => {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders', filter: `tenant_id=eq.${tenant.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['orders', tenant.id] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_items' },
         () => {
           queryClient.invalidateQueries({ queryKey: ['orders', tenant.id] });
         }
@@ -672,7 +683,9 @@ export const OrdersMonitor = () => {
       count: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'PENDING').length,
       color: 'border-indigo-500',
       accentColor: 'text-indigo-400',
-      orders: filteredOrdersForStation.filter((o: any) => getStationOrderStatus(o) === 'PENDING')
+      orders: filteredOrdersForStation
+        .filter((o: any) => getStationOrderStatus(o) === 'PENDING')
+        .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
     },
     {
       title: 'PREPARING',

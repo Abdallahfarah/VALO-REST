@@ -68,11 +68,8 @@ export const Settings = () => {
 
   const [receiptForm, setReceiptForm] = useState({
     receiptHeaderName: '',
-    receiptHeaderAddress: '',
-    receiptHeaderCity: '',
+    receiptAddressLocation: '',
     receiptHeaderPhone: '',
-    receiptHeaderEmail: '',
-
     businessRegNumber: '',
     receiptFooter: 'Thank you for dining with us!',
     logoEnabled: true,
@@ -119,10 +116,8 @@ export const Settings = () => {
       });
       setReceiptForm({
         receiptHeaderName: settings.receiptHeaderName || '',
-        receiptHeaderAddress: settings.receiptHeaderAddress || '',
-        receiptHeaderCity: settings.receiptHeaderCity || '',
+        receiptAddressLocation: settings.receiptAddressLocation || '',
         receiptHeaderPhone: settings.receiptHeaderPhone || '',
-        receiptHeaderEmail: settings.receiptHeaderEmail || '',
 
         businessRegNumber: settings.businessRegNumber || '',
         receiptFooter: settings.receiptFooter || 'Thank you for dining with us!',
@@ -251,10 +246,8 @@ export const Settings = () => {
       receiptFooter: receiptForm.receiptFooter,
       logoUrl: receiptForm.logoEnabled ? 'enabled' : 'disabled',
       receiptHeaderName: receiptForm.receiptHeaderName,
-      receiptHeaderAddress: receiptForm.receiptHeaderAddress,
-      receiptHeaderCity: receiptForm.receiptHeaderCity,
+      receiptAddressLocation: receiptForm.receiptAddressLocation,
       receiptHeaderPhone: receiptForm.receiptHeaderPhone,
-      receiptHeaderEmail: receiptForm.receiptHeaderEmail,
       businessRegNumber: receiptForm.businessRegNumber,
     });
   };
@@ -684,10 +677,8 @@ export const Settings = () => {
                       if (settings) {
                         setReceiptForm({
                           receiptHeaderName: settings.receiptHeaderName || '',
-                          receiptHeaderAddress: settings.receiptHeaderAddress || '',
-                          receiptHeaderCity: settings.receiptHeaderCity || '',
+                          receiptAddressLocation: settings.receiptAddressLocation || '',
                           receiptHeaderPhone: settings.receiptHeaderPhone || '',
-                          receiptHeaderEmail: settings.receiptHeaderEmail || '',
                           businessRegNumber: settings.businessRegNumber || '',
                           receiptFooter: settings.receiptFooter || 'Thank you for dining with us!',
                           logoEnabled: settings.logoUrl !== 'disabled',
@@ -725,36 +716,19 @@ export const Settings = () => {
                     </div>
                   </div>
 
-                  {/* Address */}
-                  <div className="flex items-start gap-4">
+                  {/* Restaurant Address / Location */}
+                  <div className="flex items-start gap-4 col-span-1 md:col-span-2">
                     <div className="flex-1">
-                      <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">Address</p>
+                      <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">Restaurant Address / Location</p>
                       {isEditingReceipts ? (
                         <input 
                           type="text" 
-                          value={receiptForm.receiptHeaderAddress} 
-                          onChange={(e) => setReceiptForm({ ...receiptForm, receiptHeaderAddress: e.target.value })}
+                          value={receiptForm.receiptAddressLocation} 
+                          onChange={(e) => setReceiptForm({ ...receiptForm, receiptAddressLocation: e.target.value })}
                           className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#F97316] font-bold text-[#0B1630]" 
                         />
                       ) : (
-                        <p className="text-sm font-medium text-[#64748B]">{receiptForm.receiptHeaderAddress || <span className="italic text-slate-400">Uses Main Profile Address</span>}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* City */}
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1">
-                      <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">City</p>
-                      {isEditingReceipts ? (
-                        <input 
-                          type="text" 
-                          value={receiptForm.receiptHeaderCity} 
-                          onChange={(e) => setReceiptForm({ ...receiptForm, receiptHeaderCity: e.target.value })}
-                          className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#F97316] font-bold text-[#0B1630]" 
-                        />
-                      ) : (
-                        <p className="text-sm font-medium text-[#64748B]">{receiptForm.receiptHeaderCity || <span className="italic text-slate-400">Not set</span>}</p>
+                        <p className="text-sm font-medium text-[#64748B]">{receiptForm.receiptAddressLocation || <span className="italic text-slate-400">Not set</span>}</p>
                       )}
                     </div>
                   </div>
@@ -772,23 +746,6 @@ export const Settings = () => {
                         />
                       ) : (
                         <p className="text-sm font-medium text-[#64748B]">{receiptForm.receiptHeaderPhone || <span className="italic text-slate-400">Uses Main Profile Phone</span>}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1">
-                      <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">Email Address</p>
-                      {isEditingReceipts ? (
-                        <input 
-                          type="text" 
-                          value={receiptForm.receiptHeaderEmail} 
-                          onChange={(e) => setReceiptForm({ ...receiptForm, receiptHeaderEmail: e.target.value })}
-                          className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#F97316] font-bold text-[#0B1630]" 
-                        />
-                      ) : (
-                        <p className="text-sm font-medium text-[#64748B]">{receiptForm.receiptHeaderEmail || <span className="italic text-slate-400">Uses Main Profile Email</span>}</p>
                       )}
                     </div>
                   </div>

@@ -78,7 +78,13 @@ export const AdminKDSDashboard = ({ kitchenOrders }: { kitchenOrders: any[] }) =
           <CheckCircle2 size={18} className="text-emerald-500" /> Master Queue (All Stations)
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {kitchenOrders.map((order: any) => {
+          {(() => {
+            const pendingOrders = kitchenOrders
+              .filter((o: any) => o.status === 'PENDING')
+              .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+            const otherOrders = kitchenOrders.filter((o: any) => o.status !== 'PENDING');
+            return [...pendingOrders, ...otherOrders];
+          })().map((order: any) => {
             const elapsed = getElapsedMinutes(order.createdAt);
             const statusLabel = order.status === 'PENDING' ? 'New' : order.status === 'PREPARING' ? 'Cooking' : 'Ready';
             const statusColor = order.status === 'READY' ? 'text-emerald-600 bg-emerald-50' : 'text-orange-600 bg-orange-50';

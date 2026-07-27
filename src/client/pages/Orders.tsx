@@ -150,6 +150,10 @@ export const Orders = () => {
     return matchesTab && matchesSearch;
   });
 
+  if (activeTab === 'Pending') {
+    filteredOrders.sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  }
+
   // Auto-select first order
   useEffect(() => {
     if (filteredOrders.length > 0 && (!selectedOrder || !filteredOrders.find((o: any) => o.id === selectedOrder?.id))) {
