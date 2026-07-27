@@ -306,13 +306,13 @@ export const CustomerQRMenu = () => {
         preparationStation: item.preparationStation || 'Chef'
       }));
 
-      // Call OrderService.createOrder which handles active order merging intelligently
-      const orderData = await OrderService.createOrder({
+      // Call OrderService.createQrOrder (Server Endpoint / Edge Function / Security Definer RPC)
+      const orderData = await OrderService.createQrOrder({
         tenantId: tenant.id,
         tableId: table?.id || null,
         tableNumber: tableNumber || table?.number || null,
-        customerName: `${customerName.trim()} (QR${tableNumber ? ' Table ' + tableNumber : ''})`,
-        totalAmount: cartTotal,
+        customerName: customerName.trim(),
+        paymentMethod,
         items: formattedItems
       });
 

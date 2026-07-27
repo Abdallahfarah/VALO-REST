@@ -107,6 +107,44 @@ export const OrderService = {
     return (data || []).map(mapOrder);
   },
 
+  async createQrOrder(payload: {
+    tenantId: string;
+    tableId?: string | null;
+    tableNumber?: string | null;
+    customerName: string;
+    items: Array<{ id: string; name?: string; price: number; quantity: number; preparationStation?: string }>;
+    paymentMethod?: string;
+  }) {
+    // 1. Attempt Edge Function call first
+    try {
+      const { data, error } = await supabase.functions.invoke('create-qr-order', {
+        body: payload,
+      });
+
+      if (!error && data && data.success && data.order) {
+        return data.order;
+      }
+      if (error && data?.error) {
+        throw new Error(data.error);
+      }
+    } catch (edgeErr: any) {
+      if (edgeErr.message && !edgeErr.message.includes('FunctionsFetchError') && !edgeErr.message.includes('Failed to send')) {
+        throw edgeErr;
+      }
+    }
+
+    // 2. Fallback to SECURITY DEFINER Database RPC
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('create_qr_order_func', {
+      p_tenant_id: payload.tenantId,
+      p_table_id: payload.tableId || null,
+      p_customer_name: payload.customerName,
+      p_items: payload.items
+    });
+
+    if (rpcErr) throw rpcErr;
+    return rpcData;
+  },
+
   async createOrder(payload: any) {
     // 1. Parallelize initial lookups for active order and waiter assignment (if waiterId is missing)
     const [activeOrdersRes, waiterIdRes] = await Promise.all([
