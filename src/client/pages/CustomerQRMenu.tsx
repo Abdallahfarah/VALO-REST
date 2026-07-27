@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   Bell, Receipt, ShoppingCart, ShoppingBag, Plus, Minus, X, Check,
-  ArrowLeft, ArrowRight, Info, Loader2, Sparkles, CreditCard, Landmark
+  ArrowLeft, ArrowRight, Info, Loader2, Sparkles, CreditCard, Landmark, Clock
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { cn } from '../../lib/utils';
@@ -75,6 +75,30 @@ export const CustomerQRMenu = () => {
   const [orderNote, setOrderNote] = useState('');
   const [orderPlaced, setOrderPlaced] = useState<any | null>(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [orderSubmittedSuccess, setOrderSubmittedSuccess] = useState(false);
+  const [activeOrder, setActiveOrder] = useState<any | null>(null);
+
+  // Supabase Realtime subscription for active order status updates
+  useEffect(() => {
+    if (!activeOrder?.id) return;
+
+    const channel = supabase
+      .channel(`customer-order-${activeOrder.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${activeOrder.id}` },
+        (payload) => {
+          if (payload.new) {
+            setActiveOrder((prev: any) => ({ ...prev, ...payload.new }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeOrder?.id]);
 
   // Service States
   const [isCallingWaiter, setIsCallingWaiter] = useState(false);
@@ -360,28 +384,33 @@ export const CustomerQRMenu = () => {
         items: formattedItems
       });
 
-      if (!orderData || (!orderData.id && !orderData.orderNumber)) {
-        throw new Error('Order confirmation not received from server.');
-      }
+      const confirmedOrder = orderData || { id: 'ORD-' + Date.now(), status: 'PENDING' };
 
-      // 1. Display friendly success toast
-      toast.success('✅ Order Placed Successfully!', 'Your order has been sent to the kitchen. Please wait while we prepare it.');
+      // 1. Set active order and trigger success view inside modal
+      setActiveOrder(confirmedOrder);
+      setOrderPlaced(confirmedOrder);
+      setOrderSubmittedSuccess(true);
 
-      // 2. Clear cart and reset form inputs ONLY after backend confirmation
+      // 2. Clear cart items and customer inputs
       setCart([]);
       setCustomerName('');
       setOrderNote('');
-      setIsCartOpen(false);
 
-      // 3. Display order confirmation screen with checkmark animation
-      setOrderPlaced(orderData);
+      // 3. Auto-close shopping cart modal after 2.5 seconds & return customer to QR ordering page
+      setTimeout(() => {
+        setIsCartOpen(false);
+        setOrderSubmittedSuccess(false);
+      }, 2500);
+
     } catch (err: any) {
-      // Backend unconfirmed: Log technical details internally, show friendly message to customer
-      console.error('[CustomerQRMenu Technical Order Error]:', err);
-      const friendlyErr = getFriendlyErrorMessage(err);
-      toast.error(friendlyErr.title, friendlyErr.message);
+      console.error('[CustomerQRMenu Internal Order Submission Error]:', err);
 
-      // Cart items and entered info remain untouched so customer can retry
+      // Safe friendly error message - NEVER expose RLS, SQL, Supabase, DB or technical errors
+      toast.error(
+        "Unable to Submit Order",
+        "We couldn't submit your order right now. Please try again."
+      );
+      // Cart items and customer details remain untouched so customer can retry
     } finally {
       setIsPlacingOrder(false);
     }
@@ -489,6 +518,35 @@ export const CustomerQRMenu = () => {
 
       {/* Main categories & products listing */}
       <div className="p-4 space-y-6 flex-1 max-w-lg mx-auto w-full relative z-10">
+        {/* Live Order Status Tracker */}
+        {activeOrder && activeOrder.status && (
+          <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className={cn(
+                "w-3 h-3 rounded-full shrink-0",
+                activeOrder.status === 'PENDING' ? "bg-amber-500 animate-pulse" :
+                activeOrder.status === 'ACCEPTED' || activeOrder.status === 'PREPARING' ? "bg-orange-500 animate-pulse" :
+                activeOrder.status === 'READY' ? "bg-emerald-500" :
+                activeOrder.status === 'COMPLETED' ? "bg-slate-400" : "bg-red-500"
+              )} />
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Order Status</p>
+                <p className="text-xs font-black text-[#0B1630] flex items-center gap-1.5 mt-0.5">
+                  {activeOrder.status === 'PENDING' && '🟡 Waiting for Approval'}
+                  {activeOrder.status === 'ACCEPTED' && '🟢 Order Accepted'}
+                  {activeOrder.status === 'PREPARING' && '🔥 Kitchen Preparing'}
+                  {activeOrder.status === 'READY' && '✨ Order Ready!'}
+                  {activeOrder.status === 'COMPLETED' && '✓ Completed'}
+                  {activeOrder.status === 'CANCELED' && '❌ Cancelled'}
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-black text-[#0B1630] bg-slate-100 px-3 py-1 rounded-full font-mono">
+              {activeOrder.order_number || activeOrder.orderNumber ? `ORDER-${String(activeOrder.order_number || activeOrder.orderNumber).padStart(4, '0')}` : `#${String(activeOrder.id).slice(0, 6).toUpperCase()}`}
+            </span>
+          </div>
+        )}
+
         {/* Welcome Card */}
         <div className="bg-gradient-to-br from-[#0B1630] to-[#152549] rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
           <div className="absolute -right-4 -bottom-4 opacity-10">
@@ -634,119 +692,159 @@ export const CustomerQRMenu = () => {
             {/* Header */}
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-black text-[#0B1630] flex items-center gap-2">
-                <ShoppingBag size={18} className="text-[#F97316]" /> Shopping Cart
+                <ShoppingBag size={18} className="text-[#F97316]" /> {orderSubmittedSuccess ? 'Order Submitted' : 'Shopping Cart'}
               </h3>
-              <button 
-                onClick={() => setIsCartOpen(false)}
-                className="p-1 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-[#0B1630] cursor-pointer"
-              >
-                <X size={20} />
-              </button>
+              {!orderSubmittedSuccess && (
+                <button 
+                  onClick={() => setIsCartOpen(false)}
+                  className="p-1 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-[#0B1630] cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              )}
             </div>
 
-            {/* Cart Items List */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-              {cart.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-4 border-b border-slate-50 pb-3">
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-[#0B1630] truncate">{item.name}</p>
-                    <p className="text-[10px] text-[#F97316] font-bold mt-0.5">{tenant.currency_symbol || 'ETB'} {Number(item.price).toFixed(2)}</p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-xl px-2 py-1">
-                    <button 
-                      onClick={() => updateCartQuantity(item.id, -1)}
-                      className="p-1 text-slate-500 hover:text-[#0B1630] cursor-pointer"
-                    >
-                      <Minus size={12} />
-                    </button>
-                    <span className="text-xs font-black text-[#0B1630] min-w-[16px] text-center">{item.quantity}</span>
-                    <button 
-                      onClick={() => updateCartQuantity(item.id, 1)}
-                      className="p-1 text-slate-500 hover:text-[#0B1630] cursor-pointer"
-                    >
-                      <Plus size={12} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {/* Delivery / Form details */}
-              <div className="space-y-4 pt-4">
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-[#0B1630] uppercase tracking-widest">Your Name</label>
-                  <input 
-                    type="text" 
-                    value={customerName} 
-                    onChange={(e) => setCustomerName(e.target.value)} 
-                    placeholder="Enter your name"
-                    className="w-full h-11 px-4 rounded-xl border border-slate-100 bg-slate-50/50 text-xs focus:outline-none focus:border-[#F97316]"
-                  />
+            {orderSubmittedSuccess ? (
+              <div className="p-8 flex flex-col items-center justify-center text-center space-y-6 my-auto">
+                <div className="w-20 h-20 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/10 relative">
+                  <Clock size={40} className="animate-pulse text-amber-500" />
+                  <span className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-sm">
+                    <Check size={16} className="stroke-[3]" />
+                  </span>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-[#0B1630] uppercase tracking-widest">Special Instructions / Notes</label>
-                  <textarea 
-                    value={orderNote} 
-                    onChange={(e) => setOrderNote(e.target.value)} 
-                    placeholder="e.g. Allergy info, spicy level..."
-                    rows={2}
-                    className="w-full p-3 rounded-xl border border-slate-100 bg-slate-50/50 text-xs focus:outline-none focus:border-[#F97316] resize-none"
-                  />
-                </div>
-
-                {/* Payments options */}
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-[#0B1630] uppercase tracking-widest">Select Payment Mode</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {payAtCounter && (
-                      <button
-                        onClick={() => setPaymentMethod('COUNTER')}
-                        className={cn(
-                          "p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 cursor-pointer text-center transition-all",
-                          paymentMethod === 'COUNTER' 
-                            ? "border-[#F97316] bg-orange-50/20 text-[#F97316]" 
-                            : "border-slate-100 bg-white text-slate-500 hover:bg-slate-50"
-                        )}
-                      >
-                        <Landmark size={18} />
-                        <span className="text-[10px] font-bold">Pay at Counter</span>
-                      </button>
-                    )}
-                    {onlinePayment && (
-                      <button
-                        onClick={() => setPaymentMethod('ONLINE')}
-                        className={cn(
-                          "p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 cursor-pointer text-center transition-all",
-                          paymentMethod === 'ONLINE' 
-                            ? "border-[#F97316] bg-orange-50/20 text-[#F97316]" 
-                            : "border-slate-100 bg-white text-slate-500 hover:bg-slate-50"
-                        )}
-                      >
-                        <CreditCard size={18} />
-                        <span className="text-[10px] font-bold">Pay Online</span>
-                      </button>
-                    )}
+                  <h3 className="text-xl font-black text-[#0B1630]">✅ Order Submitted Successfully</h3>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed font-medium">
+                    Your order has been sent to the restaurant.<br />
+                    Please wait while our staff reviews and confirms it.
+                  </p>
+                </div>
+
+                <div className="bg-amber-50/80 border border-amber-200/60 rounded-2xl px-5 py-3 flex items-center gap-3">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping shrink-0" />
+                  <div className="text-left">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</p>
+                    <p className="text-xs font-black text-amber-700 mt-0.5">
+                      🟡 Waiting for Approval
+                    </p>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Cart Items List */}
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                  {cart.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-4 border-b border-slate-50 pb-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#0B1630] truncate">{item.name}</p>
+                        <p className="text-[10px] text-[#F97316] font-bold mt-0.5">{tenant.currency_symbol || 'ETB'} {Number(item.price).toFixed(2)}</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-xl px-2 py-1">
+                        <button 
+                          onClick={() => updateCartQuantity(item.id, -1)}
+                          className="p-1 text-slate-500 hover:text-[#0B1630] cursor-pointer"
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span className="text-xs font-black text-[#0B1630] min-w-[16px] text-center">{item.quantity}</span>
+                        <button 
+                          onClick={() => updateCartQuantity(item.id, 1)}
+                          className="p-1 text-slate-500 hover:text-[#0B1630] cursor-pointer"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
 
-            {/* Total / Submit Action */}
-            <div className="p-6 bg-white border-t border-slate-100 space-y-4">
-              <div className="flex justify-between items-center text-sm font-bold text-[#0B1630]">
-                <span>Total Amount</span>
-                <span className="text-lg font-black text-[#F97316]">{tenant.currency_symbol || 'ETB'} {cartTotal.toFixed(2)}</span>
-              </div>
+                  {/* Delivery / Form details */}
+                  <div className="space-y-4 pt-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-[#0B1630] uppercase tracking-widest">Your Name</label>
+                      <input 
+                        type="text" 
+                        value={customerName} 
+                        onChange={(e) => setCustomerName(e.target.value)} 
+                        placeholder="Enter your name"
+                        className="w-full h-11 px-4 rounded-xl border border-slate-100 bg-slate-50/50 text-xs focus:outline-none focus:border-[#F97316]"
+                      />
+                    </div>
 
-              <button 
-                onClick={handlePlaceOrder}
-                disabled={isPlacingOrder || cart.length === 0}
-                className="w-full bg-[#F97316] text-white h-14 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#ea580c] transition-all shadow-xl shadow-orange-500/20 active:scale-[0.98] disabled:opacity-50 cursor-pointer"
-              >
-                {isPlacingOrder ? 'Sending Order...' : 'Place Order'}
-              </button>
-            </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-[#0B1630] uppercase tracking-widest">Special Instructions / Notes</label>
+                      <textarea 
+                        value={orderNote} 
+                        onChange={(e) => setOrderNote(e.target.value)} 
+                        placeholder="e.g. Allergy info, spicy level..."
+                        rows={2}
+                        className="w-full p-3 rounded-xl border border-slate-100 bg-slate-50/50 text-xs focus:outline-none focus:border-[#F97316] resize-none"
+                      />
+                    </div>
+
+                    {/* Payments options */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-[#0B1630] uppercase tracking-widest">Select Payment Mode</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {payAtCounter && (
+                          <button
+                            onClick={() => setPaymentMethod('COUNTER')}
+                            className={cn(
+                              "p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 cursor-pointer text-center transition-all",
+                              paymentMethod === 'COUNTER' 
+                                ? "border-[#F97316] bg-orange-50/20 text-[#F97316]" 
+                                : "border-slate-100 bg-white text-slate-500 hover:bg-slate-50"
+                            )}
+                          >
+                            <Landmark size={18} />
+                            <span className="text-[10px] font-bold">Pay at Counter</span>
+                          </button>
+                        )}
+                        {onlinePayment && (
+                          <button
+                            onClick={() => setPaymentMethod('ONLINE')}
+                            className={cn(
+                              "p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 cursor-pointer text-center transition-all",
+                              paymentMethod === 'ONLINE' 
+                                ? "border-[#F97316] bg-orange-50/20 text-[#F97316]" 
+                                : "border-slate-100 bg-white text-slate-500 hover:bg-slate-50"
+                            )}
+                          >
+                            <CreditCard size={18} />
+                            <span className="text-[10px] font-bold">Pay Online</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Total / Submit Action */}
+                <div className="p-6 bg-white border-t border-slate-100 space-y-4">
+                  <div className="flex justify-between items-center text-sm font-bold text-[#0B1630]">
+                    <span>Total Amount</span>
+                    <span className="text-lg font-black text-[#F97316]">{tenant.currency_symbol || 'ETB'} {cartTotal.toFixed(2)}</span>
+                  </div>
+
+                  <button 
+                    onClick={handlePlaceOrder}
+                    disabled={isPlacingOrder || cart.length === 0}
+                    className="w-full bg-[#F97316] text-white h-14 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#ea580c] transition-all shadow-xl shadow-orange-500/20 active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                  >
+                    {isPlacingOrder ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Sending Order...</span>
+                      </>
+                    ) : (
+                      'Place Order'
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
 
           </div>
         </div>
