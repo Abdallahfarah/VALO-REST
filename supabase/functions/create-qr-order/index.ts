@@ -257,11 +257,12 @@ Deno.serve(async (req: Request) => {
       if (tableUpdate.error) throw tableUpdate.error;
     }
 
-    // STEP 4: TRIGGER REALTIME NOTIFICATIONS
+    // STEP 4: TRIGGER REALTIME NOTIFICATIONS WITH ORDER REFERENCE
     const displayTableLabel = tableNumber || table?.number ? `Table ${tableNumber || table?.number}` : 'QR Mobile';
     const notificationRows = [
       {
         tenant_id: tenantId,
+        order_id: orderId,
         role: "ADMIN",
         title: "New QR Order",
         message: `Customer ${customerName.trim()} placed QR order at ${displayTableLabel} (${validatedOrderItems.length} items, ${tenant.currency_symbol || 'ETB'} ${calculatedTotal.toFixed(2)}).`,
@@ -272,6 +273,7 @@ Deno.serve(async (req: Request) => {
     if (table?.waiter_id) {
       notificationRows.push({
         tenant_id: tenantId,
+        order_id: orderId,
         user_id: table.waiter_id,
         role: "WAITER",
         title: `Table ${table.number} Order Placed`,
@@ -281,6 +283,7 @@ Deno.serve(async (req: Request) => {
     } else {
       notificationRows.push({
         tenant_id: tenantId,
+        order_id: orderId,
         role: "WAITER",
         title: "New QR Order (Unassigned Table)",
         message: `Customer ${customerName.trim()} placed a QR order at ${displayTableLabel}. Available for pickup.`,

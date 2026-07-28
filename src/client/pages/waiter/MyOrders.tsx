@@ -76,8 +76,44 @@ export const MyOrders = () => {
     };
   }, [tenant?.id, queryClient]);
 
+  const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
+
   // Filter orders assigned to this waiter OR newly placed QR orders
   const waiterOrders = allOrders.filter((o: any) => o.waiterId === user?.id || (o.customerName && o.customerName.includes('(QR')));
+
+  // Direct notification navigation effect for Waiters
+  useEffect(() => {
+    if (!allOrders || allOrders.length === 0) return;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const targetOrderId = searchParams.get('orderId');
+
+    if (!targetOrderId) return;
+
+    const targetOrder = allOrders.find((o: any) =>
+      o.id === targetOrderId ||
+      (o.orderNumber && String(o.orderNumber).toLowerCase() === targetOrderId.toLowerCase()) ||
+      (o.order_number && String(o.order_number).toLowerCase() === targetOrderId.toLowerCase())
+    );
+
+    if (targetOrder) {
+      setSelectedOrder(targetOrder);
+      setIsDetailsModalOpen(true);
+      setHighlightedOrderId(targetOrder.id);
+
+      setTimeout(() => {
+        const el = document.getElementById(`waiter-order-card-${targetOrder.id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 250);
+
+      const timer = setTimeout(() => setHighlightedOrderId(null), 4000);
+      return () => clearTimeout(timer);
+    } else {
+      toast.warning('Order Unavailable', 'This order is no longer available.');
+    }
+  }, [allOrders]);
 
   // Filter based on search term
   const searchedOrders = waiterOrders.filter((o: any) => 
@@ -217,7 +253,14 @@ export const MyOrders = () => {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {searchedOrders.map((order: any) => (
-                <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
+                <tr 
+                  id={`waiter-order-card-${order.id}`}
+                  key={order.id} 
+                  className={cn(
+                    "hover:bg-slate-50/50 transition-all duration-300 group",
+                    highlightedOrderId === order.id && "bg-orange-100/90 border-y-2 border-orange-500 shadow-md animate-pulse"
+                  )}
+                >
                   <td className="px-6 py-4">
                     <span className="text-xs font-black text-[#0B1630]">
                       {order.order_number ? `#ORDER-${String(order.order_number).padStart(4, '0')}` : `#${order.id.slice(0, 8).toUpperCase()}`}

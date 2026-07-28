@@ -84,6 +84,29 @@ export const Notifications = () => {
     }
   }, [notifications, markAllReadMutation]);
 
+  const extractOrderIdFromText = (title?: string, message?: string): string | null => {
+    const text = `${title || ''} ${message || ''}`;
+    const uuidMatch = text.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+    if (uuidMatch) return uuidMatch[0];
+
+    const orderNumMatch = text.match(/ORDER-?(\d+)/i) || text.match(/order\s*#?(\d+)/i);
+    if (orderNumMatch) return orderNumMatch[1];
+
+    return null;
+  };
+
+  const handleNotificationClick = (notif: any) => {
+    if (!notif.isRead) {
+      markReadMutation.mutate(notif.id);
+    }
+    const targetOrderId = notif.orderId || notif.order_id || extractOrderIdFromText(notif.title, notif.message);
+    if (targetOrderId) {
+      window.location.href = `/waiter/orders?orderId=${encodeURIComponent(targetOrderId)}`;
+    } else {
+      window.location.href = '/waiter/orders';
+    }
+  };
+
   const getTimeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
@@ -95,7 +118,7 @@ export const Notifications = () => {
   };
 
   return (
-    <div className="max-w-[1000px] mx-auto space-y-8">
+    <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[#0B1630]">Notifications</h1>
@@ -114,10 +137,14 @@ export const Notifications = () => {
           const IconComp = typeIcons[notif.type] || Info;
           const colors = typeColors[notif.type] || typeColors.SYSTEM;
           return (
-            <Card key={notif.id} className={cn(
-              "p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-md transition-all flex gap-6 relative group overflow-hidden bg-white",
-              !notif.isRead && "border-l-4 border-l-[#F97316]"
-            )}>
+            <Card 
+              key={notif.id} 
+              onClick={() => handleNotificationClick(notif)}
+              className={cn(
+                "p-6 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-md transition-all flex gap-6 relative group overflow-hidden bg-white cursor-pointer",
+                !notif.isRead && "border-l-4 border-l-[#F97316]"
+              )}
+            >
                <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm", colors.bg, colors.color)}>
                   <IconComp size={28} />
                </div>
@@ -128,9 +155,12 @@ export const Notifications = () => {
                   </div>
                   <p className="text-sm text-[#64748B] leading-relaxed max-w-[600px]">{notif.message}</p>
                   <div className="mt-4 flex items-center gap-3">
+                     <span className="text-[10px] font-black text-[#F97316] uppercase tracking-widest px-3 py-1.5 bg-orange-50 border border-orange-100 rounded-lg group-hover:bg-[#F97316] group-hover:text-white transition-all">
+                       View Order &rarr;
+                     </span>
                      {!notif.isRead && (
                        <button 
-                         onClick={() => markReadMutation.mutate(notif.id)}
+                         onClick={(e) => { e.stopPropagation(); markReadMutation.mutate(notif.id); }}
                          className="text-[10px] font-black text-[#0B1630] uppercase tracking-widest px-4 py-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
                        >
                          Mark Read

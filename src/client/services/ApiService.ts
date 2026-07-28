@@ -1979,6 +1979,7 @@ export const NotificationService = {
       return {
         id: n.id,
         tenantId: n.tenant_id,
+        orderId: n.order_id || null,
         userId: n.user_id,
         role: n.role,
         type: derivedType,

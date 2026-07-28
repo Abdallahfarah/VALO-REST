@@ -187,15 +187,36 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
+  const extractOrderIdFromText = (title?: string, message?: string): string | null => {
+    const text = `${title || ''} ${message || ''}`;
+    const uuidMatch = text.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+    if (uuidMatch) return uuidMatch[0];
+
+    const orderNumMatch = text.match(/ORDER-?(\d+)/i) || text.match(/order\s*#?(\d+)/i);
+    if (orderNumMatch) return orderNumMatch[1];
+
+    return null;
+  };
+
   const handleNotificationClick = (n: any) => {
     if (!n.isRead) {
       readMutation.mutate(n.id);
     }
     onClose();
 
-    // Contextual Routing based on User Role & Notification Category
-    const category = getNotificationCategory(n);
+    // Extract order reference
+    const targetOrderId = n.orderId || n.order_id || extractOrderIdFromText(n.title, n.message);
     const roleUpper = role?.toUpperCase();
+    const isWaiter = roleUpper === 'WAITER';
+
+    if (targetOrderId) {
+      const basePath = isWaiter ? '/waiter/orders' : '/admin/orders';
+      window.location.href = `${basePath}?orderId=${encodeURIComponent(targetOrderId)}`;
+      return;
+    }
+
+    // Contextual Routing fallback based on User Role & Notification Category
+    const category = getNotificationCategory(n);
 
     if (roleUpper === 'WAITER') {
       if (category === 'Tables') {

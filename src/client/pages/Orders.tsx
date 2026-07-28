@@ -31,20 +31,23 @@ const statusMap: Record<string, { label: string; color: string }> = {
 interface OrderRowProps {
   order: any;
   isSelected: boolean;
+  isHighlighted?: boolean;
   onSelect: (order: any) => void;
   getStatusStyle: (status: string) => any;
   getTimeLabel: (dateStr: string) => string;
   formatPrice: (price: number) => string;
 }
 
-const OrderRow = React.memo(({ order, isSelected, onSelect, getStatusStyle, getTimeLabel, formatPrice }: OrderRowProps) => {
+const OrderRow = React.memo(({ order, isSelected, isHighlighted, onSelect, getStatusStyle, getTimeLabel, formatPrice }: OrderRowProps) => {
   const style = getStatusStyle(order.status);
   return (
     <tr
+      id={`order-row-${order.id}`}
       onClick={() => onSelect(order)}
       className={cn(
-        "hover:bg-slate-50/50 transition-colors cursor-pointer",
-        isSelected && "bg-orange-50/30"
+        "hover:bg-slate-50/50 transition-all cursor-pointer duration-300",
+        isSelected && "bg-orange-50/30",
+        isHighlighted && "bg-orange-100/90 border-y-2 border-orange-500 shadow-md animate-pulse"
       )}
     >
       <td className="px-6 py-4 text-sm font-bold text-[#0B1630]">{order.orderNumber || `#${order.id.slice(0, 8).toUpperCase()}`}</td>
@@ -97,6 +100,7 @@ export const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
 
   // ─── Realtime ───
   useEffect(() => {
@@ -116,6 +120,44 @@ export const Orders = () => {
     queryFn: () => OrderService.getOrders(tenant?.id || ''),
     enabled: !!tenant?.id,
   });
+
+  // URL query parameter navigation effect (e.g. ?orderId=xxx)
+  useEffect(() => {
+    if (!orders || orders.length === 0 || isLoading) return;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const targetOrderId = searchParams.get('orderId');
+
+    if (!targetOrderId) return;
+
+    const targetOrder = orders.find((o: any) =>
+      o.id === targetOrderId ||
+      (o.orderNumber && String(o.orderNumber).toLowerCase() === targetOrderId.toLowerCase()) ||
+      (o.order_number && String(o.order_number).toLowerCase() === targetOrderId.toLowerCase())
+    );
+
+    if (targetOrder) {
+      setActiveTab('All Orders');
+      setSelectedOrder(targetOrder);
+      setIsMobileDetailOpen(true);
+      setHighlightedOrderId(targetOrder.id);
+
+      setTimeout(() => {
+        const rowEl = document.getElementById(`order-row-${targetOrder.id}`);
+        if (rowEl) {
+          rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 250);
+
+      const timer = setTimeout(() => {
+        setHighlightedOrderId(null);
+      }, 4000);
+
+      return () => clearTimeout(timer);
+    } else {
+      toast.warning('Order Unavailable', 'This order is no longer available.');
+    }
+  }, [orders, isLoading]);
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
@@ -154,8 +196,11 @@ export const Orders = () => {
     filteredOrders.sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   }
 
-  // Auto-select first order
+  // Auto-select first order if none selected via query param
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('orderId')) return;
+
     if (filteredOrders.length > 0 && (!selectedOrder || !filteredOrders.find((o: any) => o.id === selectedOrder?.id))) {
       setSelectedOrder(filteredOrders[0]);
     }
@@ -301,6 +346,7 @@ export const Orders = () => {
                       key={order.id}
                       order={order}
                       isSelected={selectedOrder?.id === order.id}
+                      isHighlighted={highlightedOrderId === order.id}
                       onSelect={(order) => { setSelectedOrder(order); setIsMobileDetailOpen(true); }}
                       getStatusStyle={getStatusStyle}
                       getTimeLabel={getTimeLabel}
