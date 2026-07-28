@@ -121,20 +121,31 @@ export const Orders = () => {
     enabled: !!tenant?.id,
   });
 
-  // URL query parameter navigation effect (e.g. ?orderId=xxx)
+  // URL query parameter navigation effect (e.g. ?orderId=xxx or ?table=xxx)
   useEffect(() => {
     if (!orders || orders.length === 0 || isLoading) return;
 
     const searchParams = new URLSearchParams(window.location.search);
     const targetOrderId = searchParams.get('orderId');
+    const targetTableNum = searchParams.get('table');
 
-    if (!targetOrderId) return;
+    if (!targetOrderId && !targetTableNum) return;
 
-    const targetOrder = orders.find((o: any) =>
-      o.id === targetOrderId ||
-      (o.orderNumber && String(o.orderNumber).toLowerCase() === targetOrderId.toLowerCase()) ||
-      (o.order_number && String(o.order_number).toLowerCase() === targetOrderId.toLowerCase())
-    );
+    let targetOrder = null;
+
+    if (targetOrderId) {
+      targetOrder = orders.find((o: any) =>
+        o.id === targetOrderId ||
+        (o.orderNumber && String(o.orderNumber).toLowerCase() === targetOrderId.toLowerCase()) ||
+        (o.order_number && String(o.order_number).toLowerCase() === targetOrderId.toLowerCase())
+      );
+    }
+
+    if (!targetOrder && targetTableNum) {
+      targetOrder = orders.find((o: any) =>
+        o.table?.number && String(o.table.number) === targetTableNum
+      );
+    }
 
     if (targetOrder) {
       setActiveTab('All Orders');

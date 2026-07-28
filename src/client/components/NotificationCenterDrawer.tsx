@@ -123,20 +123,21 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
     const titleLower = n.title?.toLowerCase() || '';
     const messageLower = n.message?.toLowerCase() || '';
 
+    // Check Orders / QR orders FIRST so Table mention in QR Order message doesn't send user to Tables page
+    if (titleLower.includes('order') || messageLower.includes('order') || titleLower.includes('qr') || messageLower.includes('qr')) {
+      return 'Orders';
+    }
     if (titleLower.includes('priority') || titleLower.includes('cancel') || messageLower.includes('cancel') || titleLower.includes('modified') || messageLower.includes('modified')) {
       return 'Priority';
     }
     if (titleLower.includes('payment') || titleLower.includes('bill') || titleLower.includes('receipt') || titleLower.includes('invoice') || messageLower.includes('payment') || messageLower.includes('paid') || messageLower.includes('settle')) {
       return 'Payments';
     }
-    if (titleLower.includes('table') || titleLower.includes('seat') || messageLower.includes('table')) {
-      return 'Tables';
-    }
-    if (titleLower.includes('order') || messageLower.includes('order')) {
-      return 'Orders';
-    }
     if (titleLower.includes('kitchen') || titleLower.includes('prep') || titleLower.includes('dish') || titleLower.includes('food') || titleLower.includes('drink') || titleLower.includes('ready') || messageLower.includes('ready')) {
       return 'Kitchen';
+    }
+    if (titleLower.includes('table') || titleLower.includes('seat') || messageLower.includes('table')) {
+      return 'Tables';
     }
     return 'System';
   };
@@ -187,15 +188,18 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
-  const extractOrderIdFromText = (title?: string, message?: string): string | null => {
+  const extractOrderOrTableRef = (title?: string, message?: string): { orderId?: string; tableNumber?: string } => {
     const text = `${title || ''} ${message || ''}`;
     const uuidMatch = text.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
-    if (uuidMatch) return uuidMatch[0];
+    if (uuidMatch) return { orderId: uuidMatch[0] };
 
     const orderNumMatch = text.match(/ORDER-?(\d+)/i) || text.match(/order\s*#?(\d+)/i);
-    if (orderNumMatch) return orderNumMatch[1];
+    if (orderNumMatch) return { orderId: orderNumMatch[1] };
 
-    return null;
+    const tableMatch = text.match(/table\s*#?\s*(\d+)/i);
+    if (tableMatch) return { tableNumber: tableMatch[1] };
+
+    return {};
   };
 
   const handleNotificationClick = (n: any) => {
@@ -204,51 +208,50 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
     }
     onClose();
 
-    // Extract order reference
-    const targetOrderId = n.orderId || n.order_id || extractOrderIdFromText(n.title, n.message);
     const roleUpper = role?.toUpperCase();
     const isWaiter = roleUpper === 'WAITER';
+    const category = getNotificationCategory(n);
+    const titleLower = n.title?.toLowerCase() || '';
+    const messageLower = n.message?.toLowerCase() || '';
+    const isOrderNotification = titleLower.includes('order') || messageLower.includes('order') || titleLower.includes('qr') || messageLower.includes('qr') || category === 'Orders';
 
-    if (targetOrderId) {
-      const basePath = isWaiter ? '/waiter/orders' : '/admin/orders';
-      window.location.href = `${basePath}?orderId=${encodeURIComponent(targetOrderId)}`;
+    // Extract reference (orderId or tableNumber)
+    const ref = extractOrderOrTableRef(n.title, n.message);
+    const targetOrderId = n.orderId || n.order_id || ref.orderId;
+    const targetTableNum = ref.tableNumber;
+
+    // For Restaurant Admin & Owner: ANY QR Order or New Order Notification MUST ALWAYS navigate to /admin/orders
+    if (roleUpper === 'ADMIN' || roleUpper === 'OWNER' || isOrderNotification) {
+      let url = '/admin/orders';
+      if (targetOrderId) {
+        url = `/admin/orders?orderId=${encodeURIComponent(targetOrderId)}`;
+      } else if (targetTableNum) {
+        url = `/admin/orders?table=${encodeURIComponent(targetTableNum)}`;
+      }
+      window.location.href = url;
       return;
     }
 
-    // Contextual Routing fallback based on User Role & Notification Category
-    const category = getNotificationCategory(n);
+    if (isWaiter) {
+      let url = '/waiter/orders';
+      if (targetOrderId) {
+        url = `/waiter/orders?orderId=${encodeURIComponent(targetOrderId)}`;
+      } else if (targetTableNum) {
+        url = `/waiter/orders?table=${encodeURIComponent(targetTableNum)}`;
+      } else if (category === 'Tables') {
+        url = '/waiter/tables';
+      }
+      window.location.href = url;
+      return;
+    }
 
-    if (roleUpper === 'WAITER') {
-      if (category === 'Tables') {
-        window.location.href = '/waiter/tables';
-      } else {
-        window.location.href = '/waiter/orders';
-      }
-    } else if (roleUpper === 'CASHIER') {
-      if (category === 'Payments') {
-        window.location.href = '/cashier';
-      } else {
-        window.location.href = '/cashier/receipts';
-      }
+    // Role-specific fallbacks
+    if (roleUpper === 'CASHIER') {
+      window.location.href = category === 'Payments' ? '/cashier' : '/cashier/receipts';
     } else if (roleUpper === 'CHEF' || roleUpper === 'BARISTA' || roleUpper === 'KITCHEN_STAFF') {
       window.location.href = '/kds';
-    } else if (roleUpper === 'ADMIN' || roleUpper === 'OWNER') {
-      if (category === 'Payments') {
-        window.location.href = '/admin/payments';
-      } else if (category === 'Orders' || category === 'Kitchen') {
-        window.location.href = '/admin/orders';
-      } else if (category === 'Tables') {
-        window.location.href = '/admin/tables';
-      } else {
-        const titleLower = n.title?.toLowerCase() || '';
-        if (titleLower.includes('staff')) {
-          window.location.href = '/admin/staff';
-        } else if (titleLower.includes('inventory')) {
-          window.location.href = '/admin/inventory';
-        } else {
-          window.location.href = '/admin/settings';
-        }
-      }
+    } else {
+      window.location.href = category === 'Payments' ? '/admin/payments' : '/admin/orders';
     }
   };
 
