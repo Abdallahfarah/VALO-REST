@@ -63,7 +63,7 @@ export const POS = () => {
       if (!selectedTable) return null;
       const { data, error } = await supabase
         .from('orders')
-        .select('*, order_items(*, menu_items(*))')
+        .select('*, order_items(*, menu_items(*)), waiter:users!waiter_id(name)')
         .eq('table_id', selectedTable)
         .not('status', 'in', '("COMPLETED","CANCELED")')
         .maybeSingle();
@@ -103,7 +103,30 @@ export const POS = () => {
     }
   }, [activeOrder, selectedTable]);
 
-  const availableTables = tables.filter((t: any) => t.status === 'AVAILABLE' || t.status === 'OCCUPIED');
+  // Realtime subscription for orders and active tables
+  useEffect(() => {
+    if (!tenant?.id) return;
+    const channel = supabase
+      .channel(`pos-realtime-${tenant.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `tenant_id=eq.${tenant.id}` }, () => {
+        refetchActiveOrder();
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, () => {
+        refetchActiveOrder();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables', filter: `tenant_id=eq.${tenant.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['tables'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tenant?.id, refetchActiveOrder, queryClient]);
+
+  const availableTables = tables.filter((t: any) => t.status === 'AVAILABLE');
+  const selectedTableObj = tables.find((t: any) => t.id === selectedTable);
 
   const createOrderMutation = useMutation({
     mutationFn: (orderData: any) => OrderService.createOrder(orderData),
@@ -275,17 +298,59 @@ export const POS = () => {
           <h3 className="font-bold text-[#0B1630] text-xs lg:text-sm uppercase tracking-wider">Current Order</h3>
           <span className="text-[10px] font-black text-[#F97316] tracking-widest uppercase">DINE_IN</span>
         </div>
-        <div className="px-3 py-2.5 lg:p-5 border-b border-slate-50 bg-slate-50/50 shrink-0">
-          <select
-            value={selectedTable}
-            onChange={(e) => setSelectedTable(e.target.value)}
-            className="w-full h-10 rounded-lg border border-[#E5E7EB] px-3 text-sm bg-white text-[#0B1630] cursor-pointer"
-          >
-            <option value="">Select Table</option>
-            {availableTables.map((t: any) => (
-              <option key={t.id} value={t.id}>Table {t.number} ({t.capacity}p)</option>
-            ))}
-          </select>
+        <div className="px-3 py-2.5 lg:p-4 border-b border-slate-50 bg-slate-50/50 shrink-0">
+          {selectedTableObj && (selectedTableObj.status !== 'AVAILABLE' || activeOrder) ? (
+            <div className="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider">
+                    Occupied • Running Order
+                  </span>
+                </div>
+                <button 
+                  onClick={() => setSelectedTable('')} 
+                  className="text-[10px] font-bold text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                >
+                  Clear Selection
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between pt-0.5">
+                <div>
+                  <h4 className="text-sm font-black text-[#0B1630]">Table {selectedTableObj.number}</h4>
+                  <p className="text-[11px] text-slate-600 font-medium truncate max-w-[180px]">
+                    {activeOrder?.customer_name || 'Walk-in Guest'}
+                    {activeOrder?.waiter?.name ? ` • ${activeOrder.waiter.name}` : selectedTableObj.waiter?.name ? ` • ${selectedTableObj.waiter.name}` : ''}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Running Total</span>
+                  <span className="text-xs font-black text-amber-700">
+                    {format(Number(activeOrder?.total_amount || 0))}
+                  </span>
+                </div>
+              </div>
+
+              {activeOrder?.created_at && (
+                <div className="text-[9px] text-slate-500 font-bold flex items-center justify-between border-t border-amber-200/40 pt-1 mt-1">
+                  <span>Order #{String(activeOrder.order_number || 1).padStart(4, '0')}</span>
+                  <span>Opened {new Date(activeOrder.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <select
+              value={selectedTable}
+              onChange={(e) => setSelectedTable(e.target.value)}
+              className="w-full h-10 rounded-lg border border-[#E5E7EB] px-3 text-sm bg-white text-[#0B1630] cursor-pointer"
+            >
+              <option value="">Select Available Table</option>
+              {availableTables.map((t: any) => (
+                <option key={t.id} value={t.id}>Table {t.number} ({t.capacity}p)</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Cart Items */}

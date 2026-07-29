@@ -109,7 +109,7 @@ export const WaiterPOS = () => {
       if (!selectedTable) return null;
       const { data, error } = await supabase
         .from('orders')
-        .select('*, order_items(*, menu_items(*))')
+        .select('*, order_items(*, menu_items(*)), waiter:users!waiter_id(name)')
         .eq('table_id', selectedTable)
         .not('status', 'in', '("COMPLETED","CANCELED")')
         .maybeSingle();
@@ -118,6 +118,31 @@ export const WaiterPOS = () => {
     },
     enabled: !!selectedTable
   });
+
+  // Realtime subscription for orders and active tables
+  useEffect(() => {
+    if (!tenant?.id) return;
+    const channel = supabase
+      .channel(`waiter-pos-realtime-${tenant.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `tenant_id=eq.${tenant.id}` }, () => {
+        refetchActiveOrder();
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, () => {
+        refetchActiveOrder();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables', filter: `tenant_id=eq.${tenant.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['tables'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tenant?.id, refetchActiveOrder, queryClient]);
+
+  const availableTables = tables.filter((t: any) => t.status === 'AVAILABLE');
+  const selectedTableObj = tables.find((t: any) => t.id === selectedTable);
 
   // Sync customer count when selected table changes or tables update
   useEffect(() => {
@@ -512,17 +537,58 @@ export const WaiterPOS = () => {
            <span className="text-[10px] font-black text-[#F97316] tracking-widest uppercase">DINE_IN</span>
         </div>
 
-        <div className="px-3 py-2.5 lg:p-6 space-y-3 lg:space-y-4 border-b border-slate-50 bg-slate-50/50 shrink-0">
-           <div className="flex items-center gap-3 lg:gap-4">
+        <div className="px-3 py-2.5 lg:p-6 space-y-3 border-b border-slate-50 bg-slate-50/50 shrink-0">
+          {selectedTableObj && (selectedTableObj.status !== 'AVAILABLE' || activeOrder) ? (
+            <div className="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-3.5 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider">
+                    Occupied • Running Order
+                  </span>
+                </div>
+                <button 
+                  onClick={() => setSelectedTable('')} 
+                  className="text-[10px] font-bold text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                >
+                  Clear Selection
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between pt-0.5">
+                <div>
+                  <h4 className="text-sm font-black text-[#0B1630]">Table {selectedTableObj.number}</h4>
+                  <p className="text-[11px] text-slate-600 font-medium truncate max-w-[200px]">
+                    {activeOrder?.customer_name || 'Walk-in Guest'}
+                    {activeOrder?.waiter?.name ? ` • Waiter: ${activeOrder.waiter.name}` : selectedTableObj.waiter?.name ? ` • Waiter: ${selectedTableObj.waiter.name}` : ''}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Running Total</span>
+                  <span className="text-xs font-black text-amber-700">
+                    {format(Number(activeOrder?.total_amount || 0))}
+                  </span>
+                </div>
+              </div>
+
+              {activeOrder?.created_at && (
+                <div className="text-[9px] text-slate-500 font-bold flex items-center justify-between border-t border-amber-200/40 pt-1.5 mt-1">
+                  <span>Order #{String(activeOrder.order_number || 1).padStart(4, '0')}</span>
+                  <span>Opened {new Date(activeOrder.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 lg:gap-4">
               <div className="flex-1 flex items-center gap-2 bg-white px-3 py-1.5 lg:py-2 rounded-xl border border-slate-200">
                  <Armchair size={14} className="text-[#94A3B8]" />
                  <select 
                     value={selectedTable}
                     onChange={(e) => setSelectedTable(e.target.value)}
-                    className="bg-transparent text-xs font-bold text-[#0B1630] outline-none w-full"
+                    className="bg-transparent text-xs font-bold text-[#0B1630] outline-none w-full cursor-pointer"
                  >
-                    <option value="">Select Table</option>
-                    {tables.map((t: any) => (
+                    <option value="">Select Available Table</option>
+                    {availableTables.map((t: any) => (
                        <option key={t.id} value={t.id}>Table {t.number}</option>
                     ))}
                  </select>
@@ -569,7 +635,8 @@ export const WaiterPOS = () => {
                     </span>
                   </div>
                </div>
-           </div>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 lg:p-6 space-y-3 lg:space-y-6 min-h-0">
