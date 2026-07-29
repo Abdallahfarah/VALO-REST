@@ -75,6 +75,36 @@ export const POS = () => {
 
   const [openedOrderId, setOpenedOrderId] = useState<string | null>(null);
 
+  // ─── Realtime Synchronization ───
+  useEffect(() => {
+    if (!tenant?.id) return;
+
+    const channel = supabase
+      .channel(`pos-realtime-${tenant.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `tenant_id=eq.${tenant.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['orders'] });
+          queryClient.invalidateQueries({ queryKey: ['tables'] });
+          refetchActiveOrder();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_items' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['orders'] });
+          refetchActiveOrder();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tenant?.id, queryClient, refetchActiveOrder]);
+
   useEffect(() => {
     if (selectedTable) {
       if (activeOrder) {
@@ -100,46 +130,30 @@ export const POS = () => {
       }
     } else {
       setOpenedOrderId(null);
+      setCart([]);
     }
   }, [activeOrder, selectedTable]);
 
-  // ─── Realtime Subscriptions for POS ───
-  useEffect(() => {
-    if (!tenant?.id) return;
+  const handleSelectTable = (tableId: string) => {
+    if (!tableId) {
+      setSelectedTable('');
+      setCart([]);
+      return;
+    }
+    const t = tables.find((item: any) => item.id === tableId);
+    if (!t) return;
 
-    const channel = supabase
-      .channel(`admin-pos-realtime-${tenant.id}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'tables', filter: `tenant_id=eq.${tenant.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['tables', tenant.id] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders', filter: `tenant_id=eq.${tenant.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['orders', tenant.id] });
-          refetchActiveOrder();
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'order_items' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['orders', tenant.id] });
-          refetchActiveOrder();
-        }
-      )
-      .subscribe();
+    if (t.status === 'CLEANING') {
+      toast.warning('Table Cleaning', `Table ${t.number} is currently being cleaned. Cannot start orders.`);
+      return;
+    }
+    if (t.status === 'DISABLED') {
+      toast.warning('Table Disabled', `Table ${t.number} is currently disabled. Cannot start orders.`);
+      return;
+    }
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [tenant?.id, selectedTable, queryClient, refetchActiveOrder]);
-
-  const availableTables = tables.filter((t: any) => (t.status === 'AVAILABLE' && (t.isActive ?? true)) || t.id === selectedTable);
+    setSelectedTable(tableId);
+  };
 
   const createOrderMutation = useMutation({
     mutationFn: (orderData: any) => OrderService.createOrder(orderData),
@@ -153,9 +167,13 @@ export const POS = () => {
 
   // ─── Cart logic ───
   const addToCart = (item: any) => {
-    const existing = cart.find((c) => c.id === item.id);
+    if (!selectedTable) {
+      toast.warning('Please select a table first', 'You must select a table before adding products to the order.');
+      return;
+    }
+    const existing = cart.find((c) => c.id === item.id && !c.sent);
     if (existing) {
-      setCart(cart.map((c) => c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c));
+      setCart(cart.map((c) => (c.id === item.id && !c.sent) ? { ...c, quantity: c.quantity + 1 } : c));
     } else {
       setCart([...cart, { ...item, quantity: 1, sent: false }]);
     }
@@ -267,6 +285,14 @@ export const POS = () => {
 
       {/* Menu Grid (Independently Scrollable on Mobile & Desktop) */}
       <div className={cn("flex-1 min-h-0 flex flex-col gap-4 lg:gap-6 overflow-hidden", activeMobileTab !== 'menu' && "hidden lg:flex")}>
+        {!selectedTable && (
+          <div className="bg-amber-50 border border-amber-200/80 text-amber-900 px-4 py-3 rounded-2xl flex items-center gap-3 shrink-0 shadow-sm animate-pulse">
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+            <span className="text-xs font-bold tracking-wider">
+              Please select a table first to add products to cart or view an active table order.
+            </span>
+          </div>
+        )}
         <div className="flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <h2 className="text-lg lg:text-xl font-bold text-[#0B1630]">
@@ -284,7 +310,7 @@ export const POS = () => {
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-4 flex-1 overflow-y-auto pr-1 pb-2 content-start">
+        <div className={cn("grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-4 flex-1 overflow-y-auto pr-1 pb-2 content-start", !selectedTable && "opacity-75")}>
           {filteredProducts.map((item: any) => (
             <Card key={item.id} onClick={() => addToCart(item)} className="p-0 border-none shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform text-left flex flex-col">
               <div className="aspect-[4/3] bg-slate-50 flex items-center justify-center text-4xl lg:text-5xl group-hover:scale-110 transition-transform duration-500 relative shrink-0">
@@ -314,13 +340,23 @@ export const POS = () => {
         <div className="px-3 py-2.5 lg:p-5 border-b border-slate-50 bg-slate-50/50 shrink-0">
           <select
             value={selectedTable}
-            onChange={(e) => setSelectedTable(e.target.value)}
-            className="w-full h-10 rounded-lg border border-[#E5E7EB] px-3 text-sm bg-white text-[#0B1630] cursor-pointer"
+            onChange={(e) => handleSelectTable(e.target.value)}
+            className="w-full h-10 rounded-lg border border-[#E5E7EB] px-3 text-xs lg:text-sm bg-white text-[#0B1630] font-bold cursor-pointer"
           >
-            <option value="">Select Table</option>
-            {availableTables.map((t: any) => (
-              <option key={t.id} value={t.id}>Table {t.number} ({t.capacity}p)</option>
-            ))}
+            <option value="">-- Select Table First --</option>
+            {tables.map((t: any) => {
+              let badge = '🟢 Available';
+              if (t.status === 'OCCUPIED') badge = '🟡 Occupied (Active Order)';
+              else if (t.status === 'RESERVED') badge = '🔵 Reserved';
+              else if (t.status === 'CLEANING') badge = '🧹 Cleaning (Blocked)';
+              else if (t.status === 'DISABLED') badge = '🔴 Disabled (Blocked)';
+
+              return (
+                <option key={t.id} value={t.id}>
+                  Table {t.number} ({t.capacity}p) - {badge}
+                </option>
+              );
+            })}
           </select>
         </div>
 

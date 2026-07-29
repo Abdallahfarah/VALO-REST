@@ -343,26 +343,22 @@ export const OrderService = {
         .eq('status', 'PREPARING');
     }
 
-    // Keep table status in sync (AVAILABLE when completed/canceled, OCCUPIED when active)
+    // Keep table status in sync
     if (orderData?.table_id) {
       if (status === 'COMPLETED' || status === 'CANCELED') {
-        const { data: remainingActive } = await supabase
-          .from('orders')
-          .select('id')
-          .eq('table_id', orderData.table_id)
-          .not('status', 'in', '("COMPLETED","CANCELED")')
-          .neq('id', orderId);
-
-        if (!remainingActive || remainingActive.length === 0) {
-          await supabase
-            .from('tables')
-            .update({ status: 'AVAILABLE' })
-            .eq('id', orderData.table_id);
-        }
-      } else {
         await supabase
           .from('tables')
-          .update({ status: 'OCCUPIED' })
+          .update({ status: 'AVAILABLE' })
+          .eq('id', orderData.table_id);
+      } else if (status === 'PREPARING') {
+        await supabase
+          .from('tables')
+          .update({ status: 'PREPARING' })
+          .eq('id', orderData.table_id);
+      } else if (status === 'READY') {
+        await supabase
+          .from('tables')
+          .update({ status: 'READY' })
           .eq('id', orderData.table_id);
       }
     }
@@ -427,7 +423,9 @@ export const OrderService = {
     // BACKGROUND: fire-and-forget order/table/notification updates
     void (async () => {
       try {
-        const tableStatus = 'OCCUPIED';
+        let tableStatus = 'OCCUPIED';
+        if (projectedOrderStatus === 'PREPARING') tableStatus = 'PREPARING';
+        else if (projectedOrderStatus === 'READY') tableStatus = 'READY';
 
         const { data: orderData } = await supabase
           .from('orders')
